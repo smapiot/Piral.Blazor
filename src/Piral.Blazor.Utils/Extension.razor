@@ -1,0 +1,21 @@
+﻿@inject IJSRuntime JSRuntime
+
+<slot @ref=SlotRef></slot>
+
+@code {
+    ElementReference SlotRef;
+
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public object Params { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("Blazor.emitRenderEvent", SlotRef, Name, Params);
+        }
+    }
+}

@@ -1,0 +1,40 @@
+@inject IComponentActivationService Activation
+@inject ILogger<App> Logger
+
+@foreach (var active in Activation.Components)
+{
+    <div id="@active.ComponentName-@active.ReferenceId">
+        <div>
+            @{
+                RenderFragment renderFragment = (builder) =>
+                {
+                    var seq = 0;
+                    builder.OpenComponent(seq++, active.Component);
+
+                    foreach (var arg in active.Args)
+                    {
+                        builder.AddAttribute(seq++, arg.Key, arg.Value);
+                    }
+
+                    builder.CloseComponent();
+                };
+                @renderFragment
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Activation.Changed += (s, e) =>
+            {
+                this.StateHasChanged();
+            };
+        }
+
+        return base.OnAfterRenderAsync(firstRender);
+    }
+}
