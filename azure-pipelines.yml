@@ -21,5 +21,9 @@ steps:
   displayName: 'Pack Core'
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
-- script: dotnet nuget push --api-key nuget ./dist/*.nupkg
-  displayName: 'Publish Packages'
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: 'dist/*.nupkg'
+    publishFeedCredentials: 'nuget'
+    nuGetFeedType: 'external'
