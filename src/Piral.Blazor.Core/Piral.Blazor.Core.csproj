@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+    <PackageId>Piral.Blazor.Core</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Florian Rappl</Authors>
+    <Company>smapiot</Company>
+    <IsPackable>true</IsPackable>
     <TargetFramework>netstandard2.1</TargetFramework>
     <RazorLangVersion>3.0</RazorLangVersion>
   </PropertyGroup>
