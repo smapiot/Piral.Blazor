@@ -1,0 +1,37 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
+  displayName: 'Build Core'
+- script: dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
+  displayName: 'Build Utils'
+- script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist/Core
+  displayName: 'Pack Core'
+- script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist/Utils
+  displayName: 'Pack Utils'
+- task: NuGetCommand@2
+  displayName: 'Publish Core'
+  inputs:
+    command: 'push'
+    packagesToPush: 'dist/Core/*.nupkg'
+    feedsToUse: 'config'
+    publishFeedCredentials: 'nuget'
+- task: NuGetCommand@2
+  displayName: 'Publish Utils'
+  inputs:
+    command: 'push'
+    packagesToPush: 'dist/Utils/*.nupkg'
+    feedsToUse: 'config'
+    publishFeedCredentials: 'nuget'
