@@ -13,26 +13,13 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetAuthenticate@0
-  inputs:
-    nuGetServiceConnections: nuget
 - script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
   displayName: 'Build Core'
 - script: dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
   displayName: 'Build Utils'
-- script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist/Core
+- script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Core'
-- script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist/Utils
+- script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
-- task: NuGetCommand@2
-  displayName: 'Publish Core'
-  inputs:
-    command: 'push'
-    packagesToPush: 'dist/Core/*.nupkg'
-    nuGetFeedType: external
-- task: NuGetCommand@2
-  displayName: 'Publish Utils'
-  inputs:
-    command: 'push'
-    packagesToPush: 'dist/Utils/*.nupkg'
-    nuGetFeedType: external
+- script: dotnet nuget push --api-key nuget ./dist/*.nupkg
+  displayName: 'Publish Packages'
