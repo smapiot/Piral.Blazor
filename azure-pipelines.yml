@@ -13,6 +13,9 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+- task: NuGetAuthenticate@0
+  inputs:
+    nuGetServiceConnections: nuget
 - script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
   displayName: 'Build Core'
 - script: dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
@@ -26,12 +29,10 @@ steps:
   inputs:
     command: 'push'
     packagesToPush: 'dist/Core/*.nupkg'
-    feedsToUse: 'config'
-    publishFeedCredentials: 'nuget'
+    nuGetFeedType: external
 - task: NuGetCommand@2
   displayName: 'Publish Utils'
   inputs:
     command: 'push'
     packagesToPush: 'dist/Utils/*.nupkg'
-    feedsToUse: 'config'
-    publishFeedCredentials: 'nuget'
+    nuGetFeedType: external
