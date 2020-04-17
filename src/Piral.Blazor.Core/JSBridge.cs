@@ -1,5 +1,4 @@
 ﻿using Microsoft.JSInterop;
-using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,19 +11,15 @@ namespace Piral.Blazor.Core
     {
         public static ComponentActivationService ActivationService { get; set; }
 
+        public static ModuleContainerService ContainerService { get; set; }
+
         [JSInvokable]
         public static Task LoadComponentsFromLibrary(string data)
         {
             var bytes = Convert.FromBase64String(data);
             var assembly = Assembly.Load(bytes);
-            var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
-
-            foreach (var type in types)
-            {
-                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
-                ActivationService?.Register(name, type);
-            }
-
+            var container = ContainerService?.Configure(assembly);
+            ActivationService?.RegisterAll(assembly, container);
             return Task.FromResult(true);
         }
 

@@ -7,17 +7,19 @@ namespace Piral.Blazor.Core
     {
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
+        private readonly IModuleContainerService _container;
 
         public event EventHandler Changed;
 
         public IEnumerable<ActiveComponent> Components => _active;
 
-        public ComponentActivationService()
+        public ComponentActivationService(IModuleContainerService container)
         {
+            _container = container;
             JSBridge.ActivationService = this;
         }
 
-        public void Register(string componentName, Type componentType)
+        public void Register(string componentName, Type componentType, IServiceProvider provider)
         {
             if (_services.ContainsKey(componentName))
             {
@@ -25,9 +27,8 @@ namespace Piral.Blazor.Core
             }
 
             _services.Add(componentName, componentType);
+            _container.ConfigureComponent(componentType, provider);
         }
-
-        public void Register<T>(string componentName) => Register(componentName, typeof(T));
 
         public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
         {

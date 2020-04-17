@@ -15,7 +15,8 @@ namespace Piral.Blazor.Core
 
             builder.Services
                 .AddBaseAddressHttpClient()
-                .AddSingleton<IComponentActivationService, ComponentActivationService>();
+                .AddSingleton<IComponentActivationService, ComponentActivationService>()
+                .AddSingleton<IModuleContainerService, ModuleContainerService>();
 
             await builder.Build().RunAsync();
         }
