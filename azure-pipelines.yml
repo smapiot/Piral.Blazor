@@ -22,6 +22,7 @@ steps:
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
 - task: NuGetCommand@2
+  displayName: 'Publish Packages'
   inputs:
     command: 'push'
     packagesToPush: 'dist/*.nupkg'
