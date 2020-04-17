@@ -2,10 +2,11 @@
 
   <PropertyGroup>
     <PackageId>Piral.Blazor.Utils</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
+    <PackageIcon>https://raw.githubusercontent.com/smapiot/piral/develop/docs/assets/logo-simple.png</PackageIcon>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RazorLangVersion>3.0</RazorLangVersion>
   </PropertyGroup>
