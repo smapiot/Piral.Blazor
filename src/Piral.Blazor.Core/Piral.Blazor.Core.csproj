@@ -6,7 +6,7 @@
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
-    <PackageIcon>https://raw.githubusercontent.com/smapiot/piral/develop/docs/assets/logo-simple.png</PackageIcon>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseUrl>https://github.com/FlorianRappl/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/FlorianRappl/Piral.Blazor</PackageProjectUrl>
@@ -24,6 +24,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Piral.Blazor.Utils\Piral.Blazor.Utils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\icon.png" Pack="true" PackagePath=""/>
   </ItemGroup>
 
 </Project>

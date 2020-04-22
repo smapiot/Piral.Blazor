@@ -8,7 +8,7 @@
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <Description>Template for creating a new Piral Blazor pilet.</Description>
-    <PackageIcon>https://raw.githubusercontent.com/smapiot/piral/develop/docs/assets/logo-simple.png</PackageIcon>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageTags>aspnet;templates;blazor;spa;piral;microfrontend;pilet;mife;react</PackageTags>
     <PackageLicenseUrl>https://github.com/FlorianRappl/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -22,6 +22,10 @@
   <ItemGroup>
     <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" />
     <Compile Remove="**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\icon.png" Pack="true" PackagePath=""/>
   </ItemGroup>
 
 </Project>
