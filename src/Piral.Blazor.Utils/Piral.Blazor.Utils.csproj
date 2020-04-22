@@ -7,6 +7,9 @@
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
     <PackageIcon>https://raw.githubusercontent.com/smapiot/piral/develop/docs/assets/logo-simple.png</PackageIcon>
+    <PackageLicenseUrl>https://github.com/FlorianRappl/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/FlorianRappl/Piral.Blazor</PackageProjectUrl>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RazorLangVersion>3.0</RazorLangVersion>
   </PropertyGroup>

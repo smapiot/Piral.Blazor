@@ -21,6 +21,8 @@ steps:
   displayName: 'Pack Core'
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
+- script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --output ./dist
+  displayName: 'Pack Template'
 - task: NuGetCommand@2
   displayName: 'Publish Packages'
   inputs:

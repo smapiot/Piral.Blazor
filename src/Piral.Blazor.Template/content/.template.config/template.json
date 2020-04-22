@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Florian Rappl",
+  "classifications": ["Web", "Blazor", "WebAssembly"],
+  "groupIdentity": "Piral.Blazor.Template",
+  "identity": "Piral.Blazor.Template.CSharp",
+  "name": "Piral Blazor Pilet",
+  "shortName": "blazorpilet",
+  "sourceName": "Piral.Blazor.Template",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "HostIdentifier": {
+      "type": "bind",
+      "binding": "HostIdentifier"
+    },
+    "piralInstance": {
+      "type": "parameter",
+      "datatype": "string",
+      "description": "Sets the name of the Piral instance as available on the specified registry.",
+      "isRequired": true,
+      "defaultValue": "sample-piral",
+      "replaces": "$(piralInstance)"
+    },
+    "npmRegistry": {
+      "type": "parameter",
+      "datatype": "string",
+      "description": "Sets the URL of the registry to use for resolving the Piral instance.",
+      "isRequired": false,
+      "defaultValue": "https://registry.npmjs.org",
+      "replaces": "$(npmRegistry)"
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "description": "If specified, skips the automatic restore of the project on create.",
+      "isRequired": false,
+      "defaultValue": "false"
+    }
+  },
+  "sources": [
+    {
+      "source": "./",
+      "target": "./",
+      "exclude": [".template.config/**"]
+    }
+  ],
+  "primaryOutputs": [
+    {
+      "path": "Piral.Blazor.Template.csproj"
+    }
+  ],
+  "postActions": [
+    {
+      "condition": "(!skipRestore)",
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "description": "Restore NuGet packages required by this project.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "continueOnError": true
+    },
+    {
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "description ": "Install the Node.js packages required by this project.",
+      "args": {
+        "executable": "npm",
+        "args": "install"
+      },
+      "manualInstructions": [
+        {
+          "text": "Run 'setup.cmd'"
+        }
+      ],
+      "continueOnError": true
+    }
+  ]
+}

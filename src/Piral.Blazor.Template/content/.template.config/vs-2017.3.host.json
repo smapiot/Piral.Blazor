@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json.schemastore.org/vs-2017.3.host",
+  "name": {
+    "text": "Piral Blazor Pilet",
+    "id": "1050"
+  },
+  "description": {
+    "text": "A project template for creating a Piral Blazor pilet.",
+    "package": "{0CD94836-1526-4E85-87D3-FB5274C5AFC9}",
+    "id": "1051"
+  },
+  "order": 300,
+  "icon": "icon.png",
+  "learnMoreLink": "https://piral.io",
+  "uiFilters": [
+    "oneaspnet"
+  ]
+}

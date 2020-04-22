@@ -1,0 +1,17 @@
+@attribute [ExposePilet("sample-page")]
+
+<div>
+    <p>Current count: @counter</p>
+    <p>
+        <button @onclick="Increment">Increment</button>
+    </p>
+</div>
+
+@code {
+    int counter = 0;
+
+    void Increment()
+    {
+        counter++;
+    }
+}
