@@ -16,6 +16,7 @@
   <ItemGroup>
     <None Remove=".npmrc" Visible="false" />
     <None Remove=".gitignore" Visible="false" />
+    <None Remove="tsconfig.json" Visible="false" />
     <None Remove="package.json" Visible="false" />
     <None Remove="node_modules/**/*" Visible="false" />
   </ItemGroup>
