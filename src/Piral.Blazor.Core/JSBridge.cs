@@ -24,6 +24,15 @@ namespace Piral.Blazor.Core
         }
 
         [JSInvokable]
+        public static Task UnloadComponentsFromLibrary(string name)
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var assembly = assemblies.FirstOrDefault(m => m.FullName == name);
+            ActivationService?.UnregisterAll(assembly);
+            return Task.FromResult(true);
+        }
+
+        [JSInvokable]
         public static Task<string> Activate(string componentName, IDictionary<string, object> args)
         {
             var referenceId = Guid.NewGuid().ToString().Split('-').Last();

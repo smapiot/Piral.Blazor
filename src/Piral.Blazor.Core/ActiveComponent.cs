@@ -16,12 +16,24 @@ namespace Piral.Blazor.Core
             Args = Component.AdjustArguments(args ?? emptyArgs);
         }
 
+        /// <summary>
+        /// Gets the name of the component.
+        /// </summary>
         public string ComponentName { get; }
 
+        /// <summary>
+        /// Gets the refererence ID to uniquely identifies the instance.
+        /// </summary>
         public string ReferenceId { get; }
 
+        /// <summary>
+        /// Gets the component's type.
+        /// </summary>
         public Type Component { get; }
 
+        /// <summary>
+        /// Gets the arguments used for initializing the component.
+        /// </summary>
         public IDictionary<string, object> Args { get; }
     }
 }

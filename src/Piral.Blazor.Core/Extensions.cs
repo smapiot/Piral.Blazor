@@ -14,12 +14,23 @@ namespace Piral.Blazor.Core
 
         public static void RegisterAll(this ComponentActivationService activationService, Assembly assembly, IServiceProvider container)
         {
-            var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
+            var types = assembly?.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null) ?? Enumerable.Empty<Type>();
 
             foreach (var type in types)
             {
                 var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
                 activationService?.Register(name, type, container);
+            }
+        }
+
+        public static void UnregisterAll(this ComponentActivationService activationService, Assembly assembly)
+        {
+            var types = assembly?.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null) ?? Enumerable.Empty<Type>();
+
+            foreach (var type in types)
+            {
+                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
+                activationService?.Unregister(name);
             }
         }
 

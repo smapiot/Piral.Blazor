@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 
 namespace Piral.Blazor.Core
@@ -7,15 +8,17 @@ namespace Piral.Blazor.Core
     {
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
+        private readonly ILogger<ComponentActivationService> _logger;
         private readonly IModuleContainerService _container;
 
         public event EventHandler Changed;
 
         public IEnumerable<ActiveComponent> Components => _active;
 
-        public ComponentActivationService(IModuleContainerService container)
+        public ComponentActivationService(IModuleContainerService container, ILogger<ComponentActivationService> logger)
         {
             _container = container;
+            _logger = logger;
             JSBridge.ActivationService = this;
         }
 
@@ -23,11 +26,27 @@ namespace Piral.Blazor.Core
         {
             if (_services.ContainsKey(componentName))
             {
-                throw new InvalidOperationException("The provided component name has already been registered.");
+                _logger.LogWarning("The provided component name has already been registered.");
             }
+            else
+            {
+                _services.Add(componentName, componentType);
+                _container.ConfigureComponent(componentType, provider);
+            }
+        }
 
-            _services.Add(componentName, componentType);
-            _container.ConfigureComponent(componentType, provider);
+        public void Unregister(string componentName)
+        {
+            if (_services.TryGetValue(componentName, out var componentType))
+            {
+                DeactivateComponent(componentName);
+                _services.Remove(componentName);
+                _container.ForgetComponent(componentType);
+            }
+            else
+            {
+                _logger.LogWarning("The provided component name has not been registered.");
+            }
         }
 
         public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
@@ -39,6 +58,16 @@ namespace Piral.Blazor.Core
         public void DeactivateComponent(string componentName, string referenceId)
         {
             var removed = _active.RemoveAll(m => m.ComponentName == componentName && m.ReferenceId == referenceId);
+
+            if (removed > 0)
+            {
+                Changed?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        public void DeactivateComponent(string componentName)
+        {
+            var removed = _active.RemoveAll(m => m.ComponentName == componentName);
 
             if (removed > 0)
             {
