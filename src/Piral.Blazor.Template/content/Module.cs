@@ -6,7 +6,7 @@ namespace Piral.Blazor.Template
 	{
 		public static void Main()
 		{
-			// this entrypoint shold remain empty
+			// this entrypoint should remain empty
 		}
 
 		public static void ConfigureServices(IServiceCollection services)

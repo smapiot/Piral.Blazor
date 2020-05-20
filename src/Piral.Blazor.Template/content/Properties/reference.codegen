@@ -1,4 +1,17 @@
+const { resolve } = require("path");
+const { copyFileSync } = require("fs");
+
 module.exports = function () {
-    //TODO
-    return `module.exports = [];`;
+  const source = resolve(__dirname, "..", "bin", "Release", "netstandard2.1", "wwwroot", "_framework", "_bin");
+  const target = this.options.outDir;
+  const files = ["Piral.Blazor.Template.dll"];
+  files.forEach((file) => {
+    const from = resolve(source, file);
+    const to = resolve(target, file);
+    this.addDependency(from, { includedInParent: true });
+    copyFileSync(from, to)
+  });
+  return `module.exports = [
+    ${files.map(f => `__bundleUrl__+"${f}"`).join(',')}
+  ];`;
 };
