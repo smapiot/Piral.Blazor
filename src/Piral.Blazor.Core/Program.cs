@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Piral.Blazor.Core
@@ -9,12 +11,13 @@ namespace Piral.Blazor.Core
         public static async Task Main(string[] args)
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
+            var baseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 
             builder.RootComponents
                 .Add<App>("#blazor-root");
 
             builder.Services
-                .AddBaseAddressHttpClient()
+                .AddSingleton(new HttpClient { BaseAddress = baseAddress })
                 .AddSingleton<IComponentActivationService, ComponentActivationService>()
                 .AddSingleton<IModuleContainerService, ModuleContainerService>();
 

@@ -16,19 +16,14 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static Task LoadComponentsFromLibrary(string data)
         {
-            var bytes = Convert.FromBase64String(data);
-            var assembly = Assembly.Load(bytes);
-            var container = ContainerService?.Configure(assembly);
-            ActivationService?.RegisterAll(assembly, container);
+            LoadComponents(Convert.FromBase64String(data));
             return Task.FromResult(true);
         }
 
         [JSInvokable]
         public static Task UnloadComponentsFromLibrary(string name)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var assembly = assemblies.FirstOrDefault(m => m.FullName == name);
-            ActivationService?.UnregisterAll(assembly);
+            UnloadComponents(name);
             return Task.FromResult(true);
         }
 
@@ -45,6 +40,21 @@ namespace Piral.Blazor.Core
         {
             ActivationService?.DeactivateComponent(componentName, referenceId);
             return Task.FromResult(true);
+        }
+
+        private static void LoadComponents(byte[] content)
+        {
+            var assembly = Assembly.Load(content);
+            UnloadComponents(assembly.FullName);
+            var container = ContainerService?.Configure(assembly);
+            ActivationService?.RegisterAll(assembly, container);
+        }
+
+        private static void UnloadComponents(string name)
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var assembly = assemblies.LastOrDefault(m => m.FullName == name);
+            ActivationService?.UnregisterAll(assembly);
         }
     }
 }
