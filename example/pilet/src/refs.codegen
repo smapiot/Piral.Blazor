@@ -4,7 +4,7 @@ const { execSync } = require("child_process");
 
 const bbjson = "blazor.boot.json";
 const root = resolve(__dirname, "..");
-const output = resolve(root, "bin", "Release", "netstandard2.1", "wwwroot", "_framework");
+const output = resolve(__dirname, "bin", "Release", "netstandard2.1", "wwwroot", "_framework");
 const source = resolve(output, "_bin");
 
 function getAssemblyNames(manifest) {

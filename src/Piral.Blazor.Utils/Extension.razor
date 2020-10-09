@@ -5,9 +5,16 @@
 @code {
     ElementReference SlotRef;
 
+    /// <summary>
+    /// The name of the extension slot to use.
+    /// </summary>
     [Parameter]
     public string Name { get; set; }
 
+    /// <summary>
+    /// The additional parameters to forward to the extensions.
+    /// Use an anonymous object or some other POCO. This will be JSON serialized.
+    /// </summary>
     [Parameter]
     public object Params { get; set; }
 

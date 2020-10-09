@@ -20,9 +20,4 @@
     <None Remove="node_modules/**/*" Visible="false" />
   </ItemGroup>
 
-  <Target Name="AfterBuild" AfterTargets="PostBuildEvent">
-    <Exec Condition="$(Configuration) == 'Debug'" Command="npm run build" />
-    <Exec Condition="$(Configuration) == 'Release'" Command="npm run build" />
-  </Target>
-
 </Project>
