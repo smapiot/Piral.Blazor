@@ -21,16 +21,17 @@ steps:
     cd dist
     cp ../package-template.json ./package.json
     export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
+    export NPM_TOKEN=$(npmToken)
     npm version $TARGET_VERSION
-    echo _auth=$(npmToken) >> .npmrc
-    echo always-auth=true >> .npmrc
+    echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+    echo always-auth=true >> ~/.npmrc
     cd ..
   displayName: 'Prepare NPM Package'
 
 - script: |
     cd dist
     sed -i -e "s/\(\"version\":\\s\+\"\([0-9]\+\.\?\)\+\)/\1-pre.$BUILD_BUILDNUMBER/" ./package.json;
-    cat .npmrc
+    cat ~/.npmrc
     npm publish --tag next
     cd ..
   displayName: 'Publish Pre-Package on NPM'
