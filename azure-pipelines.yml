@@ -22,7 +22,7 @@ steps:
     cp ../package-template.json ./package.json
     export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
     npm version $TARGET_VERSION
-    echo _auth=$(npm_token) >> .npmrc
+    echo _auth=$(npmToken) >> .npmrc
     echo always-auth=true >> .npmrc
     cd ..
   displayName: 'Prepare NPM Package'
@@ -30,6 +30,7 @@ steps:
 - script: |
     cd dist
     sed -i -e "s/\(\"version\":\\s\+\"\([0-9]\+\.\?\)\+\)/\1-pre.$BUILD_BUILDNUMBER/" ./package.json;
+    cat .npmrc
     npm publish --tag next
     cd ..
   displayName: 'Publish Pre-Package on NPM'
@@ -37,7 +38,6 @@ steps:
 
 - script: |
     cd dist
-    export NPM_AUTH_TOKEN=$(npm_token)
     npm publish --tag latest
     cd ..
   displayName: 'Publish Package on NPM'
@@ -46,24 +46,29 @@ steps:
 - script: rm -rf dist
   displayName: 'Reset Output'
 
+- script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Core (Pre)'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+
 - script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Core'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Utils (Pre)'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Template (Pre)'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 - script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Template'
-
-- task: NuGetCommand@2
-  displayName: 'Publish Pre-Packages on NuGet'
-  inputs:
-    command: 'push'
-    versioningScheme: 'byBuildNumber'
-    packagesToPush: 'dist/*.nupkg'
-    publishFeedCredentials: 'nuget'
-    nuGetFeedType: 'external'
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 - task: NuGetCommand@2
   displayName: 'Publish Packages on NuGet'
@@ -72,4 +77,3 @@ steps:
     packagesToPush: 'dist/*.nupkg'
     publishFeedCredentials: 'nuget'
     nuGetFeedType: 'external'
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
