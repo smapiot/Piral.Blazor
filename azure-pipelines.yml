@@ -1,32 +1,69 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
 trigger:
 - master
+- develop
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  buildConfiguration: 'Release'
+  - group: secrets
+  - group: defaults
 
 steps:
 - script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
   displayName: 'Build Core'
+
 - script: dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
   displayName: 'Build Utils'
+
+- script: |
+    dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
+    cd dist
+    cp ../package-template.json ./package.json
+    export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
+    npm version $TARGET_VERSION
+    cd ..
+  displayName: 'Prepare NPM Package'
+
+- script: |
+    sed -i -e "s/\(\"version\":\\s\+\"\([0-9]\+\.\?\)\+\)/\1-pre.$BUILD_BUILDNUMBER/" ./dist/package.json;
+  displayName: 'NPM Preview version'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- script: |
+    cd dist
+    export NPM_AUTH_TOKEN=$(npm_token)
+    npm publish
+    cd ..
+  displayName: 'Publish on NPM'
+
+- script: rm -rf dist
+  displayName: 'Reset Output'
+
 - script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Core'
+
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
+
 - script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Template'
+
 - task: NuGetCommand@2
-  displayName: 'Publish Packages'
+  displayName: 'Publish Pre-Packages on NuGet'
+  inputs:
+    command: 'push'
+    versioningScheme: 'byBuildNumber'
+    packagesToPush: 'dist/*.nupkg'
+    publishFeedCredentials: 'nuget'
+    nuGetFeedType: 'external'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- task: NuGetCommand@2
+  displayName: 'Publish Packages on NuGet'
   inputs:
     command: 'push'
     packagesToPush: 'dist/*.nupkg'
     publishFeedCredentials: 'nuget'
     nuGetFeedType: 'external'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
