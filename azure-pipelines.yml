@@ -22,20 +22,26 @@ steps:
     cp ../package-template.json ./package.json
     export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
     npm version $TARGET_VERSION
+    echo _auth=$(npm_token) >> .npmrc
+    echo always-auth=true >> .npmrc
     cd ..
   displayName: 'Prepare NPM Package'
 
 - script: |
-    sed -i -e "s/\(\"version\":\\s\+\"\([0-9]\+\.\?\)\+\)/\1-pre.$BUILD_BUILDNUMBER/" ./dist/package.json;
-  displayName: 'NPM Preview version'
+    cd dist
+    sed -i -e "s/\(\"version\":\\s\+\"\([0-9]\+\.\?\)\+\)/\1-pre.$BUILD_BUILDNUMBER/" ./package.json;
+    npm publish --tag next
+    cd ..
+  displayName: 'Publish Pre-Package on NPM'
   condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 - script: |
     cd dist
     export NPM_AUTH_TOKEN=$(npm_token)
-    npm publish
+    npm publish --tag latest
     cd ..
-  displayName: 'Publish on NPM'
+  displayName: 'Publish Package on NPM'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 - script: rm -rf dist
   displayName: 'Reset Output'
