@@ -14,12 +14,17 @@ namespace Piral.Blazor.Core
 
         public static ModuleContainerService ContainerService { get; set; }
 
+        private static HttpClient _client;
+        
+        public static void Configure(HttpClient client)
+        {
+            _client = client;
+        }
+        
         [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
-            var client  = new HttpClient();
-            byte[] data = await client.GetByteArrayAsync(url);
-            
+            byte[] data = await _client.GetByteArrayAsync(url);
             LoadComponents(data);
         }
 
