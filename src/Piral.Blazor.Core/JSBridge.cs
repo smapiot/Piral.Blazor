@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -14,10 +15,12 @@ namespace Piral.Blazor.Core
         public static ModuleContainerService ContainerService { get; set; }
 
         [JSInvokable]
-        public static Task LoadComponentsFromLibrary(string data)
+        public static async Task LoadComponentsFromLibrary(string url)
         {
-            LoadComponents(Convert.FromBase64String(data));
-            return Task.FromResult(true);
+            var client  = new HttpClient();
+            byte[] data = await client.GetByteArrayAsync(url);
+            
+            LoadComponents(data);
         }
 
         [JSInvokable]
