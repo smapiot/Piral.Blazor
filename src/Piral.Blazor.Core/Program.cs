@@ -21,7 +21,16 @@ namespace Piral.Blazor.Core
                 .AddSingleton<IComponentActivationService, ComponentActivationService>()
                 .AddSingleton<IModuleContainerService, ModuleContainerService>();
 
-            await builder.Build().RunAsync();
+            var host = builder.Build();
+
+            Configure(host);
+            
+            await host.RunAsync();
+        }
+
+        private static void Configure(WebAssemblyHost host)
+        {
+            JSBridge.Configure(host.Services.GetRequiredService<HttpClient>());
         }
     }
 }
