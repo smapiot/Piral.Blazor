@@ -17,7 +17,8 @@ steps:
   displayName: 'Build Utils'
 
 - script: |
-    dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
+    dotnet build ./src/Piral.Blazor.Core --configuration Release --output ./dist/release
+    dotnet build ./src/Piral.Blazor.Core --configuration Debug --output ./dist/debug
     cd dist
     cp ../package-template.json ./package.json
     export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
