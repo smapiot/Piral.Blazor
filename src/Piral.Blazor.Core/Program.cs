@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Piral.Blazor.Core
 {
@@ -31,6 +32,7 @@ namespace Piral.Blazor.Core
         private static void Configure(WebAssemblyHost host)
         {
             JSBridge.Configure(host.Services.GetRequiredService<HttpClient>());
+            Extensions.Configure(host.Services.GetService<ILoggerFactory>());
         }
     }
 }

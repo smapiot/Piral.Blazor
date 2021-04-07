@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Piral.Blazor.Core
 {
@@ -12,14 +13,23 @@ namespace Piral.Blazor.Core
     {
         private static readonly IDictionary<Type, string[]> allowedArgs = new Dictionary<Type, string[]>();
         private static readonly IEnumerable<Type> AttributeTypes =  new List<Type> { typeof(ExposePiletAttribute), typeof(RouteAttribute) };
+        private static ILogger _logger;
 
+        public static void Configure(ILoggerFactory loggerFactory)
+        {
+            _logger = loggerFactory.CreateLogger(typeof(Extensions));
+        }
+        
         public static void RegisterAll(this ComponentActivationService activationService, Assembly assembly,
             IServiceProvider container, IDictionary<string, object> args = default)
         {
             var attributeTypes = AttributeTypes;
-
-            if (args is null || !args.TryGetValue("includePages", out var includePages) || includePages is null)// || !(bool)includePages) --> TODO cast fails
+            
+            if (args.IsNullOrEmpty() || !args.BooleanOptionExplicitlySetTo(true, "includePages"))
             {
+                _logger.LogInformation(
+                    "Pages decorated with the @page directive are not included in the Blazor references. If this is unintended, reference the docs."
+                );
                 attributeTypes = AttributeTypes.Where(at => at != typeof(RouteAttribute));
             }
 
@@ -36,7 +46,7 @@ namespace Piral.Blazor.Core
                 }
             }
         }
-        
+
         public static void UnregisterAll(this ComponentActivationService activationService, Assembly assembly) 
         {
             var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
@@ -124,6 +134,23 @@ namespace Piral.Blazor.Core
             {
                 return null;
             }
+        }
+        
+        private static bool BooleanOptionExplicitlySetTo(this IDictionary<string, object> args, bool expectedValue, string option)
+        {
+            try
+            {
+                return args.TryGetValue(option, out var value) && ((JsonElement) value).GetBoolean() == expectedValue;
+            }
+            catch
+            {
+                _logger.LogWarning($"The '{option}' option is not set correctly. It should be either 'true' or 'false'.");
+                return false;
+            }
+        }
+        
+        private static bool IsNullOrEmpty<TKey, TValue>(this IDictionary<TKey,TValue> collection) {
+            return ( collection == null || collection.Count < 1 );
         }
         
         private static IEnumerable<Type> GetTypesWithAttributes(this Assembly assembly, IEnumerable<Type> attributeTypes)
