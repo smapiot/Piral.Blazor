@@ -22,10 +22,10 @@ namespace Piral.Blazor.Core
         }
         
         [JSInvokable]
-        public static async Task LoadComponentsFromLibrary(string url)
+        public static async Task LoadComponentsFromLibrary(string url, IDictionary<string, object> args = default)
         {
             byte[] data = await _client.GetByteArrayAsync(url);
-            LoadComponents(data);
+            LoadComponents(data, args);
         }
 
         [JSInvokable]
@@ -50,12 +50,12 @@ namespace Piral.Blazor.Core
             return Task.FromResult(true);
         }
 
-        private static void LoadComponents(byte[] content)
+        private static void LoadComponents(byte[] content, IDictionary<string, object> args = default)
         {
             var assembly = Assembly.Load(content);
             UnloadComponents(assembly.FullName);
             var container = ContainerService?.Configure(assembly);
-            ActivationService?.RegisterAll(assembly, container);
+            ActivationService?.RegisterAll(assembly, container, args);
         }
 
         private static void UnloadComponents(string name)

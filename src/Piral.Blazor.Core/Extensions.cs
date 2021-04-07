@@ -11,26 +11,45 @@ namespace Piral.Blazor.Core
     static class Extensions
     {
         private static readonly IDictionary<Type, string[]> allowedArgs = new Dictionary<Type, string[]>();
+        private static readonly IEnumerable<Type> AttributeTypes =  new List<Type> { typeof(ExposePiletAttribute), typeof(RouteAttribute) };
 
-        public static void RegisterAll(this ComponentActivationService activationService, Assembly assembly, IServiceProvider container)
+        public static void RegisterAll(this ComponentActivationService activationService, Assembly assembly,
+            IServiceProvider container, IDictionary<string, object> args = default)
         {
-            var types = assembly?.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null) ?? Enumerable.Empty<Type>();
+            var attributeTypes = AttributeTypes;
 
-            foreach (var type in types)
+            if (args is null || !args.TryGetValue("includePages", out var includePages) || includePages is null)// || !(bool)includePages) --> TODO cast fails
             {
-                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
-                activationService?.Register(name, type, container);
+                attributeTypes = AttributeTypes.Where(at => at != typeof(RouteAttribute));
+            }
+
+            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
+
+            foreach (var componentType in componentTypes)
+            {
+                var attributeValues = componentType.GetAllAttributeValues(attributeTypes);
+                if(attributeValues is null) continue;
+                
+                foreach (string componentName in attributeValues)
+                {
+                    activationService?.Register(componentName, componentType, container);
+                }
             }
         }
-
-        public static void UnregisterAll(this ComponentActivationService activationService, Assembly assembly)
+        
+        public static void UnregisterAll(this ComponentActivationService activationService, Assembly assembly) 
         {
-            var types = assembly?.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null) ?? Enumerable.Empty<Type>();
+            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
 
-            foreach (var type in types)
+            foreach (var componentType in componentTypes)
             {
-                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
-                activationService?.Unregister(name);
+                var attributeValues = componentType.GetAllAttributeValues(AttributeTypes);
+                if(attributeValues is null) continue;
+                
+                foreach (string attributeValue in attributeValues)
+                {
+                    activationService?.Unregister(attributeValue);
+                }
             }
         }
 
@@ -105,6 +124,31 @@ namespace Piral.Blazor.Core
             {
                 return null;
             }
+        }
+        
+        private static IEnumerable<Type> GetTypesWithAttributes(this Assembly assembly, IEnumerable<Type> attributeTypes)
+        {
+            return assembly?.GetTypes().Where(m => m.HasAnyAttribute(attributeTypes)) ?? Enumerable.Empty<Type>();
+        }
+
+        private static bool HasAnyAttribute(this Type member, IEnumerable<Type> attributeTypes)
+        {
+            return attributeTypes.Any(attributeType =>  Attribute.IsDefined(member, attributeType));
+        }
+        
+        private static IEnumerable<string> GetAllAttributeValues(this Type member, IEnumerable<Type> attributeTypes)
+        {
+            return attributeTypes.Select(member.GetAttributeValue).Where(val=> val != null);
+        }
+        
+        private static string GetAttributeValue(this Type member, Type attributeType)
+        {
+            return attributeType.Name switch
+            {
+                nameof(RouteAttribute) => member.GetCustomAttribute<RouteAttribute>(false)?.Template.Replace("/", ""), //TODO consistent url manipulation
+                nameof(ExposePiletAttribute) => member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name,
+                _ => null
+            };
         }
     }
 }
