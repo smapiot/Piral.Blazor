@@ -12,34 +12,31 @@ namespace Piral.Blazor.Core
     static class Extensions
     {
         private static readonly IDictionary<Type, string[]> allowedArgs = new Dictionary<Type, string[]>();
-        private static readonly IEnumerable<Type> AttributeTypes =  new List<Type> { typeof(ExposePiletAttribute), typeof(RouteAttribute) };
+
+        private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
+        {
+            typeof(ExposePiletAttribute),
+            typeof(RouteAttribute)
+        };
+
         private static ILogger _logger;
 
         public static void Configure(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger(typeof(Extensions));
         }
-        
+
         public static void RegisterAll(this ComponentActivationService activationService, Assembly assembly,
             IServiceProvider container, IDictionary<string, object> args = default)
         {
-            var attributeTypes = AttributeTypes;
-            
-            if (args.IsNullOrEmpty() || !args.BooleanOptionExplicitlySetTo(true, "includePages"))
-            {
-                _logger.LogInformation(
-                    "Pages decorated with the @page directive are not included in the Blazor references. If this is unintended, reference the docs."
-                );
-                attributeTypes = AttributeTypes.Where(at => at != typeof(RouteAttribute));
-            }
-
-            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
+            var attributeTypes = FilterAttributeTypes(args);
+            var componentTypes = assembly.GetTypesWithAttributes(attributeTypes);
 
             foreach (var componentType in componentTypes)
             {
                 var attributeValues = componentType.GetAllAttributeValues(attributeTypes);
-                if(attributeValues is null) continue;
-                
+                if (attributeValues is null) continue;
+
                 foreach (string componentName in attributeValues)
                 {
                     activationService?.Register(componentName, componentType, container);
@@ -47,15 +44,15 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public static void UnregisterAll(this ComponentActivationService activationService, Assembly assembly) 
+        public static void UnregisterAll(this ComponentActivationService activationService, Assembly assembly)
         {
             var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
 
             foreach (var componentType in componentTypes)
             {
                 var attributeValues = componentType.GetAllAttributeValues(AttributeTypes);
-                if(attributeValues is null) continue;
-                
+                if (attributeValues is null) continue;
+
                 foreach (string attributeValue in attributeValues)
                 {
                     activationService?.Unregister(attributeValue);
@@ -135,47 +132,81 @@ namespace Piral.Blazor.Core
                 return null;
             }
         }
-        
-        private static bool BooleanOptionExplicitlySetTo(this IDictionary<string, object> args, bool expectedValue, string option)
+
+        private static IReadOnlyCollection<Type> FilterAttributeTypes(IDictionary<string, object> args)
         {
+            var types = AttributeTypes;
+
+            types = FilterPages(args, types);
+            // potentially more filters here
+
+            return types;
+        }
+
+        private static IReadOnlyCollection<Type> FilterPages(IDictionary<string, object> args, IReadOnlyCollection<Type> types)
+        {
+            if (args.HasExplicitFlag(true, "includePages"))
+                return types; //don't filter anything out
+
+            _logger.LogInformation(
+                "Pages decorated with the @page directive are not included in the Blazor references. If this is unintended, reference the docs."
+            );
+
+            return types.Where(at => at != typeof(RouteAttribute)).ToList().AsReadOnly(); // filter out the pages
+        }
+
+
+        private static bool HasExplicitFlag(this IDictionary<string, object> args, bool expectedValue, string option)
+        {
+            if (args.IsNullOrEmpty()) return false;
             try
             {
                 return args.TryGetValue(option, out var value) && ((JsonElement) value).GetBoolean() == expectedValue;
             }
             catch
             {
-                _logger.LogWarning($"The '{option}' option is not set correctly. It should be either 'true' or 'false'.");
+                _logger.LogWarning(
+                    $"The '{option}' option is not set correctly. It should be either 'true' or 'false'.");
                 return false;
             }
         }
-        
-        private static bool IsNullOrEmpty<TKey, TValue>(this IDictionary<TKey,TValue> collection) {
-            return ( collection == null || collection.Count < 1 );
+
+        private static bool IsNullOrEmpty<TKey, TValue>(this IDictionary<TKey, TValue> collection)
+        {
+            return (collection == null || collection.Count < 1);
         }
-        
-        private static IEnumerable<Type> GetTypesWithAttributes(this Assembly assembly, IEnumerable<Type> attributeTypes)
+
+        private static IEnumerable<Type> GetTypesWithAttributes(this Assembly assembly,
+            IReadOnlyCollection<Type> attributeTypes)
         {
             return assembly?.GetTypes().Where(m => m.HasAnyAttribute(attributeTypes)) ?? Enumerable.Empty<Type>();
         }
 
         private static bool HasAnyAttribute(this Type member, IEnumerable<Type> attributeTypes)
         {
-            return attributeTypes.Any(attributeType =>  Attribute.IsDefined(member, attributeType));
+            return attributeTypes.Any(attributeType => Attribute.IsDefined(member, attributeType));
         }
-        
+
         private static IEnumerable<string> GetAllAttributeValues(this Type member, IEnumerable<Type> attributeTypes)
         {
-            return attributeTypes.Select(member.GetAttributeValue).Where(val=> val != null);
+            return attributeTypes.Select(member.GetAttributeValue).Where(val => val != null);
         }
-        
+
         private static string GetAttributeValue(this Type member, Type attributeType)
         {
-            return attributeType.Name switch
+            string value = attributeType.Name switch
             {
-                nameof(RouteAttribute) => member.GetCustomAttribute<RouteAttribute>(false)?.Template.Replace("/", ""), //TODO consistent url manipulation
+                nameof(RouteAttribute) => member.GetCustomAttribute<RouteAttribute>(false)?.Template,
                 nameof(ExposePiletAttribute) => member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name,
                 _ => null
             };
+
+            return value is null ? null : SanitizeAttributeValue(value);
+        }
+
+        private static string SanitizeAttributeValue(string value)
+        {
+            return value.Replace("/", ""); //TODO
         }
     }
 }
