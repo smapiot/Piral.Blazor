@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 
 namespace Piral.Blazor.Core
@@ -40,6 +41,7 @@ namespace Piral.Blazor.Core
                 foreach (string componentName in attributeValues)
                 {
                     activationService?.Register(componentName, componentType, container);
+                    _logger.LogInformation($"registered {componentName}");
                 }
             }
         }
@@ -81,41 +83,37 @@ namespace Piral.Blazor.Core
         {
             var property = type.GetProperty(key);
             var propType = property.PropertyType;
-
-            if (value == null)
+            
+            if (value == null) return propType.GetDefaultValue();
+            if (value.GetType() == propType) return value;
+            if (!(value is JsonElement e)) return value;
+            
+            if (propType == typeof(int))
             {
-                return propType.GetDefaultValue();
+                if (e.ValueKind == JsonValueKind.Number) return e.GetInt32();
+                if (e.ValueKind == JsonValueKind.String) return int.Parse(e.GetString());
             }
-
-            if (value.GetType() != propType)
+            else if (propType == typeof(double))
             {
-                if (value is JsonElement e)
-                {
-                    if (propType == typeof(int))
-                    {
-                        return e.GetInt32();
-                    }
-                    else if (propType == typeof(double))
-                    {
-                        return e.GetDouble();
-                    }
-                    else if (propType == typeof(string))
-                    {
-                        return e.GetString();
-                    }
-                    else if (propType == typeof(bool))
-                    {
-                        return e.GetBoolean();
-                    }
-                    else if (propType == typeof(Guid))
-                    {
-                        return e.GetGuid();
-                    }
-                    else if (propType == typeof(DateTime))
-                    {
-                        return e.GetDateTime();
-                    }
-                }
+                if (e.ValueKind == JsonValueKind.Number) return e.GetDouble();
+                if (e.ValueKind == JsonValueKind.String) return double.Parse(e.GetString());
+            }
+            else if (propType == typeof(string))
+            {
+                return e.GetString();
+            }
+            else if (propType == typeof(bool))
+            {
+                if (e.ValueKind == JsonValueKind.True || e.ValueKind == JsonValueKind.False) return e.GetBoolean();
+                if (e.ValueKind == JsonValueKind.String) return bool.Parse(e.GetString());
+            }
+            else if (propType == typeof(Guid))
+            {
+                return e.GetGuid();
+            }
+            else if (propType == typeof(DateTime))
+            {
+                return e.GetDateTime();
             }
 
             return value;
@@ -204,9 +202,14 @@ namespace Piral.Blazor.Core
             return value is null ? null : SanitizeAttributeValue(value);
         }
 
+        /// <summary>
+        /// Sanitizing a Blazor attribute value. Any leading slashes are removed and
+        /// everything that is not alphanumeric, an underscore or a dash gets replaced with an underscore.
+        /// </summary>
         private static string SanitizeAttributeValue(string value)
         {
-            return value.Replace("/", ""); //TODO
+            string val = value.StartsWith("/") ? value.Substring(1) : value;
+            return Regex.Replace(val, @"[^\w\-]", "_");
         }
     }
 }
