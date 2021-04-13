@@ -45,10 +45,9 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static async Task LoadComponentsWithSymbolsFromLibrary(string dllUrl, string pdbUrl)
         {
-            var task1 = _client.GetByteArrayAsync(dllUrl);
-            var task2 = _client.GetByteArrayAsync(pdbUrl);
-            await Task.WhenAll(task1, task2);
-            var assembly = Assembly.Load(task1.Result, task2.Result);
+            var dll = await _client.GetByteArrayAsync(dllUrl);
+            var pdb = await _client.GetByteArrayAsync(pdbUrl);
+            var assembly = Assembly.Load(dll, pdb);
             ActivationService?.LoadComponentsFromAssembly(assembly);
         }
     }
