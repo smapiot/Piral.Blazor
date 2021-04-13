@@ -1,12 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
+using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace Piral.Blazor.Core
 {
     public class ComponentActivationService : IComponentActivationService
     {
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
+        
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
         private readonly ILogger<ComponentActivationService> _logger;
         private readonly IModuleContainerService _container;
@@ -51,7 +55,8 @@ namespace Piral.Blazor.Core
 
         public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
         {
-            _active.Add(new ActiveComponent(componentName, referenceId, GetComponent(componentName), args));
+            var component = GetComponent(componentName);
+            _active.Add(new ActiveComponent(componentName, referenceId, component, args));
             Changed?.Invoke(this, EventArgs.Empty);
         }
 
@@ -72,6 +77,18 @@ namespace Piral.Blazor.Core
             if (removed > 0)
             {
                 Changed?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        public void LoadComponentsFromAssembly(Assembly assembly)
+        {
+            var serviceProvider = _container.Configure(assembly);
+            var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
+
+            foreach (var type in types)
+            {
+                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
+                Register(name, type, serviceProvider);
             }
         }
 

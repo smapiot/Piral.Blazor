@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace Piral.Blazor.Core
 {
@@ -16,5 +17,12 @@ namespace Piral.Blazor.Core
         /// </summary>
         /// <param name="type">The type to forget.</param>
         void ForgetComponent(Type type);
+
+        /// <summary>
+        /// Configures the whole assembly returning a dedicated service provider.
+        /// </summary>
+        /// <param name="assembly"></param>
+        /// <returns></returns>
+        IServiceProvider Configure(Assembly assembly);
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -12,27 +12,11 @@ namespace Piral.Blazor.Core
     {
         public static ComponentActivationService ActivationService { get; set; }
 
-        public static ModuleContainerService ContainerService { get; set; }
-
         private static HttpClient _client;
-        
+
         public static void Configure(HttpClient client)
         {
             _client = client;
-        }
-        
-        [JSInvokable]
-        public static async Task LoadComponentsFromLibrary(string url, IDictionary<string, object> args = default)
-        {
-            byte[] data = await _client.GetByteArrayAsync(url);
-            LoadComponents(data, args);
-        }
-
-        [JSInvokable]
-        public static Task UnloadComponentsFromLibrary(string name)
-        {
-            UnloadComponents(name);
-            return Task.FromResult(true);
         }
 
         [JSInvokable]
@@ -50,19 +34,21 @@ namespace Piral.Blazor.Core
             return Task.FromResult(true);
         }
 
-        private static void LoadComponents(byte[] content, IDictionary<string, object> args = default)
+        [JSInvokable]
+        public static async Task LoadComponentsFromLibrary(string url)
         {
-            var assembly = Assembly.Load(content);
-            UnloadComponents(assembly.FullName);
-            var container = ContainerService?.Configure(assembly);
-            ActivationService?.RegisterAll(assembly, container, args);
+            var data = await _client.GetByteArrayAsync(url);
+            var assembly = Assembly.Load(data);
+            ActivationService?.LoadComponentsFromAssembly(assembly);
         }
 
-        private static void UnloadComponents(string name)
+        [JSInvokable]
+        public static async Task LoadComponentsWithSymbolsFromLibrary(string dllUrl, string pdbUrl)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var assembly = assemblies.LastOrDefault(m => m.FullName == name);
-            ActivationService?.UnregisterAll(assembly);
+            var dll = await _client.GetByteArrayAsync(dllUrl);
+            var pdb = await _client.GetByteArrayAsync(pdbUrl);
+            var assembly = Assembly.Load(dll, pdb);
+            ActivationService?.LoadComponentsFromAssembly(assembly);
         }
     }
 }

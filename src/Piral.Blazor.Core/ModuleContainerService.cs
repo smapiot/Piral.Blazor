@@ -15,7 +15,6 @@ namespace Piral.Blazor.Core
         {
             _parent = provider;
             _manipulator = new Manipulator<ModuleContainerService>(logger);
-            JSBridge.ContainerService = this;
         }
 
         public void ConfigureComponent(Type type, IServiceProvider provider) => _manipulator.OverrideComponentInitializer(type, provider);
