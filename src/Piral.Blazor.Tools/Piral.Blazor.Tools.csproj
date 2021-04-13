@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageId>Piral.Blazor.Tools</PackageId>
+        <VersionPrefix>3.2.1</VersionPrefix>
+        <Authors>Florian Rappl</Authors>
+        <Company>smapiot</Company>
+        <IsPackable>true</IsPackable>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageLicenseUrl>https://github.com/FlorianRappl/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageProjectUrl>https://github.com/FlorianRappl/Piral.Blazor</PackageProjectUrl>
+        <TargetFramework>netstandard2.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\icon.png" Pack="true" PackagePath="" />
+        <None Include="build\**" Pack="True" PackagePath="build\" />
+    </ItemGroup>
+
+</Project>
