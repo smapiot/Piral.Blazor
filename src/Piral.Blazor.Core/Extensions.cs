@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Piral.Blazor.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -62,6 +63,13 @@ namespace Piral.Blazor.Core
             }
         }
 
+        
+        internal class Match
+        {
+            public IDictionary<string, object> @params { get; set; }
+        }
+        
+        
         public static IDictionary<string, object> AdjustArguments(this Type type, IDictionary<string, object> args)
         {
             if (!allowedArgs.TryGetValue(type, out var allowed))
@@ -74,11 +82,22 @@ namespace Piral.Blazor.Core
                 allowedArgs.Add(type, allowed);
             }
 
-            return args
+            var allArgs = new List<IDictionary<string, object>> {args};
+            try
+            {
+                var routeParams = JsonSerializer.Deserialize<Match>(JsonSerializer.Serialize(args["match"]))?.@params;
+                if(!routeParams.IsNullOrEmpty()) allArgs.Add(routeParams);
+            }
+            catch(KeyNotFoundException) { }
+
+            var adjustedArgs = allArgs
+                .SelectMany(dict => dict)
                 .Where(m => allowed.Contains(m.Key))
                 .ToDictionary(m => m.Key, m => type.NormalizeValue(m.Key, m.Value));
+            
+            return adjustedArgs;
         }
-
+        
         public static object NormalizeValue(this Type type, string key, object value)
         {
             var property = type.GetProperty(key);
