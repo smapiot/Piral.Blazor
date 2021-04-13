@@ -10,7 +10,6 @@ namespace Piral.Blazor.Core
     public class ComponentActivationService : IComponentActivationService
     {
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
-        private readonly List<Assembly> _assemblies = new List<Assembly>();
         
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
         private readonly ILogger<ComponentActivationService> _logger;
@@ -81,43 +80,22 @@ namespace Piral.Blazor.Core
             }
         }
 
-        private Type GetComponent(string componentName)
+        public void LoadComponentsFromAssembly(Assembly assembly)
         {
-            if (!_services.TryGetValue(componentName, out var value))
+            var serviceProvider = _container.Configure(assembly);
+            var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
+
+            foreach (var type in types)
             {
-                return LoadMissingComponentsFor(componentName);
-            }
-            else
-            {
-                return value;
+                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
+                Register(name, type, serviceProvider);
             }
         }
 
-        private Type LoadMissingComponentsFor(string componentName)
+        private Type GetComponent(string componentName)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Except(_assemblies).ToArray();
-            var result = default(Type);
-
-            foreach (var assembly in assemblies)
-            {
-                var serviceProvider = _container.Configure(assembly);
-                var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
-
-                foreach (var type in types)
-                {
-                    var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
-                    Register(name, type, serviceProvider);
-
-                    if (name == componentName)
-                    {
-                        result = type;
-                    }
-                }
-
-                _assemblies.Add(assembly);
-            }
-
-            return result;
+            _services.TryGetValue(componentName, out var value);
+            return value;
         }
     }
 }
