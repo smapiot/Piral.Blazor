@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Components;
-using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
 
 namespace Piral.Blazor.Core
 {
@@ -35,7 +33,7 @@ namespace Piral.Blazor.Core
             try
             {
                 var routeParams = JsonSerializer.Deserialize<Match>(JsonSerializer.Serialize(args["match"]))?.@params;
-                
+
                 if (!routeParams.IsNullOrEmpty())
                 {
                     allArgs.Add(routeParams);
@@ -56,7 +54,7 @@ namespace Piral.Blazor.Core
             var property = type.GetProperty(key);
             var propType = property.PropertyType;
 
-            if (value == null)
+            if (value is null || (value is JsonElement e && e.ValueKind == JsonValueKind.Null))
             {
                 return propType.GetDefaultValue();
             }
@@ -66,16 +64,8 @@ namespace Piral.Blazor.Core
                 return value;
             }
 
-            return value switch
-            {
-                JsonElement e when propType == typeof(int) => e.GetInt32(),
-                JsonElement e when propType == typeof(double) => e.GetDouble(),
-                JsonElement e when propType == typeof(string) => e.GetString(),
-                JsonElement e when propType == typeof(bool) => e.GetBoolean(),
-                JsonElement e when propType == typeof(Guid) => e.GetGuid(),
-                JsonElement e when propType == typeof(DateTime) => e.GetDateTime(),
-                _ => value
-            };
+            var converter = TypeDescriptor.GetConverter(propType);
+            return converter.ConvertFrom(value.ToString());
         }
 
         public static object GetDefaultValue(this Type t)

@@ -64,8 +64,16 @@ namespace Piral.Blazor.Core
         public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
         {
             var component = GetComponent(componentName);
-            _active.Add(new ActiveComponent(componentName, referenceId, component, args));
-            Changed?.Invoke(this, EventArgs.Empty);
+            try
+            {
+                _active.Add(new ActiveComponent(componentName, referenceId, component, args));
+                Changed?.Invoke(this, EventArgs.Empty);
+            }
+            catch (ArgumentException ae)
+            {
+                _logger.LogError($"One of the arguments is invalid: {ae.Message}");
+            }
+
         }
 
         public void DeactivateComponent(string componentName, string referenceId)
