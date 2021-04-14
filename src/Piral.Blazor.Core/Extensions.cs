@@ -58,40 +58,27 @@ namespace Piral.Blazor.Core
         {
             var property = type.GetProperty(key);
             var propType = property.PropertyType;
-            
-            if (value == null) return propType.GetDefaultValue();
-            if (value.GetType() == propType) return value;
-            if (!(value is JsonElement e)) return value;
-            
-            if (propType == typeof(int))
+
+            if (value == null)
             {
-                if (e.ValueKind == JsonValueKind.Number) return e.GetInt32();
-                if (e.ValueKind == JsonValueKind.String) return int.Parse(e.GetString());
-            }
-            else if (propType == typeof(double))
-            {
-                if (e.ValueKind == JsonValueKind.Number) return e.GetDouble();
-                if (e.ValueKind == JsonValueKind.String) return double.Parse(e.GetString());
-            }
-            else if (propType == typeof(string))
-            {
-                return e.GetString();
-            }
-            else if (propType == typeof(bool))
-            {
-                if (e.ValueKind == JsonValueKind.True || e.ValueKind == JsonValueKind.False) return e.GetBoolean();
-                if (e.ValueKind == JsonValueKind.String) return bool.Parse(e.GetString());
-            }
-            else if (propType == typeof(Guid))
-            {
-                return e.GetGuid();
-            }
-            else if (propType == typeof(DateTime))
-            {
-                return e.GetDateTime();
+                return propType.GetDefaultValue();
             }
 
-            return value;
+            if (value.GetType() == propType)
+            {
+                return value;
+            }
+
+            return value switch
+            {
+                JsonElement e when propType == typeof(int) => e.GetInt32(),
+                JsonElement e when propType == typeof(double) => e.GetDouble(),
+                JsonElement e when propType == typeof(string) => e.GetString(),
+                JsonElement e when propType == typeof(bool) => e.GetBoolean(),
+                JsonElement e when propType == typeof(Guid) => e.GetGuid(),
+                JsonElement e when propType == typeof(DateTime) => e.GetDateTime(),
+                _ => value
+            };
         }
 
         public static object GetDefaultValue(this Type t)
