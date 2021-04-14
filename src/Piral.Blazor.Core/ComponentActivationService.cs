@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Components;
 
 namespace Piral.Blazor.Core
 {
@@ -18,6 +20,12 @@ namespace Piral.Blazor.Core
         public event EventHandler Changed;
 
         public IEnumerable<ActiveComponent> Components => _active;
+        
+        private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
+        {
+            typeof(ExposePiletAttribute),
+            typeof(RouteAttribute)
+        };
 
         public ComponentActivationService(IModuleContainerService container, ILogger<ComponentActivationService> logger)
         {
@@ -80,21 +88,79 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public void LoadComponentsFromAssembly(Assembly assembly)
+        public void LoadComponentsFromAssembly(Assembly assembly, IDictionary<string, object> args = default)
         {
             var serviceProvider = _container.Configure(assembly);
-            var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
+            
+            var attributeTypes = FilterAttributeTypes(args);
+            var componentTypes = assembly.GetTypesWithAttributes(attributeTypes);
 
-            foreach (var type in types)
+            foreach (var componentType in componentTypes)
             {
-                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
-                Register(name, type, serviceProvider);
+                var attributeValues = GetAllAttributeValues(componentType, attributeTypes);
+                if (attributeValues is null) continue;
+
+                foreach (string componentName in attributeValues)
+                {
+                    string cleanComponentName = Sanitize(componentName);
+                    Register(cleanComponentName, componentType, serviceProvider);
+                    _logger.LogInformation($"registered {componentName}");
+                }
             }
+        }
+        
+        /// <summary>
+        /// Sanitizing a Blazor component name. Any leading slashes are removed and
+        /// everything that is not alphanumeric, an underscore or a dash gets replaced with an underscore.
+        /// </summary>
+        public static string Sanitize(string value)
+        {
+            string val = value.StartsWith("/") ? value.Substring(1) : value;
+            return Regex.Replace(val, @"[^\w\-]", "_");
         }
 
         private Type GetComponent(string componentName)
         {
             _services.TryGetValue(componentName, out var value);
+            return value;
+        }
+        
+        private IReadOnlyCollection<Type> FilterAttributeTypes(IDictionary<string, object> args)
+        {
+            var types = AttributeTypes;
+
+            types = FilterPages(args, types);
+            // potentially more filters here
+
+            return types;
+        }
+
+        private IReadOnlyCollection<Type> FilterPages(IDictionary<string, object> args, IReadOnlyCollection<Type> types)
+        {
+            if (args.HasExplicitFlag(true, "includePages"))
+                return types; //don't filter anything out
+
+            _logger.LogInformation(
+                "Pages decorated with the @page directive are not included in the Blazor references. If this is unintended, reference the docs."
+            );
+
+            return types.Where(at => at != typeof(RouteAttribute)).ToList().AsReadOnly(); // filter out the pages
+        }
+        
+        private static IEnumerable<string> GetAllAttributeValues(Type member, IEnumerable<Type> attributeTypes)
+        {
+            return attributeTypes.Select(at=> GetAttributeValue(member, at)).Where(val => val != null);
+        }
+
+        private static string GetAttributeValue(Type member, Type attributeType)
+        {
+            string value = attributeType.Name switch
+            {
+                nameof(RouteAttribute) => member.GetCustomAttribute<RouteAttribute>(false)?.Template,
+                nameof(ExposePiletAttribute) => member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name,
+                _ => null
+            };
+
             return value;
         }
     }

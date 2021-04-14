@@ -35,11 +35,11 @@ namespace Piral.Blazor.Core
         }
 
         [JSInvokable]
-        public static async Task LoadComponentsFromLibrary(string url)
+        public static async Task LoadComponentsFromLibrary(string url, IDictionary<string, object> args = default)
         {
             var data = await _client.GetByteArrayAsync(url);
             var assembly = Assembly.Load(data);
-            ActivationService?.LoadComponentsFromAssembly(assembly);
+            ActivationService?.LoadComponentsFromAssembly(assembly, args);
         }
 
         [JSInvokable]

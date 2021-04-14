@@ -13,13 +13,7 @@ namespace Piral.Blazor.Core
     static class Extensions
     {
         private static readonly IDictionary<Type, string[]> allowedArgs = new Dictionary<Type, string[]>();
-
-        private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
-        {
-            typeof(ExposePiletAttribute),
-            typeof(RouteAttribute)
-        };
-
+        
         private static ILogger _logger;
 
         public static void Configure(ILoggerFactory loggerFactory)
@@ -27,47 +21,10 @@ namespace Piral.Blazor.Core
             _logger = loggerFactory.CreateLogger(typeof(Extensions));
         }
 
-        public static void RegisterAll(this ComponentActivationService activationService, Assembly assembly,
-            IServiceProvider container, IDictionary<string, object> args = default)
-        {
-            var attributeTypes = FilterAttributeTypes(args);
-            var componentTypes = assembly.GetTypesWithAttributes(attributeTypes);
-
-            foreach (var componentType in componentTypes)
-            {
-                var attributeValues = componentType.GetAllAttributeValues(attributeTypes);
-                if (attributeValues is null) continue;
-
-                foreach (string componentName in attributeValues)
-                {
-                    activationService?.Register(componentName, componentType, container);
-                    _logger.LogInformation($"registered {componentName}");
-                }
-            }
-        }
-
-        public static void UnregisterAll(this ComponentActivationService activationService, Assembly assembly)
-        {
-            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
-
-            foreach (var componentType in componentTypes)
-            {
-                var attributeValues = componentType.GetAllAttributeValues(AttributeTypes);
-                if (attributeValues is null) continue;
-
-                foreach (string attributeValue in attributeValues)
-                {
-                    activationService?.Unregister(attributeValue);
-                }
-            }
-        }
-
-        
-        internal class Match
+        private class Match
         {
             public IDictionary<string, object> @params { get; set; }
         }
-        
         
         public static IDictionary<string, object> AdjustArguments(this Type type, IDictionary<string, object> args)
         {
@@ -149,30 +106,7 @@ namespace Piral.Blazor.Core
             }
         }
 
-        private static IReadOnlyCollection<Type> FilterAttributeTypes(IDictionary<string, object> args)
-        {
-            var types = AttributeTypes;
-
-            types = FilterPages(args, types);
-            // potentially more filters here
-
-            return types;
-        }
-
-        private static IReadOnlyCollection<Type> FilterPages(IDictionary<string, object> args, IReadOnlyCollection<Type> types)
-        {
-            if (args.HasExplicitFlag(true, "includePages"))
-                return types; //don't filter anything out
-
-            _logger.LogInformation(
-                "Pages decorated with the @page directive are not included in the Blazor references. If this is unintended, reference the docs."
-            );
-
-            return types.Where(at => at != typeof(RouteAttribute)).ToList().AsReadOnly(); // filter out the pages
-        }
-
-
-        private static bool HasExplicitFlag(this IDictionary<string, object> args, bool expectedValue, string option)
+        public static bool HasExplicitFlag(this IDictionary<string, object> args, bool expectedValue, string option)
         {
             if (args.IsNullOrEmpty()) return false;
             try
@@ -187,47 +121,20 @@ namespace Piral.Blazor.Core
             }
         }
 
-        private static bool IsNullOrEmpty<TKey, TValue>(this IDictionary<TKey, TValue> collection)
+        public static bool IsNullOrEmpty<TKey, TValue>(this IDictionary<TKey, TValue> collection)
         {
             return (collection == null || collection.Count < 1);
         }
 
-        private static IEnumerable<Type> GetTypesWithAttributes(this Assembly assembly,
+        public static IEnumerable<Type> GetTypesWithAttributes(this Assembly assembly,
             IReadOnlyCollection<Type> attributeTypes)
         {
             return assembly?.GetTypes().Where(m => m.HasAnyAttribute(attributeTypes)) ?? Enumerable.Empty<Type>();
         }
 
-        private static bool HasAnyAttribute(this Type member, IEnumerable<Type> attributeTypes)
+        public static bool HasAnyAttribute(this Type member, IEnumerable<Type> attributeTypes)
         {
             return attributeTypes.Any(attributeType => Attribute.IsDefined(member, attributeType));
-        }
-
-        private static IEnumerable<string> GetAllAttributeValues(this Type member, IEnumerable<Type> attributeTypes)
-        {
-            return attributeTypes.Select(member.GetAttributeValue).Where(val => val != null);
-        }
-
-        private static string GetAttributeValue(this Type member, Type attributeType)
-        {
-            string value = attributeType.Name switch
-            {
-                nameof(RouteAttribute) => member.GetCustomAttribute<RouteAttribute>(false)?.Template,
-                nameof(ExposePiletAttribute) => member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name,
-                _ => null
-            };
-
-            return value is null ? null : SanitizeAttributeValue(value);
-        }
-
-        /// <summary>
-        /// Sanitizing a Blazor attribute value. Any leading slashes are removed and
-        /// everything that is not alphanumeric, an underscore or a dash gets replaced with an underscore.
-        /// </summary>
-        private static string SanitizeAttributeValue(string value)
-        {
-            string val = value.StartsWith("/") ? value.Substring(1) : value;
-            return Regex.Replace(val, @"[^\w\-]", "_");
         }
     }
 }
