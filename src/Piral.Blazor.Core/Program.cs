@@ -32,7 +32,6 @@ namespace Piral.Blazor.Core
         private static void Configure(WebAssemblyHost host)
         {
             JSBridge.Configure(host.Services.GetRequiredService<HttpClient>());
-            Extensions.Configure(host.Services.GetService<ILoggerFactory>());
         }
     }
 }

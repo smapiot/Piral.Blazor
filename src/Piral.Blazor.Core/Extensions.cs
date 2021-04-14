@@ -13,13 +13,6 @@ namespace Piral.Blazor.Core
     static class Extensions
     {
         private static readonly IDictionary<Type, string[]> allowedArgs = new Dictionary<Type, string[]>();
-        
-        private static ILogger _logger;
-
-        public static void Configure(ILoggerFactory loggerFactory)
-        {
-            _logger = loggerFactory.CreateLogger(typeof(Extensions));
-        }
 
         private class Match
         {
@@ -90,21 +83,6 @@ namespace Piral.Blazor.Core
             else
             {
                 return null;
-            }
-        }
-
-        public static bool HasExplicitFlag(this IDictionary<string, object> args, bool expectedValue, string option)
-        {
-            if (args.IsNullOrEmpty()) return false;
-            try
-            {
-                return args.TryGetValue(option, out var value) && ((JsonElement) value).GetBoolean() == expectedValue;
-            }
-            catch
-            {
-                _logger.LogWarning(
-                    $"The '{option}' option is not set correctly. It should be either 'true' or 'false'.");
-                return false;
             }
         }
 
