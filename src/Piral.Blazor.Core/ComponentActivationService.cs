@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
@@ -88,22 +88,18 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public void LoadComponentsFromAssembly(Assembly assembly, IDictionary<string, object> args = default)
+        public void LoadComponentsFromAssembly(Assembly assembly)
         {
             var serviceProvider = _container.Configure(assembly);
+            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
             
-            var attributeTypes = FilterAttributeTypes(args);
-            var componentTypes = assembly.GetTypesWithAttributes(attributeTypes);
-
             foreach (var componentType in componentTypes)
             {
-                var attributeValues = GetAllAttributeValues(componentType, attributeTypes);
-                if (attributeValues is null) continue;
-
-                foreach (string componentName in attributeValues)
+                var toRegister = GetComponentNamesToRegister(componentType, AttributeTypes);
+                foreach (string componentName in toRegister)
                 {
-                    string cleanComponentName = Sanitize(componentName);
-                    Register(cleanComponentName, componentType, serviceProvider);
+                    if (componentName is null) continue;
+                    Register(componentName, componentType, serviceProvider);
                     _logger.LogInformation($"registered {componentName}");
                 }
             }
@@ -113,7 +109,7 @@ namespace Piral.Blazor.Core
         /// Sanitizing a Blazor component name. Any leading slashes are removed and
         /// everything that is not alphanumeric, an underscore or a dash gets replaced with an underscore.
         /// </summary>
-        public static string Sanitize(string value)
+        private static string Sanitize(string value)
         {
             string val = value.StartsWith("/") ? value.Substring(1) : value;
             return Regex.Replace(val, @"[^\w\-]", "_");
@@ -124,44 +120,26 @@ namespace Piral.Blazor.Core
             _services.TryGetValue(componentName, out var value);
             return value;
         }
-        
-        private IReadOnlyCollection<Type> FilterAttributeTypes(IDictionary<string, object> args)
+
+        private static IEnumerable<string> GetComponentNamesToRegister(Type member, IEnumerable<Type> attributeTypes)
         {
-            var types = AttributeTypes;
-
-            types = FilterPages(args, types);
-            // potentially more filters here
-
-            return types;
+            return attributeTypes.Select(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
         }
 
-        private IReadOnlyCollection<Type> FilterPages(IDictionary<string, object> args, IReadOnlyCollection<Type> types)
+        private static string GetComponentNameToRegister(Type member, Type attributeType)
         {
-            if (args.HasExplicitFlag(true, "includePages"))
-                return types; //don't filter anything out
-
-            _logger.LogInformation(
-                "Pages decorated with the @page directive are not included in the Blazor references. If this is unintended, reference the docs."
-            );
-
-            return types.Where(at => at != typeof(RouteAttribute)).ToList().AsReadOnly(); // filter out the pages
-        }
-        
-        private static IEnumerable<string> GetAllAttributeValues(Type member, IEnumerable<Type> attributeTypes)
-        {
-            return attributeTypes.Select(at=> GetAttributeValue(member, at)).Where(val => val != null);
-        }
-
-        private static string GetAttributeValue(Type member, Type attributeType)
-        {
-            string value = attributeType.Name switch
+            switch (attributeType)
             {
-                nameof(RouteAttribute) => member.GetCustomAttribute<RouteAttribute>(false)?.Template,
-                nameof(ExposePiletAttribute) => member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name,
-                _ => null
-            };
-
-            return value;
+                case Type _ when attributeType == typeof(RouteAttribute):
+                    string template = member.GetCustomAttribute<RouteAttribute>(false)?.Template;
+                    return template is null
+                        ? null
+                        : $"page-{Sanitize(template)}"; //pages have a "page-" prefix and get sanitized
+                case Type _ when attributeType == typeof(ExposePiletAttribute):
+                    return member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name;
+                default:
+                    return null;
+            }
         }
     }
 }
