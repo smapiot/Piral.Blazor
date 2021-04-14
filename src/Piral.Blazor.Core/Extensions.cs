@@ -18,7 +18,7 @@ namespace Piral.Blazor.Core
         {
             public IDictionary<string, object> @params { get; set; }
         }
-        
+
         public static IDictionary<string, object> AdjustArguments(this Type type, IDictionary<string, object> args)
         {
             if (!allowedArgs.TryGetValue(type, out var allowed))
@@ -31,22 +31,26 @@ namespace Piral.Blazor.Core
                 allowedArgs.Add(type, allowed);
             }
 
-            var allArgs = new List<IDictionary<string, object>> {args};
+            var allArgs = new List<IDictionary<string, object>> { args };
             try
             {
                 var routeParams = JsonSerializer.Deserialize<Match>(JsonSerializer.Serialize(args["match"]))?.@params;
-                if(!routeParams.IsNullOrEmpty()) allArgs.Add(routeParams);
+                
+                if (!routeParams.IsNullOrEmpty())
+                {
+                    allArgs.Add(routeParams);
+                }
             }
-            catch(KeyNotFoundException) { }
+            catch (KeyNotFoundException) { }
 
             var adjustedArgs = allArgs
                 .SelectMany(dict => dict)
                 .Where(m => allowed.Contains(m.Key))
                 .ToDictionary(m => m.Key, m => type.NormalizeValue(m.Key, m.Value));
-            
+
             return adjustedArgs;
         }
-        
+
         public static object NormalizeValue(this Type type, string key, object value)
         {
             var property = type.GetProperty(key);

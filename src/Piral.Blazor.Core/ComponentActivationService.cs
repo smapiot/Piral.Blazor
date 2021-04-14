@@ -95,10 +95,9 @@ namespace Piral.Blazor.Core
             
             foreach (var componentType in componentTypes)
             {
-                var toRegister = GetComponentNamesToRegister(componentType, AttributeTypes);
-                foreach (string componentName in toRegister)
+                var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
+                foreach (var componentName in componentNames)
                 {
-                    if (componentName is null) continue;
                     Register(componentName, componentType, serviceProvider);
                     _logger.LogInformation($"registered {componentName}");
                 }
@@ -111,7 +110,7 @@ namespace Piral.Blazor.Core
         /// </summary>
         private static string Sanitize(string value)
         {
-            string val = value.StartsWith("/") ? value.Substring(1) : value;
+            var val = value.StartsWith("/") ? value.Substring(1) : value;
             return Regex.Replace(val, @"[^\w\-]+", "_");
         }
 
@@ -131,7 +130,7 @@ namespace Piral.Blazor.Core
             switch (attributeType)
             {
                 case Type _ when attributeType == typeof(RouteAttribute):
-                    string template = member.GetCustomAttribute<RouteAttribute>(false)?.Template;
+                    var template = member.GetCustomAttribute<RouteAttribute>(false)?.Template;
                     return template is null
                         ? null
                         : $"page-{Sanitize(template)}"; //pages have a "page-" prefix and get sanitized
