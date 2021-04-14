@@ -112,7 +112,7 @@ namespace Piral.Blazor.Core
         private static string Sanitize(string value)
         {
             string val = value.StartsWith("/") ? value.Substring(1) : value;
-            return Regex.Replace(val, @"[^\w\-]", "_");
+            return Regex.Replace(val, @"[^\w\-]+", "_");
         }
 
         private Type GetComponent(string componentName)
