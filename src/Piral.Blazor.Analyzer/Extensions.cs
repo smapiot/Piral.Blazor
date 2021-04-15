@@ -21,9 +21,9 @@ namespace Piral.Blazor.Analyzer
                 .ToReadOnly();
         }
 
-        internal static Dictionary<string, IReadOnlyCollection<string>> MapAttributeValuesFor
+        internal static IDictionary<string, IReadOnlyCollection<string>> MapAttributeValuesFor
         (
-            this IReadOnlyCollection<Type> types,
+            this IEnumerable<Type> types,
             string attributeName
         )
         {

@@ -23,13 +23,12 @@ namespace Piral.Blazor.Analyzer
             Console.WriteLine(JsonSerializer.Serialize(new { routes, extensions }));
         }
 
-        private static Dictionary<string, IReadOnlyCollection<string>> ExtractExtensions(Type[] types)
+        private static IDictionary<string, IReadOnlyCollection<string>> ExtractExtensions(Type[] types)
         {
-            var extensions = types.MapAttributeValuesFor("PiralExtensionAttribute");
-            return extensions;
+            return types.MapAttributeValuesFor("PiralExtensionAttribute");
         }
 
-        private static IEnumerable<string> ExtractRoutes(Type[] types)
+        private static IEnumerable<string> ExtractRoutes(IEnumerable<Type> types)
         {
             return types.SelectMany(t => t.GetFirstAttributeValue("RouteAttribute"));
         }
