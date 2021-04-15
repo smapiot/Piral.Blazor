@@ -139,7 +139,7 @@ namespace Piral.Blazor.Core
             return attributeType switch
             {
                 Type _ when attributeType == typeof(RouteAttribute) =>
-                    $"page-{Sanitize(((RouteAttribute) attribute).Template)}",
+                    $"page-{((RouteAttribute) attribute).Template}",
                 Type _ when attributeType == typeof(PiralExtensionAttribute) => 
                     $"extension-{member.FullName}",
                 Type _ when attributeType == typeof(PiralComponentAttribute) =>
