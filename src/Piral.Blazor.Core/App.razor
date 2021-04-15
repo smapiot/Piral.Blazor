@@ -3,7 +3,7 @@
 
 @foreach (var active in Activation.Components)
 {
-    <div id="@active.ComponentName-@active.ReferenceId">
+    <div id="@active.ReferenceId">
         <div>
             @{
                 RenderFragment renderFragment = (builder) =>

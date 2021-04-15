@@ -1,32 +1,38 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Piral.Blazor.Analyzer
 {
     internal static class Extensions
     {
-        internal static IReadOnlyCollection<string> GetAttributeValues
+        internal static IReadOnlyCollection<string> GetFirstAttributeValue
         (
-            this IEnumerable<CustomAttributeData> attributeData,
+            this Type type,
             string attributeName
         )
         {
-            return attributeData
+            return type
+                .GetCustomAttributesData()
                 .Where(ad => ad.AttributeType.Name.Equals(attributeName))
-                .SelectMany(ad => ad.ConstructorArguments)
+                .Select(ad => ad.ConstructorArguments.FirstOrDefault())
                 .Where(ca => ca.Value is string)
                 .Select(ca => ca.Value as string)
                 .ToReadOnly();
         }
 
-        internal static IReadOnlyCollection<CustomAttributeData> GetAllAttributeData(this Assembly assembly)
+        internal static IDictionary<string, IReadOnlyCollection<string>> MapAttributeValuesFor
+        (
+            this IEnumerable<Type> types,
+            string attributeName
+        )
         {
-            return assembly
-                .GetTypes()
-                .SelectMany(t => t.GetCustomAttributesData())
-                .ToReadOnly();
+            return types
+                .ToDictionary(t => t.FullName, t => t.GetFirstAttributeValue(attributeName))
+                .Where(kvp => kvp.Value.Count > 0)
+                .ToDictionary(x => x.Key, x => x.Value);
         }
+
 
         internal static IReadOnlyCollection<T> ToReadOnly<T>(this IEnumerable<T> source)
         {

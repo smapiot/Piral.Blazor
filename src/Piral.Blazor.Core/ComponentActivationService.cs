@@ -3,9 +3,7 @@ using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 
 namespace Piral.Blazor.Core
@@ -114,16 +112,6 @@ namespace Piral.Blazor.Core
             }
         }
 
-        /// <summary>
-        /// Sanitizing a Blazor component name. Any leading slashes are removed and
-        /// everything that is not alphanumeric, an underscore or a dash gets replaced with an underscore.
-        /// </summary>
-        private static string Sanitize(string value)
-        {
-            var val = value.StartsWith("/") ? value.Substring(1) : value;
-            return Regex.Replace(val, @"[^\w\-]+", "_");
-        }
-
         private Type GetComponent(string componentName)
         {
             _services.TryGetValue(componentName, out var value);
@@ -151,7 +139,7 @@ namespace Piral.Blazor.Core
             return attributeType switch
             {
                 Type _ when attributeType == typeof(RouteAttribute) =>
-                    $"page-{Sanitize(((RouteAttribute) attribute).Template)}",
+                    $"page-{((RouteAttribute) attribute).Template}",
                 Type _ when attributeType == typeof(PiralExtensionAttribute) => 
                     $"extension-{member.FullName}",
                 Type _ when attributeType == typeof(PiralComponentAttribute) =>
