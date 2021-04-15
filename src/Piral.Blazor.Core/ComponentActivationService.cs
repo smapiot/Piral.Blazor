@@ -125,17 +125,18 @@ namespace Piral.Blazor.Core
 
         private static string GetComponentNameToRegister(Type member, Type attributeType)
         {
-            // Equivalent to member.GetCustomAttribute< *attributeType* >(inherit: false);
-            var attribute = typeof(CustomAttributeExtensions)
-                .GetMethod("GetCustomAttribute", new[] { typeof(MemberInfo), typeof(bool) })
-                ?.MakeGenericMethod(attributeType)
-                .Invoke(member, new object[] { member, false });
-
+            // get only the first occurence of the attribute.
+            // This is only relevant for extensions, which can have multiple attributes,
+            // but the name to register (FQN) will be the same for every occurence anyway.
+            var attribute = member
+                .GetCustomAttributes(attributeType, false)
+                .FirstOrDefault(); 
+            
             if (attribute is null)
             {
                 return null;
             }
-
+            
             return attributeType switch
             {
                 Type _ when attributeType == typeof(RouteAttribute) =>
