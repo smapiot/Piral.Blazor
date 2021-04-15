@@ -3,6 +3,7 @@ using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
@@ -12,7 +13,7 @@ namespace Piral.Blazor.Core
     public class ComponentActivationService : IComponentActivationService
     {
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
-        
+
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
         private readonly ILogger<ComponentActivationService> _logger;
         private readonly IModuleContainerService _container;
@@ -20,9 +21,11 @@ namespace Piral.Blazor.Core
         public event EventHandler Changed;
 
         public IEnumerable<ActiveComponent> Components => _active;
-        
+
         private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
         {
+            typeof(PiralComponentAttribute),
+            typeof(PiralExtensionAttribute),
             typeof(ExposePiletAttribute),
             typeof(RouteAttribute)
         };
@@ -73,7 +76,6 @@ namespace Piral.Blazor.Core
             {
                 _logger.LogError($"One of the arguments is invalid: {ae.Message}");
             }
-
         }
 
         public void DeactivateComponent(string componentName, string referenceId)
@@ -100,7 +102,7 @@ namespace Piral.Blazor.Core
         {
             var serviceProvider = _container.Configure(assembly);
             var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
-            
+
             foreach (var componentType in componentTypes)
             {
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
@@ -111,7 +113,7 @@ namespace Piral.Blazor.Core
                 }
             }
         }
-        
+
         /// <summary>
         /// Sanitizing a Blazor component name. Any leading slashes are removed and
         /// everything that is not alphanumeric, an underscore or a dash gets replaced with an underscore.
@@ -135,18 +137,29 @@ namespace Piral.Blazor.Core
 
         private static string GetComponentNameToRegister(Type member, Type attributeType)
         {
-            switch (attributeType)
+            // Equivalent to member.GetCustomAttribute< *attributeType* >(inherit: false);
+            var attribute = typeof(CustomAttributeExtensions)
+                .GetMethod("GetCustomAttribute", new[] { typeof(MemberInfo), typeof(bool) })
+                ?.MakeGenericMethod(attributeType)
+                .Invoke(member, new object[] { member, false });
+
+            if (attribute is null)
             {
-                case Type _ when attributeType == typeof(RouteAttribute):
-                    var template = member.GetCustomAttribute<RouteAttribute>(false)?.Template;
-                    return template is null
-                        ? null
-                        : $"page-{Sanitize(template)}"; //pages have a "page-" prefix and get sanitized
-                case Type _ when attributeType == typeof(ExposePiletAttribute):
-                    return member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name;
-                default:
-                    return null;
+                return null;
             }
+
+            return attributeType switch
+            {
+                Type _ when attributeType == typeof(RouteAttribute) =>
+                    $"page-{Sanitize(((RouteAttribute) attribute).Template)}",
+                Type _ when attributeType == typeof(PiralExtensionAttribute) => 
+                    $"extension-{member.FullName}",
+                Type _ when attributeType == typeof(PiralComponentAttribute) =>
+                    $"{((PiralComponentAttribute) attribute).Name ?? member.FullName}",
+                Type _ when attributeType == typeof(ExposePiletAttribute) =>
+                    $"{((ExposePiletAttribute) attribute).Name ?? member.FullName}",
+                _ => null
+            };
         }
     }
 }
