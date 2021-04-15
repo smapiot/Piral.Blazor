@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Components;
 
 namespace Piral.Blazor.Core
 {
@@ -18,6 +20,12 @@ namespace Piral.Blazor.Core
         public event EventHandler Changed;
 
         public IEnumerable<ActiveComponent> Components => _active;
+        
+        private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
+        {
+            typeof(ExposePiletAttribute),
+            typeof(RouteAttribute)
+        };
 
         public ComponentActivationService(IModuleContainerService container, ILogger<ComponentActivationService> logger)
         {
@@ -56,8 +64,16 @@ namespace Piral.Blazor.Core
         public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
         {
             var component = GetComponent(componentName);
-            _active.Add(new ActiveComponent(componentName, referenceId, component, args));
-            Changed?.Invoke(this, EventArgs.Empty);
+            try
+            {
+                _active.Add(new ActiveComponent(componentName, referenceId, component, args));
+                Changed?.Invoke(this, EventArgs.Empty);
+            }
+            catch (ArgumentException ae)
+            {
+                _logger.LogError($"One of the arguments is invalid: {ae.Message}");
+            }
+
         }
 
         public void DeactivateComponent(string componentName, string referenceId)
@@ -83,19 +99,54 @@ namespace Piral.Blazor.Core
         public void LoadComponentsFromAssembly(Assembly assembly)
         {
             var serviceProvider = _container.Configure(assembly);
-            var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
-
-            foreach (var type in types)
+            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
+            
+            foreach (var componentType in componentTypes)
             {
-                var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
-                Register(name, type, serviceProvider);
+                var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
+                foreach (var componentName in componentNames)
+                {
+                    Register(componentName, componentType, serviceProvider);
+                    _logger.LogInformation($"registered {componentName}");
+                }
             }
+        }
+        
+        /// <summary>
+        /// Sanitizing a Blazor component name. Any leading slashes are removed and
+        /// everything that is not alphanumeric, an underscore or a dash gets replaced with an underscore.
+        /// </summary>
+        private static string Sanitize(string value)
+        {
+            var val = value.StartsWith("/") ? value.Substring(1) : value;
+            return Regex.Replace(val, @"[^\w\-]+", "_");
         }
 
         private Type GetComponent(string componentName)
         {
             _services.TryGetValue(componentName, out var value);
             return value;
+        }
+
+        private static IEnumerable<string> GetComponentNamesToRegister(Type member, IEnumerable<Type> attributeTypes)
+        {
+            return attributeTypes.Select(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
+        }
+
+        private static string GetComponentNameToRegister(Type member, Type attributeType)
+        {
+            switch (attributeType)
+            {
+                case Type _ when attributeType == typeof(RouteAttribute):
+                    var template = member.GetCustomAttribute<RouteAttribute>(false)?.Template;
+                    return template is null
+                        ? null
+                        : $"page-{Sanitize(template)}"; //pages have a "page-" prefix and get sanitized
+                case Type _ when attributeType == typeof(ExposePiletAttribute):
+                    return member.GetCustomAttribute<ExposePiletAttribute>(false)?.Name;
+                default:
+                    return null;
+            }
         }
     }
 }
