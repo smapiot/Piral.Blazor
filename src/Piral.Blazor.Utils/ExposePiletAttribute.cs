@@ -2,6 +2,7 @@
 
 namespace Piral.Blazor.Utils
 {
+    [Obsolete("Please use the PiralComponent or PiralExtension attributes.")]
     [AttributeUsage(AttributeTargets.Class)]
     public sealed class ExposePiletAttribute : Attribute
     {
