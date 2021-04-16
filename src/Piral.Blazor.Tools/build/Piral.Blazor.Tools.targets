@@ -3,10 +3,12 @@
     <PropertyGroup>
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
+        <_piletDebugProxyUrl>https://localhost:8000</_piletDebugProxyUrl>
     </PropertyGroup>
 
     <Target Name="Main" BeforeTargets="Build">
         <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)')"/>
+        <CallTarget Targets="OverwriteIndexHtml"/>
     </Target>
     
     <Target Name="Scaffold">
@@ -14,7 +16,7 @@
         <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName)"/>
     </Target>
     
-    <Target Name="CopyFiles" AfterTargets="Scaffold" >
+    <Target Name="CopyScaffoldFiles" AfterTargets="Scaffold" >
         <ItemGroup>
             <_piletFiles Include="$(MSBuildThisFileDirectory)..\content\**\*.*"/>
         </ItemGroup>
@@ -26,5 +28,15 @@
         />
     </Target>
     
-
+    <Target Name="OverwriteIndexHtml">
+        <PropertyGroup>
+            <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletDebugProxyUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
+        </PropertyGroup>
+        <WriteLinesToFile
+                File="$(MSBuildProjectDirectory)\wwwroot\index.html"
+                Lines="$(_indexHtml)"
+                Overwrite="true"
+                Encoding="Unicode"/>
+    </Target>
+    
 </Project>
