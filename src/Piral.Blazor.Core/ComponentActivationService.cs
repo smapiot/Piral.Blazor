@@ -1,17 +1,17 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.AspNetCore.Components;
 
 namespace Piral.Blazor.Core
 {
     public class ComponentActivationService : IComponentActivationService
     {
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
-        private readonly List<Assembly> _assemblies = new List<Assembly>();
-        
+
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
         private readonly ILogger<ComponentActivationService> _logger;
         private readonly IModuleContainerService _container;
@@ -19,6 +19,14 @@ namespace Piral.Blazor.Core
         public event EventHandler Changed;
 
         public IEnumerable<ActiveComponent> Components => _active;
+
+        private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
+        {
+            typeof(PiralComponentAttribute),
+            typeof(PiralExtensionAttribute),
+            typeof(ExposePiletAttribute),
+            typeof(RouteAttribute)
+        };
 
         public ComponentActivationService(IModuleContainerService container, ILogger<ComponentActivationService> logger)
         {
@@ -57,8 +65,15 @@ namespace Piral.Blazor.Core
         public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
         {
             var component = GetComponent(componentName);
-            _active.Add(new ActiveComponent(componentName, referenceId, component, args));
-            Changed?.Invoke(this, EventArgs.Empty);
+            try
+            {
+                _active.Add(new ActiveComponent(componentName, referenceId, component, args));
+                Changed?.Invoke(this, EventArgs.Empty);
+            }
+            catch (ArgumentException ae)
+            {
+                _logger.LogError($"One of the arguments is invalid: {ae.Message}");
+            }
         }
 
         public void DeactivateComponent(string componentName, string referenceId)
@@ -81,43 +96,59 @@ namespace Piral.Blazor.Core
             }
         }
 
-        private Type GetComponent(string componentName)
+        public void LoadComponentsFromAssembly(Assembly assembly)
         {
-            if (!_services.TryGetValue(componentName, out var value))
+            var serviceProvider = _container.Configure(assembly);
+            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
+
+            foreach (var componentType in componentTypes)
             {
-                return LoadMissingComponentsFor(componentName);
-            }
-            else
-            {
-                return value;
+                var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
+                foreach (var componentName in componentNames)
+                {
+                    Register(componentName, componentType, serviceProvider);
+                    _logger.LogInformation($"registered {componentName}");
+                }
             }
         }
 
-        private Type LoadMissingComponentsFor(string componentName)
+        private Type GetComponent(string componentName)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Except(_assemblies).ToArray();
-            var result = default(Type);
+            _services.TryGetValue(componentName, out var value);
+            return value;
+        }
 
-            foreach (var assembly in assemblies)
+        private static IEnumerable<string> GetComponentNamesToRegister(Type member, IEnumerable<Type> attributeTypes)
+        {
+            return attributeTypes.Select(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
+        }
+
+        private static string GetComponentNameToRegister(Type member, Type attributeType)
+        {
+            // get only the first occurence of the attribute.
+            // This is only relevant for extensions, which can have multiple attributes,
+            // but the name to register (FQN) will be the same for every occurence anyway.
+            var attribute = member
+                .GetCustomAttributes(attributeType, false)
+                .FirstOrDefault(); 
+            
+            if (attribute is null)
             {
-                var serviceProvider = _container.Configure(assembly);
-                var types = assembly.GetTypes().Where(m => m.GetCustomAttribute<ExposePiletAttribute>(false) != null);
-
-                foreach (var type in types)
-                {
-                    var name = type.GetCustomAttribute<ExposePiletAttribute>(false).Name;
-                    Register(name, type, serviceProvider);
-
-                    if (name == componentName)
-                    {
-                        result = type;
-                    }
-                }
-
-                _assemblies.Add(assembly);
+                return null;
             }
-
-            return result;
+            
+            return attributeType switch
+            {
+                Type _ when attributeType == typeof(RouteAttribute) =>
+                    $"page-{((RouteAttribute) attribute).Template}",
+                Type _ when attributeType == typeof(PiralExtensionAttribute) => 
+                    $"extension-{member.FullName}",
+                Type _ when attributeType == typeof(PiralComponentAttribute) =>
+                    $"{((PiralComponentAttribute) attribute).Name ?? member.FullName}",
+                Type _ when attributeType == typeof(ExposePiletAttribute) =>
+                    $"{((ExposePiletAttribute) attribute).Name ?? member.FullName}",
+                _ => null
+            };
         }
     }
 }
