@@ -1,0 +1,30 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    
+    <PropertyGroup>
+        <_piletFolderBase>..\piral~</_piletFolderBase>
+        <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
+    </PropertyGroup>
+
+    <Target Name="Main" BeforeTargets="Build">
+        <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)')"/>
+    </Target>
+    
+    <Target Name="Scaffold">
+        <Exec Command="echo 'Scaffolding the pilet...'"/>
+        <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName)"/>
+    </Target>
+    
+    <Target Name="CopyFiles" AfterTargets="Scaffold" >
+        <ItemGroup>
+            <_piletFiles Include="$(MSBuildThisFileDirectory)..\content\**\*.*"/>
+        </ItemGroup>
+        <Exec Command="echo 'Copying the files...'"/>
+        <Copy
+                SourceFiles="@(_piletFiles)"
+                DestinationFiles="@(_piletFiles -> '$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
+                Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
+        />
+    </Target>
+    
+
+</Project>
