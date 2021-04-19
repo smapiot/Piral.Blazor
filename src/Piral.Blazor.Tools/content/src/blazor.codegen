@@ -1,0 +1,233 @@
+const { join, resolve, basename } = require('path');
+const { promisify } = require('util');
+const { copyFileSync, existsSync, mkdirSync } = require('fs');
+const { execSync, exec } = require('child_process');
+const execAsync = promisify(exec);
+const glob = require('glob');
+
+const configuration = 'Debug';
+const targetFramework = 'netstandard2.1';
+const targetFrameworkAlt = '.NETStandard,Version=v2.1';
+
+const bbjson = 'blazor.boot.json';
+const pajson = 'project.assets.json';
+const pjson = 'package.json';
+const analyzer = 'Piral.Blazor.Analyzer';
+
+/** Extracts the project name from a blazor project folder */
+function getProjectName(projectFolder) {
+  return new Promise((resolve, reject) => {
+    glob(`${projectFolder}/*.csproj`, (err, matches) => {
+      if (!!err || !matches || matches.length == 0) return reject(new Error(`Project file not found. Details: ${err}`));
+      if (matches.length > 1)
+        return reject(new Error(`Only one project file is allowed. You have: ${JSON.stringify(matches, null, 2)}`));
+      return resolve(basename(matches[0]).replace('.csproj', ''));
+    });
+  });
+}
+
+function getUniqueAssemblies(originalManifest, piletManifest) {
+  const getAssemblyNames = manifest => Object.keys(manifest.resources.assembly);
+  const original = getAssemblyNames(originalManifest);
+  const dedicated = getAssemblyNames(piletManifest);
+  return dedicated.filter(m => !original.includes(m));
+}
+
+function buildSolution() {
+  console.log(`No Blazor output found. Building solution ...`);
+
+  execSync(`dotnet build --configuration ${configuration}`, {
+    cwd: __dirname,
+    stdio: 'inherit',
+  });
+}
+
+function diffBlazorBootFiles(outputdir) {
+  const root = resolve(__dirname, '..');
+  const project = require(resolve(root, pjson));
+  const appdir = resolve(root, 'node_modules', project.piral.name);
+
+  if (!existsSync(appdir)) {
+    throw new Error(`Cannot find the directory of "${project.piral.name}". Please re-install the dependencies.`);
+  }
+
+  const piletManifest = require(resolve(outputdir, 'wwwroot', '_framework', bbjson));
+  const originalManifest = require(resolve(appdir, 'app', '_framework', bbjson));
+  return getUniqueAssemblies(originalManifest, piletManifest);
+}
+
+function createAllRefs(internaltargets, externalTargets) {
+  const refs = new Set(); //Sets de-duplicate AND keep their insertion order
+
+  const createExternalRefs = fileName => {
+    //depth-first post-order traversal of the dependencies
+    if (!fileName) return;
+    const deps = externalTargets[fileName];
+    if (!deps || deps.length === 0) return refs.add(fileName);
+    deps.forEach(createExternalRefs);
+    refs.add(fileName);
+  };
+
+  for ([fileName, deps] of Object.entries(internaltargets)) {
+    deps.forEach(createExternalRefs);
+    refs.add(fileName);
+  }
+
+  return [...refs];
+}
+
+function getNestedObject(nestedObj, pathArr) {
+  return pathArr.reduce((obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined), nestedObj);
+}
+
+function defineTargets(uniqueDependencies, projectAssets) {
+  const isNotSharedDep = x => uniqueDependencies.includes(x);
+  const stripVersion = x => x.replace(/\/(\d+\.?)+/, ''); // Lib/1.2.3 --> Lib
+  const getcsprojname = x => `${/.*\\+(.*)\.csproj/.exec(x)[1]}`; // C:\\path\\to\\proj\\proj.csproj --> proj
+
+  // Get all external dependencies
+  const targets = getNestedObject(projectAssets, ['targets', targetFrameworkAlt]);
+  const externalTargets = Object.entries(targets) // object to key-value
+    .map(x => [stripVersion(x[0]), x[1]]) ///strip versions
+    .filter(x => isNotSharedDep(x[0])) //filter out targets that are shared deps
+    .map(x => [x[0], Object.keys(x[1].dependencies || {}).filter(isNotSharedDep)]) //filter out dependencies that are shared deps
+    .reduce((acc, [k, v]) => ({ [k]: v, ...acc }), {}); // key-value to object
+
+  // Get internal project
+  const projectName = getNestedObject(projectAssets, ['project', 'restore', 'projectName']);
+  const projectDependencies = Object.keys(
+    getNestedObject(projectAssets, ['project', 'frameworks', targetFramework, 'dependencies'])
+  );
+  const projectReferences = Object.keys(
+    getNestedObject(projectAssets, ['project', 'restore', 'frameworks', targetFramework, 'projectReferences'])
+  );
+
+  const internalTargets = {
+    [projectName]: [...projectDependencies, ...projectReferences.map(getcsprojname)].filter(isNotSharedDep), // depencency arr = deps + references
+  };
+
+  return [internalTargets, externalTargets];
+}
+
+/** Generates the source code line to register a blazor page */
+const toPageRegistration = route => `app.registerPage("${toPath(route)}", app.fromBlazor("page-${route}"));`;
+
+/** Generates the source code line to register a blazor extension */
+const toExtensionRegistration = entry => {
+  const fqn = entry[0];
+  const ids = entry[1];
+  return ids.map(id => `app.registerExtension("${id}", app.fromBlazor("extension-${fqn}"));`).join('\n');
+};
+
+/** Translate a Blazor route into path-to-regexp syntax */
+const toPath = route =>
+  route.replace(/\{([\w?]*)([:*])?([^\/\{\}]*)\}/g, (...groups) => (groups[2] != '*' ? `:${groups[1]}` : '*'));
+
+/*
+ *
+ * ----------------------------------------------------------------------------------------------------------------------
+ *
+ */
+
+module.exports = async function () {
+  const piralPiletFolder = resolve(__dirname, '..');
+  const rootFolder = resolve(piralPiletFolder, '..', '..');
+  const blazorfolderName = basename(piralPiletFolder);
+  const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
+
+  const binariesdir = resolve(blazorprojectfolder, 'bin', configuration, targetFramework);
+  const objectsDir = resolve(blazorprojectfolder, 'obj');
+
+  const sourceDir = resolve(binariesdir, 'wwwroot', '_framework', '_bin');
+  const targetDir = this.options.outDir;
+
+  if (!existsSync(sourceDir))
+    throw new Error(
+      `Something went wrong with the Blazor build. 
+      Make sure there is at least one Blazor project in your solution.`
+    );
+
+  const files = diffBlazorBootFiles(binariesdir);
+
+  mkdirSync(targetDir, { recursive: true });
+
+  files.forEach(file => {
+    const from = resolve(sourceDir, file);
+    const to = resolve(targetDir, file);
+    copyFileSync(from, to);
+  });
+
+  const uniqueDependencies = files.map(f => f.replace('.dll', ''));
+  const projectAssets = require(resolve(objectsDir, pajson));
+  const targets = defineTargets(uniqueDependencies, projectAssets);
+
+  const refs = createAllRefs(...targets);
+
+  // ---
+
+  let projectName;
+  try {
+    projectName = await getProjectName(blazorprojectfolder);
+  } catch (err) {
+    console.error(err);
+  }
+
+  const dllName = `${projectName}.dll`;
+
+  // Use PiletAnalyzer to look for pages and extensions
+  const command = `dotnet ${analyzer} --base-dir ${blazorprojectfolder} --dll-name ${dllName} --target-framework ${targetFramework} --configuration ${configuration}`;
+
+  try {
+    const { stdout, stderr } = await execAsync(command);
+    if (stderr) throw new Error(stderr);
+
+    const { routes, extensions } = JSON.parse(stdout.trim());
+
+    const definePathCode = `function computePath() {
+      try {
+        throw new Error();
+      } catch (t) {
+        const e = ('' + t.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\\/\\/[^)\\n]+/g);
+        if (e) {
+          return e[0].replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\\/\\/.+)\\/[^\\/]+$/, '$1') + '/';
+        }
+      }
+      return '/';
+    }
+    const path = computePath();\n
+    `;
+
+    return `    
+    ${definePathCode}
+    module.exports = {
+      registerDependencies: (app) => { 
+        app.defineBlazorReferences([${refs.map(f => `path + "${f}.dll"`).join(',')}]);
+      },
+      registerBlazorPages: (app) => { 
+        ${routes.map(toPageRegistration).join('\n')} 
+      },
+      registerBlazorExtensions : (app) => {
+        ${Object.entries(extensions).map(toExtensionRegistration).join('\n')} 
+      },
+      blazorRoutes: ${JSON.stringify(routes)},
+      paths: ${JSON.stringify(routes.map(toPath))}
+    }`;
+  } catch (err) {
+    console.error(err);
+    return `
+    ${definePathCode}
+    module.exports = {
+      registerDependencies: (app) => { 
+        app.defineBlazorReferences([${refs.map(f => `computePath() + "${f}.dll"`).join(',')}]);
+      },
+      registerBlazorPages: (...args) => {
+        console.warn('${__filename}: \`registerBlazorPages\` was called, but no Blazor routes were found.')
+      },
+      registerBlazorExtensions: (...args) => {
+        console.warn('${__filename}: \`registerBlazorExtensions\` was called, but no Blazor extensions were found.')
+      },
+      blazorRoutes: [],
+      paths: []
+    }`;
+  }
+};
