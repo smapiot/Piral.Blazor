@@ -4,7 +4,7 @@
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
         <_piletDebugProxyUrl>https://localhost:8000</_piletDebugProxyUrl>
-        
+        <_analyzerVersion>3.2.1</_analyzerVersion>
         <_indexTsxPath>$(_piletFolderPath)\src\index.tsx</_indexTsxPath>
     </PropertyGroup>
 
@@ -59,6 +59,6 @@
     
     <Target Name="InstallAnalyzer" BeforeTargets="Build">
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')"/>
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --local"/>
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_analyzerVersion) --local/>
     </Target>
 </Project>
