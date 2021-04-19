@@ -8,14 +8,17 @@
         <_indexTsxPath>$(_piletFolderPath)\src\index.tsx</_indexTsxPath>
     </PropertyGroup>
 
-    <Target Name="Main" BeforeTargets="Build">
+    <Target Name="SetupPiral" BeforeTargets="Build">
         <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)')"/>
-        <CallTarget Targets="OverwriteIndexHtml"/>
     </Target>
     
     <Target Name="Scaffold">
         <Exec Command="echo 'Scaffolding the pilet...'"/>
         <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName)"/>
+    </Target>
+
+    <Target Name="InstallDependencies" AfterTargets="Scaffold">
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install"/>
     </Target>
     
     <Target Name="DeleteIndexTsx" AfterTargets="Scaffold">
@@ -43,7 +46,7 @@
                 Encoding="UTF-8"/>
     </Target>
 
-    <Target Name="OverwriteIndexHtml">
+    <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
         <PropertyGroup>
             <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletDebugProxyUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
         </PropertyGroup>
