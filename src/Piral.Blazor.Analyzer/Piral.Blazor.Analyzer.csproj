@@ -4,6 +4,12 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
+        
+        <PackAsTool>true</PackAsTool>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.21216.1" />
+    </ItemGroup>
+    
 </Project>
