@@ -4,6 +4,8 @@
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
         <_piletDebugProxyUrl>https://localhost:8000</_piletDebugProxyUrl>
+        
+        <_indexTsxPath>$(_piletFolderPath)\src\index.tsx</_indexTsxPath>
     </PropertyGroup>
 
     <Target Name="Main" BeforeTargets="Build">
@@ -16,7 +18,11 @@
         <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName)"/>
     </Target>
     
-    <Target Name="CopyScaffoldFiles" AfterTargets="Scaffold" >
+    <Target Name="DeleteIndexTsx" AfterTargets="Scaffold">
+        <Delete Files="$(_indexTsxPath)" />
+    </Target>
+    
+    <Target Name="CopyScaffoldFiles" AfterTargets="DeleteIndexTsx" >
         <ItemGroup>
             <_piletFiles Include="$(MSBuildThisFileDirectory)..\content\**\*.*"/>
         </ItemGroup>
@@ -27,7 +33,16 @@
                 Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
         />
     </Target>
-    
+        
+    <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
+        <Exec Command="echo 'Modifying the files...'"/>
+        <WriteLinesToFile
+                File="$(_indexTsxPath)"
+                Lines="$([System.IO.File]::ReadAllText($(_indexTsxPath)).Replace('**PiralInstance**','$(PiralInstance)'))"
+                Overwrite="true"
+                Encoding="Unicode"/>
+    </Target>
+
     <Target Name="OverwriteIndexHtml">
         <PropertyGroup>
             <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletDebugProxyUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
