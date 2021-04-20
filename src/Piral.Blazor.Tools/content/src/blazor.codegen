@@ -13,6 +13,7 @@ const bbjson = 'blazor.boot.json';
 const pajson = 'project.assets.json';
 const pjson = 'package.json';
 const analyzer = 'Piral.Blazor.Analyzer';
+const setupfile = 'setup.tsx';
 
 /** Extracts the project name from a blazor project folder */
 function getProjectName(projectFolder) {
@@ -177,6 +178,11 @@ module.exports = async function () {
   // Use PiletAnalyzer to look for pages and extensions
   const command = `dotnet ${analyzer} --base-dir ${blazorprojectfolder} --dll-name ${dllName} --target-framework ${targetFramework} --configuration ${configuration}`;
 
+  // ---
+
+  const setupFilePath = join(blazorprojectfolder, setupfile).replace(/\\/g, '/');
+  const setupFileExists = existsSync(setupFilePath);
+
   try {
     const { stdout, stderr } = await execAsync(command);
     if (stderr) throw new Error(stderr);
@@ -200,6 +206,9 @@ module.exports = async function () {
     return `    
     ${definePathCode}
     module.exports = {
+      setupPilet : (app) => {
+        ${setupFileExists ? `import("${setupFilePath}").then(e=> e.default(app))` : ''};
+      },
       registerDependencies: (app) => { 
         app.defineBlazorReferences([${refs.map(f => `path + "${f}.dll"`).join(',')}]);
       },
@@ -217,6 +226,9 @@ module.exports = async function () {
     return `
     ${definePathCode}
     module.exports = {
+      setupPilet : (app) => {
+        ${setupFileExists ? `import("${setupFilePath}").then(e=> e.default(app))` : ''};
+      },
       registerDependencies: (app) => { 
         app.defineBlazorReferences([${refs.map(f => `computePath() + "${f}.dll"`).join(',')}]);
       },
