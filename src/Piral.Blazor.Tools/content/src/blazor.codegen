@@ -15,6 +15,29 @@ const pjson = 'package.json';
 const analyzer = 'Piral.Blazor.Analyzer';
 const setupfile = 'setup.tsx';
 
+const piralPiletFolder = resolve(__dirname, '..');
+const rootFolder = resolve(piralPiletFolder, '..', '..');
+const blazorfolderName = basename(piralPiletFolder);
+const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
+const binariesdir = resolve(blazorprojectfolder, 'bin', configuration, targetFramework);
+const objectsDir = resolve(blazorprojectfolder, 'obj');
+const sourceDir = resolve(binariesdir, 'wwwroot', '_framework', '_bin');
+const projectAssets = require(resolve(objectsDir, pajson));
+
+const definePathCode = `function computePath() {
+  try {
+    throw new Error();
+  } catch (t) {
+    const e = ('' + t.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\\/\\/[^)\\n]+/g);
+    if (e) {
+      return e[0].replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\\/\\/.+)\\/[^\\/]+$/, '$1') + '/';
+    }
+  }
+  return '/';
+}
+const path = computePath();\n
+`;
+
 /** Extracts the project name from a blazor project folder */
 function getProjectName(projectFolder) {
   return new Promise((resolve, reject) => {
@@ -131,17 +154,9 @@ const toPath = route =>
  */
 
 module.exports = async function () {
-  const piralPiletFolder = resolve(__dirname, '..');
-  const rootFolder = resolve(piralPiletFolder, '..', '..');
-  const blazorfolderName = basename(piralPiletFolder);
-  const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
-
-  const binariesdir = resolve(blazorprojectfolder, 'bin', configuration, targetFramework);
-  const objectsDir = resolve(blazorprojectfolder, 'obj');
-
-  const sourceDir = resolve(binariesdir, 'wwwroot', '_framework', '_bin');
   const targetDir = this.options.outDir;
 
+  // Files
   if (!existsSync(sourceDir))
     throw new Error(
       `Something went wrong with the Blazor build. 
@@ -158,30 +173,23 @@ module.exports = async function () {
     copyFileSync(from, to);
   });
 
+  // Refs
   const uniqueDependencies = files.map(f => f.replace('.dll', ''));
-  const projectAssets = require(resolve(objectsDir, pajson));
   const targets = defineTargets(uniqueDependencies, projectAssets);
-
   const refs = createAllRefs(...targets);
+  const registerDependenciesCode = `registerDependencies: (app) => { 
+    app.defineBlazorReferences([${refs.map(f => `path + "${f}.dll"`).join(',')}]);
+  }`;
 
-  // ---
-
-  let projectName;
-  try {
-    projectName = await getProjectName(blazorprojectfolder);
-  } catch (err) {
-    console.error(err);
-  }
-
+  // Analyzer
+  const projectName = await getProjectName(blazorprojectfolder);
   const dllName = `${projectName}.dll`;
-
-  // Use PiletAnalyzer to look for pages and extensions
   const command = `dotnet ${analyzer} --base-dir ${blazorprojectfolder} --dll-name ${dllName} --target-framework ${targetFramework} --configuration ${configuration}`;
 
-  // ---
-
+  // Setup file
   const setupFilePath = join(blazorprojectfolder, setupfile).replace(/\\/g, '/');
   const setupFileExists = existsSync(setupFilePath);
+  const setupPiletCode = `setupPilet: ${setupFileExists ? `require('${setupFilePath}').default` : '() => {}'}`;
 
   try {
     const { stdout, stderr } = await execAsync(command);
@@ -189,29 +197,11 @@ module.exports = async function () {
 
     const { routes, extensions } = JSON.parse(stdout.trim());
 
-    const definePathCode = `function computePath() {
-      try {
-        throw new Error();
-      } catch (t) {
-        const e = ('' + t.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\\/\\/[^)\\n]+/g);
-        if (e) {
-          return e[0].replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\\/\\/.+)\\/[^\\/]+$/, '$1') + '/';
-        }
-      }
-      return '/';
-    }
-    const path = computePath();\n
-    `;
-
     return `    
     ${definePathCode}
     module.exports = {
-      setupPilet : (app) => {
-        ${setupFileExists ? `import("${setupFilePath}").then(e=> e.default(app))` : ''};
-      },
-      registerDependencies: (app) => { 
-        app.defineBlazorReferences([${refs.map(f => `path + "${f}.dll"`).join(',')}]);
-      },
+      ${setupPiletCode},
+      ${registerDependenciesCode},
       registerBlazorPages: (app) => { 
         ${routes.map(toPageRegistration).join('\n')} 
       },
@@ -226,12 +216,8 @@ module.exports = async function () {
     return `
     ${definePathCode}
     module.exports = {
-      setupPilet : (app) => {
-        ${setupFileExists ? `import("${setupFilePath}").then(e=> e.default(app))` : ''};
-      },
-      registerDependencies: (app) => { 
-        app.defineBlazorReferences([${refs.map(f => `computePath() + "${f}.dll"`).join(',')}]);
-      },
+      ${setupPiletCode},
+      ${registerDependenciesCode},
       registerBlazorPages: (...args) => {
         console.warn('${__filename}: \`registerBlazorPages\` was called, but no Blazor routes were found.')
       },
