@@ -5,9 +5,10 @@ const { execSync, exec } = require('child_process');
 const execAsync = promisify(exec);
 const glob = require('glob');
 
-const configuration = 'Debug';
-const targetFramework = 'netstandard2.1';
-const targetFrameworkAlt = '.NETStandard,Version=v2.1';
+//these get filled in by MSBuild
+const configuration = '**MSBUILD_Configuration**';
+const targetFramework = '**MSBUILD_TargetFramework**';
+const targetFrameworkAlt = '**MSBUILD_TargetFrameworkMoniker**';
 
 const bbjson = 'blazor.boot.json';
 const pajson = 'project.assets.json';

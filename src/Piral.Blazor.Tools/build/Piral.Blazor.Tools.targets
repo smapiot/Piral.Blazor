@@ -5,7 +5,7 @@
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
         <_piletDebugProxyUrl>https://localhost:8000</_piletDebugProxyUrl>
         <_analyzerVersion>3.2.1</_analyzerVersion>
-        <_indexTsxPath>$(_piletFolderPath)\src\index.tsx</_indexTsxPath>
+        <_srcPath>$(_piletFolderPath)\src</_srcPath>
     </PropertyGroup>
 
     <Target Name="SetupPiral" BeforeTargets="Build">
@@ -22,7 +22,7 @@
     </Target>
     
     <Target Name="DeleteIndexTsx" AfterTargets="Scaffold">
-        <Delete Files="$(_indexTsxPath)" />
+        <Delete Files="$(_srcPath)\index.tsx" />
     </Target>
     
     <Target Name="CopyScaffoldFiles" AfterTargets="DeleteIndexTsx" >
@@ -40,8 +40,17 @@
     <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
         <Exec Command="echo 'Modifying the files...'"/>
         <WriteLinesToFile
-                File="$(_indexTsxPath)"
-                Lines="$([System.IO.File]::ReadAllText($(_indexTsxPath)).Replace('**PiralInstance**','$(PiralInstance)'))"
+                File="$(_srcPath)\index.tsx"
+                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)'))"
+                Overwrite="true"
+                Encoding="UTF-8"/>
+    </Target>
+
+    <Target Name="ModifyCodegen" AfterTargets="CopyScaffoldFiles">
+        <Exec Command="echo 'Modifying the files...'"/>
+        <WriteLinesToFile
+                File="$(_srcPath)\blazor.codegen"
+                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_Configuration**','$(Configuration)').Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))"
                 Overwrite="true"
                 Encoding="UTF-8"/>
     </Target>
