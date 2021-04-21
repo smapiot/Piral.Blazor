@@ -3,7 +3,7 @@
     <PropertyGroup>
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
-        <_piletDebugProxyUrl>https://localhost:8000</_piletDebugProxyUrl>
+        <_piletUrl>http://localhost:1234</_piletUrl>
         <_analyzerVersion>3.2.1</_analyzerVersion>
         <_srcPath>$(_piletFolderPath)\src</_srcPath>
     </PropertyGroup>
@@ -38,7 +38,7 @@
     </Target>
         
     <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
-        <Exec Command="echo 'Modifying the files...'"/>
+        <Exec Command="echo 'Modifying the index file...'"/>
         <WriteLinesToFile
                 File="$(_srcPath)\index.tsx"
                 Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)'))"
@@ -47,7 +47,7 @@
     </Target>
 
     <Target Name="ModifyCodegen" AfterTargets="CopyScaffoldFiles">
-        <Exec Command="echo 'Modifying the files...'"/>
+        <Exec Command="echo 'Modifying the codegen...'"/>
         <WriteLinesToFile
                 File="$(_srcPath)\blazor.codegen"
                 Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_Configuration**','$(Configuration)').Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))"
@@ -55,9 +55,18 @@
                 Encoding="UTF-8"/>
     </Target>
 
+    <Target Name="ModifyDebugJS" AfterTargets="CopyScaffoldFiles">
+        <Exec Command="echo 'Modifying the debug mock file...'"/>
+        <WriteLinesToFile
+                File="$(_srcPath)\mocks\debug.js"
+                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\mocks\debug.js).Replace('**MSBUILD_Configuration**','$(Configuration)').Replace('**MSBUILD_TargetFramework**','$(TargetFramework)'))"
+                Overwrite="true"
+                Encoding="UTF-8"/>
+    </Target>
+
     <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
         <PropertyGroup>
-            <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletDebugProxyUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
+            <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
         </PropertyGroup>
         <WriteLinesToFile
                 File="$(MSBuildProjectDirectory)\wwwroot\index.html"
