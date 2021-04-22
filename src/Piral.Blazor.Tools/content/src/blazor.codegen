@@ -200,6 +200,11 @@ module.exports = async function () {
     app.defineBlazorReferences([${refs.map(f => `path + "${f}.dll"`).join(',')}]);
   }`;
 
+  //Options
+  const registerOptionsCode = `registerBlazorOptions: (app) =>{
+    app.defineBlazorOptions({ resourcePathRoot: path });
+  }`;
+
   // Analyzer
   const projectName = await getProjectName(blazorprojectfolder);
   const dllName = `${projectName}.dll`;
@@ -221,6 +226,7 @@ module.exports = async function () {
     module.exports = {
       ${setupPiletCode},
       ${registerDependenciesCode},
+      ${registerOptionsCode},
       registerBlazorPages: (app) => { 
         ${routes.map(toPageRegistration).join('\n')} 
       },
@@ -237,6 +243,7 @@ module.exports = async function () {
     module.exports = {
       ${setupPiletCode},
       ${registerDependenciesCode},
+      ${registerOptionsCode},
       registerBlazorPages: (...args) => {
         console.warn('${__filename}: \`registerBlazorPages\` was called, but no Blazor routes were found.')
       },
