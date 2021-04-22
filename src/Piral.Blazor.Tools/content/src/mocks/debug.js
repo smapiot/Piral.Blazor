@@ -21,8 +21,14 @@ const originalManifest = require(resolve(appshellAppDir, '_framework', bbjson));
 const piletManifest = require(bbjsonPath);
 
 const launchSettingsPath = resolve(blazorprojectfolder, 'Properties', lsjson);
-const iisUrl = require(launchSettingsPath)?.iisSettings?.iisExpress?.applicationUrl;
-if (!iisUrl) throw new Error(`Please provide launchSettings for IIS Express in ${launchSettingsPath}`);
+
+let iisUrl;
+try {
+  iisUrl = require(launchSettingsPath).iisSettings.iisExpress.applicationUrl;
+  if (!iisUrl) throw new Error();
+} catch {
+  throw new Error(`Please provide launchSettings for IIS Express in ${launchSettingsPath}`);
+}
 
 const getUniqueItems = type => {
     const getLine = manifest => manifest.resources[type];
