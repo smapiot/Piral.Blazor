@@ -1,6 +1,6 @@
 const { join, resolve, basename } = require('path');
 const { promisify } = require('util');
-const { copyFileSync, existsSync, mkdirSync } = require('fs');
+const { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } = require('fs');
 const { execSync, exec } = require('child_process');
 const execAsync = promisify(exec);
 const glob = require('glob');
@@ -16,13 +16,16 @@ const pjson = 'package.json';
 const analyzer = 'Piral.Blazor.Analyzer';
 const setupfile = 'setup.tsx';
 
+const ignoredFromWwwroot = ['index.html', '_framework'];
+
 const piralPiletFolder = resolve(__dirname, '..');
 const rootFolder = resolve(piralPiletFolder, '..', '..');
 const blazorfolderName = basename(piralPiletFolder);
 const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
 const binariesdir = resolve(blazorprojectfolder, 'bin', configuration, targetFramework);
 const objectsDir = resolve(blazorprojectfolder, 'obj');
-const sourceDir = resolve(binariesdir, 'wwwroot', '_framework', '_bin');
+const wwwRootDir = resolve(binariesdir, 'wwwroot');
+const sourceDir = resolve(wwwRootDir, '_framework', '_bin');
 const projectAssets = require(resolve(objectsDir, pajson));
 
 const definePathCode = `function computePath() {
@@ -134,6 +137,21 @@ function defineTargets(uniqueDependencies, projectAssets) {
   return [internalTargets, externalTargets];
 }
 
+/** Copies entire directories or files, creating the output location in the process  */
+function copySync(items, from, to) {
+  for (item of items) {
+    const fromPath = resolve(from, item);
+    const toPath = resolve(to, item);
+
+    if (isDir(fromPath)) {
+      copySync(readdirSync(fromPath), fromPath, toPath); //recursion
+    } else {
+      mkdirSync(to, { recursive: true });
+      copyFileSync(fromPath, toPath);
+    }
+  }
+}
+
 /** Generates the source code line to register a blazor page */
 const toPageRegistration = route => `app.registerPage("${toPath(route)}", app.fromBlazor("page-${route}"));`;
 
@@ -147,6 +165,9 @@ const toExtensionRegistration = entry => {
 /** Translate a Blazor route into path-to-regexp syntax */
 const toPath = route =>
   route.replace(/\{([\w?]*)([:*])?([^\/\{\}]*)\}/g, (...groups) => (groups[2] != '*' ? `:${groups[1]}` : '*'));
+
+/** Check if a path is a directory */
+const isDir = path => statSync(path).isDirectory();
 
 /*
  *
@@ -164,18 +185,15 @@ module.exports = async function () {
       Make sure there is at least one Blazor project in your solution.`
     );
 
-  const files = diffBlazorBootFiles(binariesdir);
+  const dllFiles = diffBlazorBootFiles(binariesdir);
+  const wwwRootFiles = readdirSync(wwwRootDir);
+  const staticFiles = wwwRootFiles.filter(x => !ignoredFromWwwroot.includes(x));
 
-  mkdirSync(targetDir, { recursive: true });
-
-  files.forEach(file => {
-    const from = resolve(sourceDir, file);
-    const to = resolve(targetDir, file);
-    copyFileSync(from, to);
-  });
+  copySync(dllFiles, sourceDir, targetDir);
+  copySync(staticFiles, wwwRootDir, targetDir);
 
   // Refs
-  const uniqueDependencies = files.map(f => f.replace('.dll', ''));
+  const uniqueDependencies = dllFiles.map(f => f.replace('.dll', ''));
   const targets = defineTargets(uniqueDependencies, projectAssets);
   const refs = createAllRefs(...targets);
   const registerDependenciesCode = `registerDependencies: (app) => { 
