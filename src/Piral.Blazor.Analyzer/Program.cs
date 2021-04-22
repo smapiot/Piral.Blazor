@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -8,14 +9,15 @@ namespace Piral.Blazor.Analyzer
 {
     internal static class Program
     {
-        internal static void Main(string[] args)
+        internal static void Main(string baseDir, string dllName, string targetFramework, string configuration = "Debug")
         {
-            var options = new Options(args);
+            var dir = Path.GetFullPath(Path.Combine(baseDir, "bin", configuration, targetFramework));
+            var dllPath = Path.Combine(dir, dllName);
 
-            SetupLoader(options.Dir);
+            SetupLoader(dir);
 
             var types = Assembly
-                .LoadFrom(options.DllPath)
+                .LoadFrom(dllPath)
                 .GetTypes();
 
             var routes = ExtractRoutes(types);

@@ -16,6 +16,7 @@
     <ItemGroup>
         <None Include="..\icon.png" Pack="true" PackagePath="" />
         <None Include="build\**" Pack="True" PackagePath="build\" />
+        <None Include="content\**" Pack="True" PackagePath="content\" />
     </ItemGroup>
 
 </Project>
