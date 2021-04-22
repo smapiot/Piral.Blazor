@@ -1,4 +1,4 @@
-import { PiletApi } from 'demo-piral-blazor-appshell';
+import { PiletApi } from '**PiralInstance**';
 import * as Blazor from './blazor.codegen';
 
 export function setup(app: PiletApi) {
