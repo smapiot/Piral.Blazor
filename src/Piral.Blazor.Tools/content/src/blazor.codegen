@@ -201,7 +201,7 @@ module.exports = async function () {
   }`;
 
   //Options
-  const registerOptionsCode = `registerBlazorOptions: (app) =>{
+  const registerOptionsCode = `registerOptions: (app) =>{
     app.defineBlazorOptions({ resourcePathRoot: path });
   }`;
 
@@ -227,13 +227,13 @@ module.exports = async function () {
       ${setupPiletCode},
       ${registerDependenciesCode},
       ${registerOptionsCode},
-      registerBlazorPages: (app) => { 
+      registerPages: (app) => { 
         ${routes.map(toPageRegistration).join('\n')} 
       },
-      registerBlazorExtensions : (app) => {
+      registerExtensions : (app) => {
         ${Object.entries(extensions).map(toExtensionRegistration).join('\n')} 
       },
-      blazorRoutes: ${JSON.stringify(routes)},
+      routes: ${JSON.stringify(routes)},
       paths: ${JSON.stringify(routes.map(toPath))}
     }`;
   } catch (err) {
@@ -244,13 +244,13 @@ module.exports = async function () {
       ${setupPiletCode},
       ${registerDependenciesCode},
       ${registerOptionsCode},
-      registerBlazorPages: (...args) => {
-        console.warn('${__filename}: \`registerBlazorPages\` was called, but no Blazor routes were found.')
+      registerPages: (...args) => {
+        console.warn('${__filename}: \`registerPages\` was called, but no Blazor routes were found.')
       },
-      registerBlazorExtensions: (...args) => {
-        console.warn('${__filename}: \`registerBlazorExtensions\` was called, but no Blazor extensions were found.')
+      registerExtensions: (...args) => {
+        console.warn('${__filename}: \`registerExtensions\` was called, but no Blazor extensions were found.')
       },
-      blazorRoutes: [],
+      routes: [],
       paths: []
     }`;
   }

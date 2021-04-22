@@ -1,17 +1,10 @@
-import * as React from 'react';
-import { PiletApi } from '**PiralInstance**';
-import {
-    registerDependencies,
-    registerBlazorPages,
-    registerBlazorExtensions,
-    registerBlazorOptions,
-    setupPilet,
-} from './blazor.codegen';
+import { PiletApi } from 'demo-piral-blazor-appshell';
+import * as Blazor from './blazor.codegen';
 
 export function setup(app: PiletApi) {
-    registerDependencies(app);
-    registerBlazorOptions(app);
-    registerBlazorPages(app);
-    registerBlazorExtensions(app);
-    setupPilet(app);
+    Blazor.registerDependencies(app);
+    Blazor.registerOptions(app);
+    Blazor.registerPages(app);
+    Blazor.registerExtensions(app);
+    Blazor.setupPilet(app);
 }
