@@ -37,7 +37,7 @@ namespace Piral.Blazor.Analyzer
 
         private static void SetupLoader(string directory)
         {
-            Loader.LoadFromDirectoryName = directory;
+            Loader.LoadFromDirectoryName = Path.Combine(directory, "wwwroot", "_framework");
             AppDomain.CurrentDomain.AssemblyResolve += Loader.LoadDependency;
             AppDomain.CurrentDomain.TypeResolve += Loader.LoadDependency;
         }
