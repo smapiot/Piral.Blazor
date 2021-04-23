@@ -2,9 +2,9 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
         <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-        <VersionPrefix>3.2.1</VersionPrefix>
+        <VersionPrefix>5.0.0</VersionPrefix>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
         <PackageIcon>icon.png</PackageIcon>

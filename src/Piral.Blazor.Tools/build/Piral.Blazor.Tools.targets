@@ -8,7 +8,7 @@
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
         <_piletUrl>http://localhost:1234</_piletUrl>
-        <_analyzerVersion>3.2.1</_analyzerVersion>
+        <_analyzerVersion>5.0.0</_analyzerVersion>
         <_srcPath>$(_piletFolderPath)\src</_srcPath>
     </PropertyGroup>
 
