@@ -25,7 +25,7 @@ const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
 const binariesdir = resolve(blazorprojectfolder, 'bin', configuration, targetFramework);
 const objectsDir = resolve(blazorprojectfolder, 'obj');
 const wwwRootDir = resolve(binariesdir, 'wwwroot');
-const sourceDir = resolve(wwwRootDir, '_framework', '_bin');
+const sourceDir = resolve(wwwRootDir, '_framework');
 const projectAssets = require(resolve(objectsDir, pajson));
 
 const definePathCode = `function computePath() {
@@ -114,7 +114,9 @@ function defineTargets(uniqueDependencies, projectAssets) {
   const getcsprojname = x => `${/.*\\+(.*)\.csproj/.exec(x)[1]}`; // C:\\path\\to\\proj\\proj.csproj --> proj
 
   // Get all external dependencies
-  const targets = getNestedObject(projectAssets, ['targets', targetFrameworkAlt]);
+  const targets =
+      getNestedObject(projectAssets, ['targets', targetFrameworkAlt]) ||
+      getNestedObject(projectAssets, ['targets', targetFramework]);
   const externalTargets = Object.entries(targets) // object to key-value
     .map(x => [stripVersion(x[0]), x[1]]) ///strip versions
     .filter(x => isNotSharedDep(x[0])) //filter out targets that are shared deps
