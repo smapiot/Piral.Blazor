@@ -1,9 +1,10 @@
-﻿using Microsoft.JSInterop;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Linq;
-using System.Reflection;
+using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -39,8 +40,8 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
-            var data = await _client.GetByteArrayAsync(url);
-            var assembly = Assembly.Load(data);
+            var dll = await _client.GetByteArrayAsync(url);
+            var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(dll));
             ActivationService?.LoadComponentsFromAssembly(assembly);
         }
 
@@ -49,7 +50,7 @@ namespace Piral.Blazor.Core
         {
             var dll = await _client.GetByteArrayAsync(dllUrl);
             var pdb = await _client.GetByteArrayAsync(pdbUrl);
-            var assembly = Assembly.Load(dll, pdb);
+            var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(dll), new MemoryStream(pdb));
             ActivationService?.LoadComponentsFromAssembly(assembly);
         }
         

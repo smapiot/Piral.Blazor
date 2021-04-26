@@ -54,13 +54,6 @@ function getProjectName(projectFolder) {
   });
 }
 
-function getUniqueAssemblies(originalManifest, piletManifest) {
-  const getAssemblyNames = manifest => Object.keys(manifest.resources.assembly);
-  const original = getAssemblyNames(originalManifest);
-  const dedicated = getAssemblyNames(piletManifest);
-  return dedicated.filter(m => !original.includes(m));
-}
-
 function buildSolution() {
   console.log(`No Blazor output found. Building solution ...`);
 
@@ -68,6 +61,13 @@ function buildSolution() {
     cwd: __dirname,
     stdio: 'inherit',
   });
+}
+
+function getUniqueKeys(originalManifest, piletManifest, type) {
+  const getLine = manifest => Object.keys(manifest.resources[type]);
+  const original = getLine(originalManifest);
+  const dedicated = getLine(piletManifest);
+  return dedicated.filter(m => !original.includes(m));
 }
 
 function diffBlazorBootFiles(outputdir) {
@@ -81,7 +81,10 @@ function diffBlazorBootFiles(outputdir) {
 
   const piletManifest = require(resolve(outputdir, 'wwwroot', '_framework', bbjson));
   const originalManifest = require(resolve(appdir, 'app', '_framework', bbjson));
-  return getUniqueAssemblies(originalManifest, piletManifest);
+  return [
+    getUniqueKeys(originalManifest, piletManifest, 'assembly'),
+    getUniqueKeys(originalManifest, piletManifest, 'pdb'),
+  ];
 }
 
 function createAllRefs(internaltargets, externalTargets) {
@@ -187,10 +190,11 @@ module.exports = async function () {
       Make sure there is at least one Blazor project in your solution.`
     );
 
-  const dllFiles = diffBlazorBootFiles(binariesdir);
+  const [dllFiles, pdbFiles] = diffBlazorBootFiles(binariesdir);
   const wwwRootFiles = readdirSync(wwwRootDir);
   const staticFiles = wwwRootFiles.filter(x => !ignoredFromWwwroot.includes(x));
 
+  copySync(pdbFiles, sourceDir, targetDir);
   copySync(dllFiles, sourceDir, targetDir);
   copySync(staticFiles, wwwRootDir, targetDir);
 
@@ -199,7 +203,11 @@ module.exports = async function () {
   const targets = defineTargets(uniqueDependencies, projectAssets);
   const refs = createAllRefs(...targets);
   const registerDependenciesCode = `registerDependencies: (app) => { 
-    app.defineBlazorReferences([${refs.map(f => `path + "${f}.dll"`).join(',')}]);
+    const references = [
+      ${refs.map(ref => `path + "${ref}.dll"`).join(',')}, 
+      ${pdbFiles.map(pdb => `path + "${pdb}"`).join(',')}
+    ]; 
+    app.defineBlazorReferences(references);
   }`;
 
   //Options
