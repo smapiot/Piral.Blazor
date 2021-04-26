@@ -59,15 +59,6 @@
                 Encoding="UTF-8"/>
     </Target>
 
-    <Target Name="ModifyDebugJS" AfterTargets="CopyScaffoldFiles">
-        <Exec Command="echo 'Modifying the debug mock file...'"/>
-        <WriteLinesToFile
-                File="$(_srcPath)\mocks\debug.js"
-                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\mocks\debug.js).Replace('**MSBUILD_Configuration**','$(Configuration)').Replace('**MSBUILD_TargetFramework**','$(TargetFramework)'))"
-                Overwrite="true"
-                Encoding="UTF-8"/>
-    </Target>
-
     <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
         <PropertyGroup>
             <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
