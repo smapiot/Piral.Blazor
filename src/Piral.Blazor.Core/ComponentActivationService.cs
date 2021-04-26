@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Piral.Blazor.Core
 {
@@ -35,7 +36,7 @@ namespace Piral.Blazor.Core
             JSBridge.ActivationService = this;
         }
 
-        public void Register(string componentName, Type componentType, IServiceProvider provider)
+        public void Register(string componentName, Type componentType, IServiceProvider provider, WebAssemblyHost host)
         {
             if (_services.ContainsKey(componentName))
             {
@@ -44,7 +45,7 @@ namespace Piral.Blazor.Core
             else
             {
                 _services.Add(componentName, componentType);
-                _container.ConfigureComponent(componentType, provider);
+                _container.ConfigureComponent(componentType, provider, host);
             }
         }
 
@@ -96,7 +97,7 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public void LoadComponentsFromAssembly(Assembly assembly)
+        public void LoadComponentsFromAssembly(Assembly assembly, WebAssemblyHost host)
         {
             var serviceProvider = _container.Configure(assembly);
             var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
@@ -106,7 +107,7 @@ namespace Piral.Blazor.Core
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
                 foreach (var componentName in componentNames)
                 {
-                    Register(componentName, componentType, serviceProvider);
+                    Register(componentName, componentType, serviceProvider, host);
                     _logger.LogInformation($"registered {componentName}");
                 }
             }

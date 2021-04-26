@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Piral.Blazor.Core
 {
@@ -14,10 +15,12 @@ namespace Piral.Blazor.Core
         public static ComponentActivationService ActivationService { get; set; }
 
         private static HttpClient _client;
+        private static WebAssemblyHost _host;
 
-        public static void Configure(HttpClient client)
+        public static void Configure(HttpClient client, WebAssemblyHost host)
         {
             _client = client;
+            _host = host;
         }
 
         [JSInvokable]
@@ -41,7 +44,7 @@ namespace Piral.Blazor.Core
         {
             var dll = await _client.GetStreamAsync(url);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
-            ActivationService?.LoadComponentsFromAssembly(assembly);
+            ActivationService?.LoadComponentsFromAssembly(assembly, _host);
         }
 
         [JSInvokable]
@@ -50,7 +53,7 @@ namespace Piral.Blazor.Core
             var dll = await _client.GetStreamAsync(dllUrl);
             var pdb = await _client.GetStreamAsync(pdbUrl);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-            ActivationService?.LoadComponentsFromAssembly(assembly);
+            ActivationService?.LoadComponentsFromAssembly(assembly, _host);
         }
         
         /// <summary>Every series of characters that is not alphanumeric gets consolidated into a dash</summary>

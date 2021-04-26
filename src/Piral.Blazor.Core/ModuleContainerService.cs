@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Reflection;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Piral.Blazor.Core
 {
@@ -17,7 +18,10 @@ namespace Piral.Blazor.Core
             _manipulator = new Manipulator<ModuleContainerService>(logger);
         }
 
-        public void ConfigureComponent(Type type, IServiceProvider provider) => _manipulator.OverrideComponentInitializer(type, provider);
+        public void ConfigureComponent(Type type, IServiceProvider provider, WebAssemblyHost host)
+        {
+            _manipulator.OverrideComponentInitializer(type, provider, host);
+        }
 
         public void ForgetComponent(Type type) => _manipulator.RemoveComponentInitializer(type);
 
