@@ -1,7 +1,6 @@
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net.Http;
 using System.Linq;
 using System.Runtime.Loader;
@@ -40,17 +39,17 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
-            var dll = await _client.GetByteArrayAsync(url);
-            var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(dll));
+            var dll = await _client.GetStreamAsync(url);
+            var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
             ActivationService?.LoadComponentsFromAssembly(assembly);
         }
 
         [JSInvokable]
         public static async Task LoadComponentsWithSymbolsFromLibrary(string dllUrl, string pdbUrl)
         {
-            var dll = await _client.GetByteArrayAsync(dllUrl);
-            var pdb = await _client.GetByteArrayAsync(pdbUrl);
-            var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(dll), new MemoryStream(pdb));
+            var dll = await _client.GetStreamAsync(dllUrl);
+            var pdb = await _client.GetStreamAsync(pdbUrl);
+            var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
             ActivationService?.LoadComponentsFromAssembly(assembly);
         }
         
