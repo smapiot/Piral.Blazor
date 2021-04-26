@@ -62,7 +62,7 @@ const proxy = (req, to) =>
     );
 
 const toProxy = [...uniqueAssemblies, ...uniquePdbs].map(x => x[0]);
-const shouldBeProxied = ({ url }) => toProxy.filter(x => url.endsWith(x))?.length && url.startsWith('/_framework/_bin');
+const shouldBeProxied = ({ url }) => toProxy.filter(x => url.endsWith(x))?.length && url.startsWith('/_framework');
 
 module.exports = (ctx, req, res) => {
     if (shouldBeProxied(req)) {
