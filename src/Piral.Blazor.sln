@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.Core", "Piral.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Piral.Blazor.Template", "Piral.Blazor.Template\Piral.Blazor.Template.csproj", "{B1CBACE3-91BC-42E6-B1C0-51BA3877319C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Piral.Blazor.Tools", "Piral.Blazor.Tools\Piral.Blazor.Tools.csproj", "{7223A622-A5F6-40F2-8642-FF5850249392}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Piral.Blazor.Analyzer", "Piral.Blazor.Analyzer\Piral.Blazor.Analyzer.csproj", "{B158A713-50AE-498F-8746-1F63CBB656C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{B1CBACE3-91BC-42E6-B1C0-51BA3877319C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1CBACE3-91BC-42E6-B1C0-51BA3877319C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1CBACE3-91BC-42E6-B1C0-51BA3877319C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7223A622-A5F6-40F2-8642-FF5850249392}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7223A622-A5F6-40F2-8642-FF5850249392}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7223A622-A5F6-40F2-8642-FF5850249392}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7223A622-A5F6-40F2-8642-FF5850249392}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B158A713-50AE-498F-8746-1F63CBB656C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B158A713-50AE-498F-8746-1F63CBB656C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B158A713-50AE-498F-8746-1F63CBB656C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B158A713-50AE-498F-8746-1F63CBB656C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,43 @@
+{
+  "name": "app-shell",
+  "version": "1.0.0",
+  "description": "Example app shell using piral-blazor (Piral.Blazor.Core).",
+  "keywords": [
+    "piral"
+  ],
+  "scripts": {
+    "nuget:build": "dotnet build ../../src --configuration Release",
+    "nuget:pack": "dotnet pack ../../src/Piral.Blazor.Core --configuration Release --output .",
+    "prepare": "rm -f *.nupkg && npm run nuget:build && npm run nuget:pack && mv *.nupkg package.nupkg",
+    "debug": "cross-env PIRAL_BLAZOR_LOCAL_NUPKG=$(pwd)/package.nupkg piral debug",
+    "start": "npm run prepare && cross-env PIRAL_BLAZOR_LOCAL_NUPKG=$(pwd)/package.nupkg piral debug",
+    "build": "npm run prepare && cross-env PIRAL_BLAZOR_LOCAL_NUPKG=$(pwd)/package.nupkg piral build"
+  },
+  "app": "./src/index.html",
+  "pilets": {
+    "files": [],
+    "externals": [],
+    "scripts": {},
+    "validators": {},
+    "devDependencies": {},
+    "preScaffold": "",
+    "postScaffold": "",
+    "preUpgrade": "",
+    "postUpgrade": ""
+  },
+  "dependencies": {
+    "piral": "next",
+    "piral-blazor": "next"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/react-router": "latest",
+    "@types/react-router-dom": "latest",
+    "cross-env": "^7.0.2",
+    "piral-cli": "next",
+    "piral-cli-webpack": "next",
+    "typescript": "latest"
+  }
+}

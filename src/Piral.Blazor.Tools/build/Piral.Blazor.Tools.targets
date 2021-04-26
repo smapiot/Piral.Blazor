@@ -1,0 +1,77 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <ItemGroup>
+        <Content Update="wwwroot\**" CopyToOutputDirectory="Always" />
+    </ItemGroup>
+    
+    <PropertyGroup>
+        <_piletFolderBase>..\piral~</_piletFolderBase>
+        <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
+        <_piletUrl>http://localhost:1234</_piletUrl>
+        <_analyzerVersion>5.0.0</_analyzerVersion>
+        <_srcPath>$(_piletFolderPath)\src</_srcPath>
+    </PropertyGroup>
+
+    <Target Name="SetupPiral" BeforeTargets="Build">
+        <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)')"/>
+    </Target>
+    
+    <Target Name="Scaffold">
+        <Exec Command="echo 'Scaffolding the pilet...'"/>
+        <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName)"/>
+    </Target>
+
+    <Target Name="InstallDependencies" AfterTargets="Scaffold">
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install"/>
+    </Target>
+    
+    <Target Name="DeleteIndexTsx" AfterTargets="Scaffold">
+        <Delete Files="$(_srcPath)\index.tsx" />
+    </Target>
+    
+    <Target Name="CopyScaffoldFiles" AfterTargets="DeleteIndexTsx" >
+        <ItemGroup>
+            <_piletFiles Include="$(MSBuildThisFileDirectory)..\content\**\*.*"/>
+        </ItemGroup>
+        <Exec Command="echo 'Copying the files...'"/>
+        <Copy
+                SourceFiles="@(_piletFiles)"
+                DestinationFiles="@(_piletFiles -> '$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
+                Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
+        />
+    </Target>
+        
+    <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
+        <Exec Command="echo 'Modifying the index file...'"/>
+        <WriteLinesToFile
+                File="$(_srcPath)\index.tsx"
+                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)'))"
+                Overwrite="true"
+                Encoding="UTF-8"/>
+    </Target>
+
+    <Target Name="ModifyCodegen" AfterTargets="CopyScaffoldFiles">
+        <Exec Command="echo 'Modifying the codegen...'"/>
+        <WriteLinesToFile
+                File="$(_srcPath)\blazor.codegen"
+                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_Configuration**','$(Configuration)').Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))"
+                Overwrite="true"
+                Encoding="UTF-8"/>
+    </Target>
+
+    <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
+        <PropertyGroup>
+            <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
+        </PropertyGroup>
+        <WriteLinesToFile
+                File="$(MSBuildProjectDirectory)\wwwroot\index.html"
+                Lines="$(_indexHtml)"
+                Overwrite="true"
+                Encoding="UTF-8"/>
+    </Target>
+    
+    <Target Name="InstallAnalyzer" BeforeTargets="Build">
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')"/>
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_analyzerVersion) --local"/>
+    </Target>
+</Project>

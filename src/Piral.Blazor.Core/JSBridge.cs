@@ -1,9 +1,12 @@
-﻿using Microsoft.JSInterop;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Linq;
-using System.Reflection;
+using System.Runtime.Loader;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Piral.Blazor.Core
 {
@@ -11,31 +14,20 @@ namespace Piral.Blazor.Core
     {
         public static ComponentActivationService ActivationService { get; set; }
 
-        public static ModuleContainerService ContainerService { get; set; }
+        private static HttpClient _client;
+        private static WebAssemblyHost _host;
 
-        [JSInvokable]
-        public static Task LoadComponentsFromLibrary(string data)
+        public static void Configure(HttpClient client, WebAssemblyHost host)
         {
-            var bytes = Convert.FromBase64String(data);
-            var assembly = Assembly.Load(bytes);
-            var container = ContainerService?.Configure(assembly);
-            ActivationService?.RegisterAll(assembly, container);
-            return Task.FromResult(true);
-        }
-
-        [JSInvokable]
-        public static Task UnloadComponentsFromLibrary(string name)
-        {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var assembly = assemblies.FirstOrDefault(m => m.FullName == name);
-            ActivationService?.UnregisterAll(assembly);
-            return Task.FromResult(true);
+            _client = client;
+            _host = host;
         }
 
         [JSInvokable]
         public static Task<string> Activate(string componentName, IDictionary<string, object> args)
         {
-            var referenceId = Guid.NewGuid().ToString().Split('-').Last();
+            var guidSegment = Guid.NewGuid().ToString().Split('-').Last();
+            var referenceId = $"piral-blazor-{Sanitize(componentName)}-{guidSegment}";
             ActivationService?.ActivateComponent(componentName, referenceId, args);
             return Task.FromResult(referenceId);
         }
@@ -45,6 +37,29 @@ namespace Piral.Blazor.Core
         {
             ActivationService?.DeactivateComponent(componentName, referenceId);
             return Task.FromResult(true);
+        }
+
+        [JSInvokable]
+        public static async Task LoadComponentsFromLibrary(string url)
+        {
+            var dll = await _client.GetStreamAsync(url);
+            var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
+            ActivationService?.LoadComponentsFromAssembly(assembly, _host);
+        }
+
+        [JSInvokable]
+        public static async Task LoadComponentsWithSymbolsFromLibrary(string dllUrl, string pdbUrl)
+        {
+            var dll = await _client.GetStreamAsync(dllUrl);
+            var pdb = await _client.GetStreamAsync(pdbUrl);
+            var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
+            ActivationService?.LoadComponentsFromAssembly(assembly, _host);
+        }
+        
+        /// <summary>Every series of characters that is not alphanumeric gets consolidated into a dash</summary>
+        private static string Sanitize(string value)
+        {
+            return Regex.Replace(value, @"[^a-zA-Z0-9]+", "-");
         }
     }
 }

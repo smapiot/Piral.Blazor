@@ -1,30 +1,79 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
 trigger:
 - master
+- develop
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  buildConfiguration: 'Release'
+  - group: secrets
+  - group: defaults
 
 steps:
 - script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
   displayName: 'Build Core'
+
 - script: dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
   displayName: 'Build Utils'
+
+- script: |
+    dotnet build ./src/Piral.Blazor.Core --configuration Release --output ./dist/release
+    dotnet build ./src/Piral.Blazor.Core --configuration Debug --output ./dist/debug
+    cd dist
+    cp ../package-template.json ./package.json
+    export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./release/Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
+    export NPM_TOKEN=$(npmToken)
+    npm version $TARGET_VERSION
+    echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+    echo always-auth=true >> ~/.npmrc
+    cd ..
+  displayName: 'Prepare NPM Package'
+
+- script: |
+    cd dist
+    sed -i -e "s/\(\"version\":\\s\+\"\([0-9]\+\.\?\)\+\)/\1-pre.$BUILD_BUILDNUMBER/" ./package.json;
+    cat ~/.npmrc
+    npm publish --tag next
+    cd ..
+  displayName: 'Publish Pre-Package on NPM'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- script: |
+    cd dist
+    npm publish --tag latest
+    cd ..
+  displayName: 'Publish Package on NPM'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- script: rm -rf dist
+  displayName: 'Reset Output'
+
+- script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Core (Pre)'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+
 - script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Core'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Utils (Pre)'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+- script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Template (Pre)'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+
 - script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Template'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
 - task: NuGetCommand@2
-  displayName: 'Publish Packages'
+  displayName: 'Publish Packages on NuGet'
   inputs:
     command: 'push'
     packagesToPush: 'dist/*.nupkg'
