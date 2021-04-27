@@ -1,6 +1,10 @@
 trigger:
-- master
-- develop
+  branches:
+    include:
+    - blazor-*
+  tags:
+    include:
+    - v*
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -15,6 +19,12 @@ steps:
 
 - script: dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
   displayName: 'Build Utils'
+
+- script: dotnet build ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration)
+  displayName: 'Build Analyzer'
+
+- script: dotnet build ./src/Piral.Blazor.Tools --configuration $(buildConfiguration)
+  displayName: 'Build Tools'
 
 - script: |
     dotnet build ./src/Piral.Blazor.Core --configuration Release --output ./dist/release
@@ -36,41 +46,57 @@ steps:
     npm publish --tag next
     cd ..
   displayName: 'Publish Pre-Package on NPM'
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
 
 - script: |
     cd dist
     npm publish --tag latest
     cd ..
   displayName: 'Publish Package on NPM'
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - script: rm -rf dist
   displayName: 'Reset Output'
 
 - script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
   displayName: 'Pack Core (Pre)'
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
 
 - script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Core'
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
   displayName: 'Pack Utils (Pre)'
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
 
 - script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Utils'
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
   displayName: 'Pack Template (Pre)'
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
 
 - script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Template'
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+
+- script: dotnet pack ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Analyzer (Pre)'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
+
+- script: dotnet pack ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration) --output ./dist
+  displayName: 'Pack Analyzer'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+
+- script: dotnet pack ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Tools (Pre)'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
+
+- script: dotnet pack ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --output ./dist
+  displayName: 'Pack Tools'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - task: NuGetCommand@2
   displayName: 'Publish Packages on NuGet'
