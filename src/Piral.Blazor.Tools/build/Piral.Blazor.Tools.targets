@@ -67,6 +67,15 @@
                 Overwrite="true"
                 Encoding="UTF-8"/>
     </Target>
+    
+    <Target Name="InstallAnalyzer" AfterTargets="CopyScaffoldFiles">
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')"/>
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_analyzerVersion) --local"/>
+    </Target>
+    
+    <Target Name="RestoreTools" BeforeTargets="Build" Condition="Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool restore"/>
+    </Target>
 
     <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
         <PropertyGroup>
@@ -79,8 +88,8 @@
                 Encoding="UTF-8"/>
     </Target>
     
-    <Target Name="InstallAnalyzer" BeforeTargets="Build">
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')"/>
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_analyzerVersion) --local"/>
+    <Target Name="HotReload" AfterTargets="Build">
+        <Touch Files="$(_srcPath)\blazor.codegen" Condition="Exists('$(_srcPath)\blazor.codegen')"/>
     </Target>
+    
 </Project>
