@@ -23,7 +23,7 @@ In this case, it is highly recommended to use our template. More information and
 
 In this case, follow these steps:
 
-1. Add a `PiralInstance` property to your `.csproj` file (The piral instance name should be the name of the piral instance you want to use, as it is published on npm.)
+1. Add a `PiralInstance` property to your `.csproj` file (The Piral instance name should be the name of the Piral instance you want to use, as it is published on npm.)
 
    ```xml
    <PropertyGroup>
@@ -117,7 +117,7 @@ public class Module
 
 ## Running and debugging the pilet :rocket:
 
-From your blazor project folder, run your pilet via the piral CLI:
+From your blazor project folder, run your pilet via the Piral CLI:
 
 ```sh
 npx pilet debug --base ../piral~/<project-name>
@@ -125,7 +125,7 @@ npx pilet debug --base ../piral~/<project-name>
 
 In addition to this, if you want to debug your Blazor pilet using for example Visual Studio, these requirements should be considered:
 
-- keep the piral CLI running
+- keep the Piral CLI running
 - debug your Blazor pilet using IISExpress
 
 ## License
