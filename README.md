@@ -1,6 +1,6 @@
 [![Piral Logo](https://github.com/smapiot/piral/raw/master/docs/assets/logo.png)](https://piral.io)
 
-# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/master/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-5.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-5.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/piral.svg)](https://github.com/smapiot/piral/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/community) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
+# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/master/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-3.2)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-3.2) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/piral.svg)](https://github.com/smapiot/piral/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/community) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
 
 All .NET things to make <a href="https://blazor.net" rel="nofollow"><img
 src="https://devblogs.microsoft.com/aspnet/wp-content/uploads/sites/16/2019/04/BrandBlazor_nohalo_1000x.png"
@@ -8,6 +8,8 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 <a href="https://piral.io" rel="nofollow">
 <img src="https://piral.io/logo-simple.f8667084.png" height="10">
 &nbsp;Piral</a>.
+
+> This is the branch for Blazor 3.2.0 with .NET Core 3.1. If you want to switch to Blazor with the newer .NET 5.0, please refer to the [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) branch
 
 ## Getting Started
 
@@ -27,12 +29,13 @@ In this case, follow these steps:
 
    ```xml
    <PropertyGroup>
-       <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <RazorLangVersion>3.0</RazorLangVersion>
        <PiralInstance>my-piral-instance</PiralInstance>
    </PropertyGroup>
    ```
 
-2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages
+2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages, make sure they both have a version number of format `3.2.x`
 3. rename `Program.cs` to `Module.cs`, and make sure to make the `Main` method an empty method.
 4. Build the project. The first time you do this, this can take some time as it will fully scaffold the pilet.
 
@@ -127,6 +130,8 @@ In addition to this, if you want to debug your Blazor pilet using for example Vi
 
 - keep the Piral CLI running
 - debug your Blazor pilet using IISExpress
+
+> :warning: if you want to run your pilet and directly visit it in the browser without debugging via IISExpress, you will have to disable a [kras](https://github.com/FlorianRappl/kras) script injector **before** visiting the pilet. To do this, go to `http://localhost:1234/manage-mock-server/#/injectors`, disable the `debug.js` script, and save your changes. Afterwards, you can visit `http://localhost:1234`.
 
 ## License
 
