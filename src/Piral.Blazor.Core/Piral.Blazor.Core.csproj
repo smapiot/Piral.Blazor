@@ -7,9 +7,9 @@
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageLicenseUrl>https://github.com/FlorianRappl/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageProjectUrl>https://github.com/FlorianRappl/Piral.Blazor</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
     <TargetFramework>net5.0</TargetFramework>
     <BlazorEnableCompression>false</BlazorEnableCompression>
     <BlazorWebAssemblyEnableLinking>false</BlazorWebAssemblyEnableLinking>
