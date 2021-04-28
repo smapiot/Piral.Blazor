@@ -217,9 +217,8 @@ module.exports = async function () {
 
   // Analyzer
   const projectName = await getProjectName(blazorprojectfolder);
-  const dllName = `${projectName}.dll`;
-  const command = `dotnet ${analyzer} --base-dir ${blazorprojectfolder} --dll-name ${dllName} --target-framework ${targetFramework} --configuration ${configuration}`;
-
+  const command = `dotnet ${analyzer} --base-dir "${blazorprojectfolder}" --dll-name "${projectName}.dll" --target-framework "${targetFramework}" --configuration "${configuration}"`;
+  
   // Setup file
   const setupFilePath = join(blazorprojectfolder, setupfile).replace(/\\/g, '/');
   const setupFileExists = existsSync(setupFilePath);
