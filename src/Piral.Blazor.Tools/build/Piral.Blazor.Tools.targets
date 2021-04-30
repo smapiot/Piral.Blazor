@@ -45,7 +45,7 @@
         <Exec Command="echo 'Modifying the index file...'"/>
         <WriteLinesToFile
                 File="$(_srcPath)\index.tsx"
-                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)'))"
+                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)').Replace('**BlazorProjectName**','$(MSBuildProjectName)'))"
                 Overwrite="true"
                 Encoding="UTF-8"/>
     </Target>
@@ -78,8 +78,18 @@
                 Overwrite="true"
                 Encoding="UTF-8"/>
     </Target>
+
+    <Target Name="CopyScopedCss" AfterTargets="Build">
+        <!-- Always create an empty one first to avoid breaking index.tsx -->
+        <Touch Files="$(_srcPath)\$(MSBuildProjectName).styles.css" AlwaysCreate="true"/>
+        <Copy
+                SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css"
+                DestinationFolder="$(_srcPath)"
+                Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')"
+        />
+    </Target>
     
-    <Target Name="HotReload" AfterTargets="Build">
+    <Target Name="HotReload" AfterTargets="CopyScopedCss">
         <Touch Files="$(_srcPath)\blazor.codegen" Condition="Exists('$(_srcPath)\blazor.codegen')"/>
     </Target>
     
