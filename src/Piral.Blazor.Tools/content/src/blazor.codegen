@@ -114,29 +114,45 @@ function getNestedObject(nestedObj, pathArr) {
 function defineTargets(uniqueDependencies, projectAssets) {
   const isNotSharedDep = x => uniqueDependencies.includes(x);
   const stripVersion = x => x.replace(/\/(\d+\.?)+/, ''); // Lib/1.2.3 --> Lib
+
+  /**Looks up the dll name for a project id */
+  const getDllName = projectId => {
+    const target = Object.entries(targets).find(t => stripVersion(t[0]) === projectId);
+    if (!target || !target[1]['compile']) return undefined;
+    return Object.keys(target[1].compile)[0].split('/').pop().replace('.dll', '');
+  };
+
   const getcsprojname = x => `${/.*\\+(.*)\.csproj/.exec(x)[1]}`; // C:\\path\\to\\proj\\proj.csproj --> proj
+
+  const filterDeps = deps => deps.map(getDllName).filter(d => !!d && isNotSharedDep(d));
 
   // Get all external dependencies
   const targets =
       getNestedObject(projectAssets, ['targets', targetFrameworkAlt]) ||
       getNestedObject(projectAssets, ['targets', targetFramework]);
-  const externalTargets = Object.entries(targets) // object to key-value
-    .map(x => [stripVersion(x[0]), x[1]]) ///strip versions
-    .filter(x => isNotSharedDep(x[0])) //filter out targets that are shared deps
-    .map(x => [x[0], Object.keys(x[1].dependencies || {}).filter(isNotSharedDep)]) //filter out dependencies that are shared deps
-    .reduce((acc, [k, v]) => ({ [k]: v, ...acc }), {}); // key-value to object
+
+  const externalTargets = Object.entries(targets)
+      .map(([id, data]) => [getDllName(stripVersion(id)), data])
+      .filter(([dllName, _]) => isNotSharedDep(dllName)) //filter out targets that are shared deps
+      .map(([dllName, data]) => [
+        dllName,
+        filterDeps(Object.keys(data.dependencies || {})), //filter out dependencies that are shared deps
+      ])
+      .reduce((acc, [k, v]) => ({ [k]: v, ...acc }), {}); // key-value to object
 
   // Get internal project
   const projectName = getNestedObject(projectAssets, ['project', 'restore', 'projectName']);
-  const projectDependencies = Object.keys(
-    getNestedObject(projectAssets, ['project', 'frameworks', targetFramework, 'dependencies'])
-  );
-  const projectReferences = Object.keys(
-    getNestedObject(projectAssets, ['project', 'restore', 'frameworks', targetFramework, 'projectReferences'])
+
+  const projectDependencies = filterDeps(
+      Object.keys(getNestedObject(projectAssets, ['project', 'frameworks', targetFramework, 'dependencies']))
   );
 
+  const projectReferences = Object.keys(
+      getNestedObject(projectAssets, ['project', 'restore', 'frameworks', targetFramework, 'projectReferences'])
+  ).map(getcsprojname);
+
   const internalTargets = {
-    [projectName]: [...projectDependencies, ...projectReferences.map(getcsprojname)].filter(isNotSharedDep), // depencency arr = deps + references
+    [projectName]: [...projectDependencies, ...projectReferences], // depencency arr = deps + references
   };
 
   return [internalTargets, externalTargets];
