@@ -1,14 +1,19 @@
 const { join, resolve, basename } = require('path');
 const { promisify } = require('util');
 const { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } = require('fs');
-const { execSync, exec } = require('child_process');
+const { exec } = require('child_process');
 const execAsync = promisify(exec);
 const glob = require('glob');
 
-//these get filled in by MSBuild
-const configuration = '**MSBUILD_Configuration**';
+// filled in by MSBuild
 const targetFramework = '**MSBUILD_TargetFramework**';
 const targetFrameworkAlt = '**MSBUILD_TargetFrameworkMoniker**';
+
+// dependent on the NODE_ENV variable set by piral cli
+const RELEASE = process.env.NODE_ENV === 'production';
+const configuration = RELEASE ? 'Release' : 'Debug';
+const action = RELEASE ? 'publish' : 'build';
+const wwwroot = RELEASE ? join('publish', 'wwwroot') : 'wwwroot';
 
 const bbjson = 'blazor.boot.json';
 const pajson = 'project.assets.json';
@@ -24,7 +29,7 @@ const blazorfolderName = basename(piralPiletFolder);
 const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
 const binariesdir = resolve(blazorprojectfolder, 'bin', configuration, targetFramework);
 const objectsDir = resolve(blazorprojectfolder, 'obj');
-const wwwRootDir = resolve(binariesdir, 'wwwroot');
+const wwwRootDir = resolve(binariesdir, wwwroot);
 const sourceDir = resolve(wwwRootDir, '_framework');
 const projectAssets = require(resolve(objectsDir, pajson));
 
@@ -54,23 +59,23 @@ function getProjectName(projectFolder) {
   });
 }
 
-function buildSolution() {
-  console.log(`No Blazor output found. Building solution ...`);
+async function buildSolution() {
+  console.log(`Running "${action}" on solution in ${configuration} mode...`);
 
-  execSync(`dotnet build --configuration ${configuration}`, {
-    cwd: __dirname,
+  await execAsync(`dotnet ${action} --configuration ${configuration}`, {
+    cwd: blazorprojectfolder,
     stdio: 'inherit',
   });
 }
 
 function getUniqueKeys(originalManifest, piletManifest, type) {
-  const getLine = manifest => Object.keys(manifest.resources[type]);
+  const getLine = manifest => Object.keys(manifest.resources[type] || {});
   const original = getLine(originalManifest);
   const dedicated = getLine(piletManifest);
   return dedicated.filter(m => !original.includes(m));
 }
 
-function diffBlazorBootFiles(outputdir) {
+function diffBlazorBootFiles() {
   const root = resolve(__dirname, '..');
   const project = require(resolve(root, pjson));
   const appdir = resolve(root, 'node_modules', project.piral.name);
@@ -79,7 +84,7 @@ function diffBlazorBootFiles(outputdir) {
     throw new Error(`Cannot find the directory of "${project.piral.name}". Please re-install the dependencies.`);
   }
 
-  const piletManifest = require(resolve(outputdir, 'wwwroot', '_framework', bbjson));
+  const piletManifest = require(resolve(sourceDir, bbjson));
   const originalManifest = require(resolve(appdir, 'app', '_framework', bbjson));
   return [
     getUniqueKeys(originalManifest, piletManifest, 'assembly'),
@@ -114,29 +119,45 @@ function getNestedObject(nestedObj, pathArr) {
 function defineTargets(uniqueDependencies, projectAssets) {
   const isNotSharedDep = x => uniqueDependencies.includes(x);
   const stripVersion = x => x.replace(/\/(\d+\.?)+/, ''); // Lib/1.2.3 --> Lib
+
+  /**Looks up the dll name for a project id */
+  const getDllName = projectId => {
+    const target = Object.entries(targets).find(t => stripVersion(t[0]) === projectId);
+    if (!target || !target[1]['compile']) return undefined;
+    return Object.keys(target[1].compile)[0].split('/').pop().replace('.dll', '');
+  };
+
   const getcsprojname = x => `${/.*\\+(.*)\.csproj/.exec(x)[1]}`; // C:\\path\\to\\proj\\proj.csproj --> proj
+
+  const filterDeps = deps => deps.map(getDllName).filter(d => !!d && isNotSharedDep(d));
 
   // Get all external dependencies
   const targets =
       getNestedObject(projectAssets, ['targets', targetFrameworkAlt]) ||
       getNestedObject(projectAssets, ['targets', targetFramework]);
-  const externalTargets = Object.entries(targets) // object to key-value
-    .map(x => [stripVersion(x[0]), x[1]]) ///strip versions
-    .filter(x => isNotSharedDep(x[0])) //filter out targets that are shared deps
-    .map(x => [x[0], Object.keys(x[1].dependencies || {}).filter(isNotSharedDep)]) //filter out dependencies that are shared deps
-    .reduce((acc, [k, v]) => ({ [k]: v, ...acc }), {}); // key-value to object
+
+  const externalTargets = Object.entries(targets)
+      .map(([id, data]) => [getDllName(stripVersion(id)), data])
+      .filter(([dllName, _]) => isNotSharedDep(dllName)) //filter out targets that are shared deps
+      .map(([dllName, data]) => [
+        dllName,
+        filterDeps(Object.keys(data.dependencies || {})), //filter out dependencies that are shared deps
+      ])
+      .reduce((acc, [k, v]) => ({ [k]: v, ...acc }), {}); // key-value to object
 
   // Get internal project
   const projectName = getNestedObject(projectAssets, ['project', 'restore', 'projectName']);
-  const projectDependencies = Object.keys(
-    getNestedObject(projectAssets, ['project', 'frameworks', targetFramework, 'dependencies'])
-  );
-  const projectReferences = Object.keys(
-    getNestedObject(projectAssets, ['project', 'restore', 'frameworks', targetFramework, 'projectReferences'])
+
+  const projectDependencies = filterDeps(
+      Object.keys(getNestedObject(projectAssets, ['project', 'frameworks', targetFramework, 'dependencies']))
   );
 
+  const projectReferences = Object.keys(
+      getNestedObject(projectAssets, ['project', 'restore', 'frameworks', targetFramework, 'projectReferences'])
+  ).map(getcsprojname);
+
   const internalTargets = {
-    [projectName]: [...projectDependencies, ...projectReferences.map(getcsprojname)].filter(isNotSharedDep), // depencency arr = deps + references
+    [projectName]: [...projectDependencies, ...projectReferences], // depencency arr = deps + references
   };
 
   return [internalTargets, externalTargets];
@@ -184,13 +205,18 @@ module.exports = async function () {
   const targetDir = this.options.outDir;
 
   // Files
-  if (!existsSync(sourceDir))
+  try {
+    if (!existsSync(sourceDir) || RELEASE) await buildSolution(); //always build when files not found or in release
+    if (!existsSync(sourceDir)) throw new Error();
+  } catch (err) {
     throw new Error(
-      `Something went wrong with the Blazor build. 
-      Make sure there is at least one Blazor project in your solution.`
+        `Something went wrong with the Blazor build. 
+      Make sure there is at least one Blazor project in your solution. ${err}`
     );
+  }
 
   const [dllFiles, pdbFiles] = diffBlazorBootFiles(binariesdir);
+
   const wwwRootFiles = readdirSync(wwwRootDir);
   const staticFiles = wwwRootFiles.filter(x => !ignoredFromWwwroot.includes(x));
 
