@@ -54,7 +54,7 @@
         <Exec Command="echo 'Modifying the codegen...'"/>
         <WriteLinesToFile
                 File="$(_srcPath)\blazor.codegen"
-                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_Configuration**','$(Configuration)').Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))"
+                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))"
                 Overwrite="true"
                 Encoding="UTF-8"/>
     </Target>
