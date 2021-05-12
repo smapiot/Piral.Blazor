@@ -61,12 +61,10 @@
 
     <Target Name="InstallAnalyzer" AfterTargets="CopyScaffoldFiles" DependsOnTargets="RunResolvePackageDependencies">
         <PropertyGroup>
-            <_installedPackages>@(PackageDefinitions-> '%(Name)/%(Version)')</_installedPackages>
-            <_toolsVersionRegex>Piral\.Blazor\.Tools\/(.*?);</_toolsVersionRegex>
-            <_installedToolsVersion>$([System.Text.RegularExpressions.Regex]::Match($(_installedPackages), $(_toolsVersionRegex)).Groups[1].Value)</_installedToolsVersion>
+            <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
         </PropertyGroup>
-        
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')"/>
+        <!-- Install analyzer with version that matches the Tools version -->
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local"/>
     </Target>
     
