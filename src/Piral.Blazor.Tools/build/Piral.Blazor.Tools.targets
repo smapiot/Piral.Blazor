@@ -18,7 +18,7 @@
     
     <Target Name="Scaffold">
         <Exec Command="echo 'Scaffolding the pilet...'"/>
-        <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName)"/>
+        <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry)"/>
     </Target>
 
     <Target Name="InstallDependencies" AfterTargets="Scaffold">

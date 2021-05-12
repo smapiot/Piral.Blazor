@@ -35,6 +35,8 @@ In this case, follow these steps:
    </PropertyGroup>
    ```
 
+   (You can optionally also specify an `NpmRegistry` property. The default for this is set to `https://registry.npmjs.org/`)
+
 2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages, make sure they both have a version number of format `3.2.x`
 3. rename `Program.cs` to `Module.cs`, and make sure to make the `Main` method an empty method.
 4. Build the project. The first time you do this, this can take some time as it will fully scaffold the pilet.
