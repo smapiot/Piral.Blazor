@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <Target Name="SetupPiral" BeforeTargets="Build">
-        <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)')"/>
+        <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)\$(MSBuildProjectName)')"/>
     </Target>
     
     <Target Name="Scaffold">
