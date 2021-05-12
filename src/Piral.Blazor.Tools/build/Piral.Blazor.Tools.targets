@@ -10,6 +10,7 @@
         <_piletUrl>http://localhost:1234</_piletUrl>
         <_analyzerVersion>3.2.1</_analyzerVersion>
         <_srcPath>$(_piletFolderPath)\src</_srcPath>
+        <_bundler>webpack5</_bundler>
     </PropertyGroup>
 
     <Target Name="SetupPiral" BeforeTargets="Build">
@@ -18,7 +19,7 @@
     
     <Target Name="Scaffold">
         <Exec Command="echo 'Scaffolding the pilet...'"/>
-        <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry)"/>
+        <Exec Command="npx pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry) --bundler $(_bundler)"/>
     </Target>
 
     <Target Name="InstallDependencies" AfterTargets="Scaffold">
