@@ -20,6 +20,8 @@ project name) and run the template using
 dotnet new blazorpilet --piralInstance <piral-instance-name>
 ```
 
+You can optionally also specify a `--npmRegistry` option. The default for this is set to `https://registry.npmjs.org/`.
+
 The Piral instance name should be the name of the Piral instance as it is published on npm.
 
 Build the project. The first time you do this, this can take some time as it
