@@ -2,5 +2,6 @@
 <Project>
     <PropertyGroup>
         <PiralInstance></PiralInstance>
+        <NpmRegistry>https://registry.npmjs.org/</NpmRegistry>
     </PropertyGroup>
 </Project>
