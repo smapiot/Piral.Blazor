@@ -125,7 +125,8 @@ public class Module
 From your blazor project folder, run your pilet via the Piral CLI:
 
 ```sh
-npx pilet debug --base ../piral~/<project-name>
+cd ../piral~/<project-name>
+npm start
 ```
 
 In addition to this, if you want to debug your Blazor pilet using for example Visual Studio, these requirements should be considered:
