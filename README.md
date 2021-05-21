@@ -15,11 +15,13 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 
 To create a Blazor pilet using Piral.Blazor, two approaches can be used:
 
-#### 1. Creating a Blazor pilet from scratch.
+### 1. Creating a Blazor pilet from scratch.
 
 In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](/src/Piral.Blazor.Template)
 
-#### 2. Transforming an existing Blazor application into a pilet
+[![Using Piral Blazor](https://img.youtube.com/vi/8kWkkNgE3ao/0.jpg)](https://www.youtube.com/watch?v=8kWkkNgE3ao)
+
+### 2. Transforming an existing Blazor application into a pilet
 
 In this case, follow these steps:
 
