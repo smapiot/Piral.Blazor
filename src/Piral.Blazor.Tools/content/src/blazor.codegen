@@ -38,8 +38,10 @@ const appdir = resolve(piralPiletFolder, 'node_modules', project.piral.name);
 const appFrameworkDir = resolve(appdir, 'app', '_framework');
 const piletManifest = require(resolve(sourceDir, bbjson));
 
-let piralVersion = require(resolve(appdir, pjson)).piralCLI.version;
-if (!piralVersion) {
+try {
+  let piralVersion = require(resolve(appdir, pjson)).piralCLI.version;
+  if (!piralVersion) throw new Error();
+} catch {
   try {
     piralVersion = require('piral-cli/package.json').version;
   } catch {
@@ -235,8 +237,6 @@ module.exports = async function () {
   const blazorInAppshell = existsSync(appFrameworkDir);
   const piletBlazorVersion = extractBlazorVersion(piletManifest);
 
-  console.log({ blazorInAppshell });
-
   const wwwRootFiles = readdirSync(wwwRootDir);
 
   let blazorFiles;
@@ -279,8 +279,15 @@ module.exports = async function () {
   }
 
   // Piral Blazor API
-  const getPiralBlazorApiCode = `getPiralBlazorApi : (app) => ${
-      blazorInAppshell ? 'app' : "require('piral-blazor/convert')"
+
+  const getPiralBlazorApiCode = `initPiralBlazorApi : (app) => {
+    ${
+      blazorInAppshell
+          ? ''
+          : `const pb = require('piral-blazor/convert')
+      app.defineBlazorReferences = pb.defineBlazorReferences;
+      app.fromBlazor = pb.fromBlazor;`
+  }
   }`;
 
   // Refs
