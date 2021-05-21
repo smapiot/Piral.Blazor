@@ -118,7 +118,12 @@ function getNestedObject(nestedObj, pathArr) {
 
 function defineTargets(uniqueDependencies, projectAssets) {
   const isNotSharedDep = x => uniqueDependencies.includes(x);
-  const stripVersion = x => x.replace(/\/(\d+\.?)+/, ''); // Lib/1.2.3 --> Lib
+  const stripVersion = x => x.split('/')[0];
+
+  // Get all external dependencies
+  const targets =
+    getNestedObject(projectAssets, ['targets', targetFrameworkAlt]) ||
+    getNestedObject(projectAssets, ['targets', targetFramework]);
 
   /**Looks up the dll name for a project id */
   const getDllName = projectId => {
@@ -130,11 +135,6 @@ function defineTargets(uniqueDependencies, projectAssets) {
   const getcsprojname = x => `${/.*\\+(.*)\.csproj/.exec(x)[1]}`; // C:\\path\\to\\proj\\proj.csproj --> proj
 
   const filterDeps = deps => deps.map(getDllName).filter(d => !!d && isNotSharedDep(d));
-
-  // Get all external dependencies
-  const targets =
-      getNestedObject(projectAssets, ['targets', targetFrameworkAlt]) ||
-      getNestedObject(projectAssets, ['targets', targetFramework]);
 
   const externalTargets = Object.entries(targets)
       .map(([id, data]) => [getDllName(stripVersion(id)), data])
