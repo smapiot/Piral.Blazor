@@ -55,11 +55,8 @@ namespace Piral.Blazor.Core
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
             ActivationService?.LoadComponentsFromAssembly(assembly, _host);
         }
-        
+
         /// <summary>Every series of characters that is not alphanumeric gets consolidated into a dash</summary>
-        private static string Sanitize(string value)
-        {
-            return Regex.Replace(value, @"[^a-zA-Z0-9]+", "-");
-        }
+        private static string Sanitize(string value) => Regex.Replace(value, @"[^a-zA-Z0-9]+", "-");
     }
 }

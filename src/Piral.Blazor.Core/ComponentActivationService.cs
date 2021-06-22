@@ -66,6 +66,7 @@ namespace Piral.Blazor.Core
         public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
         {
             var component = GetComponent(componentName);
+
             try
             {
                 _active.Add(new ActiveComponent(componentName, referenceId, component, args));

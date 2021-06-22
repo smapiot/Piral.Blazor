@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Reflection;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Piral.Blazor.Core
 {
@@ -25,7 +25,7 @@ namespace Piral.Blazor.Core
 
         public void ForgetComponent(Type type) => _manipulator.RemoveComponentInitializer(type);
 
-        public IServiceProvider Configure(Assembly assembly)
+        private IServiceProvider ConfigureLocal(Assembly assembly)
         {
             var sc = new ServiceCollection();
             var configure = assembly
@@ -34,7 +34,31 @@ namespace Piral.Blazor.Core
                 ?.GetMethod("ConfigureServices", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(IServiceCollection) }, null);
 
             configure?.Invoke(null, new[] { sc });
-            var child = sc.BuildServiceProvider();
+            return sc.BuildServiceProvider();
+        }
+
+        private IServiceProvider ConfigureGlobal(Assembly assembly)
+        {
+            var sc = new ServiceCollection();
+            var configure = assembly
+                .GetTypes()
+                .FirstOrDefault(x => string.Equals(x.Name, "Module", StringComparison.Ordinal))
+                ?.GetMethod("ConfigureShared", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(IServiceCollection) }, null);
+
+            configure?.Invoke(null, new[] { sc });
+            return sc.BuildServiceProvider();
+        }
+
+        public IServiceProvider Configure(Assembly assembly)
+        {
+            var child = ConfigureLocal(assembly);
+
+            if (_parent is IGlobalServiceProvider provider)
+            {
+                var shared = ConfigureGlobal(assembly);
+                provider.AddProvider(shared);
+            }
+
             return new NestedServiceProvider(_parent, child);
         }
     }

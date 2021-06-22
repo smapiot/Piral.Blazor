@@ -12,6 +12,7 @@ namespace Piral.Blazor.Core
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             var baseAddress = new Uri(builder.HostEnvironment.BaseAddress);
+            var factory = new PiralServiceProviderFactory();
 
             builder.RootComponents
                 .Add<App>("#blazor-root");
@@ -21,6 +22,8 @@ namespace Piral.Blazor.Core
                 .AddSingleton<IComponentActivationService, ComponentActivationService>()
                 .AddSingleton<IModuleContainerService, ModuleContainerService>();
 
+            builder.ConfigureContainer(factory);
+
             var host = builder.Build();
 
             Configure(host);
@@ -28,9 +31,7 @@ namespace Piral.Blazor.Core
             await host.RunAsync();
         }
 
-        private static void Configure(WebAssemblyHost host)
-        {
+        private static void Configure(WebAssemblyHost host) => 
             JSBridge.Configure(host.Services.GetRequiredService<HttpClient>(), host);
-        }
     }
 }
