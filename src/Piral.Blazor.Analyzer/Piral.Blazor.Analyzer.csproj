@@ -4,7 +4,7 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-        <VersionPrefix>3.2.1</VersionPrefix>
+        <VersionPrefix>3.2.2</VersionPrefix>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
         <PackageIcon>icon.png</PackageIcon>

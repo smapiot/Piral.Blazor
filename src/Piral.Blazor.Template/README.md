@@ -2,14 +2,14 @@
 
 <!-- ! Version is "hardcoded" !  -->
 
-[![Nuget](https://img.shields.io/badge/nuget-v3.2.1-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/3.2.1)
+[![Nuget](https://img.shields.io/badge/nuget-v3.2.2-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/3.2.2)
 
 For getting started easily, a Blazor template is available. This will set up a Blazor pilet for the preferred Piral instance.
 
 ### Installation
 
 - Make sure that [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet/3.1) is installed.
-- Run `dotnet new --install Piral.Blazor.Template::3.2.1` to install the project template globally.
+- Run `dotnet new --install Piral.Blazor.Template::3.2.2` to install the project template globally.
 
 ### Usage
 
