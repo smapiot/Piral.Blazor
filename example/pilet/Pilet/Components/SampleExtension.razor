@@ -1,0 +1,26 @@
+﻿@attribute [PiralExtension("sample-extension")]
+
+<div>@Parameters.Test</div>
+<ul>@foreach (var item in Parameters.Items)
+{
+    <li>@item</li>
+}
+</ul>
+<div>@Message</div>
+<Extension Name="react-counter" Params="new { count = 10, diff = 3 }" />
+
+@code {
+    public class IParams
+    {
+        public string Test { get; set; }
+        public string[] Items { get; set; }
+    }
+
+    [Parameter]
+    [PiralParameter("params")]
+    public IParams Parameters { get; set; }
+
+    [Parameter]
+    [PiralParameter("params.Test")]
+    public string Message { get; set; }
+}
