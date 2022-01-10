@@ -1,14 +1,15 @@
 ﻿using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Piral.Blazor.Core
 {
     public readonly struct ActiveComponent
     {
-        private static readonly IDictionary<string, object> emptyArgs = new Dictionary<string, object>();
+        private static readonly IDictionary<string, JsonElement> emptyArgs = new Dictionary<string, JsonElement>();
 
-        public ActiveComponent(string componentName, string referenceId, Type component, IDictionary<string, object> args)
+        public ActiveComponent(string componentName, string referenceId, Type component, IDictionary<string, JsonElement> args)
         {
             ComponentName = componentName ?? string.Empty;
             ReferenceId = referenceId ?? string.Empty;

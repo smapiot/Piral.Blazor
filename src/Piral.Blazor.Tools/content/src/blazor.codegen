@@ -37,17 +37,7 @@ const project = require(resolve(piralPiletFolder, pjson));
 const appdir = resolve(piralPiletFolder, 'node_modules', project.piral.name);
 const appFrameworkDir = resolve(appdir, 'app', '_framework');
 const piletManifest = require(resolve(sourceDir, bbjson));
-
-try {
-  let piralVersion = require(resolve(appdir, pjson)).piralCLI.version;
-  if (!piralVersion) throw new Error();
-} catch {
-  try {
-    piralVersion = require('piral-cli/package.json').version;
-  } catch {
-    throw new Error('The Piral cli version could not be determined.');
-  }
-}
+const piralVersion = getPiralVersion();
 
 const definePathCode = `function computePath() {
   try {
@@ -60,7 +50,7 @@ const definePathCode = `function computePath() {
   }
   return '/';
 }
-const path = computePath();\n
+const path = computePath();
 `;
 
 /** Extracts the project name from a blazor project folder */
@@ -73,6 +63,24 @@ function getProjectName(projectFolder) {
       return resolve(basename(matches[0]).replace('.csproj', ''));
     });
   });
+}
+
+function getPiralVersion() {
+  try {
+    const { version } = require(resolve(appdir, pjson)).piralCLI;
+
+    if (!version) {
+      throw new Error();
+    }
+
+    return version;
+  } catch {
+    try {
+      return require('piral-cli/package.json').version;
+    } catch {
+      throw new Error('The version of the `piral-cli` could not be determined.');
+    }
+  }
 }
 
 async function buildSolution() {
@@ -311,7 +319,6 @@ module.exports = async function () {
   // Analyzer
   const projectName = await getProjectName(blazorprojectfolder);
   const command = `dotnet ${analyzer} --base-dir "${blazorprojectfolder}" --dll-name "${projectName}.dll" --target-framework "${targetFramework}" --configuration "${configuration}"`;
-
   // Setup file
   const setupFilePath = join(blazorprojectfolder, setupfile).replace(/\\/g, '/');
   const setupFileExists = existsSync(setupFilePath);
