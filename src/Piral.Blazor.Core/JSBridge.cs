@@ -1,9 +1,10 @@
 ﻿using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -21,7 +22,7 @@ namespace Piral.Blazor.Core
         }
 
         [JSInvokable]
-        public static Task<string> Activate(string componentName, IDictionary<string, object> args)
+        public static Task<string> Activate(string componentName, IDictionary<string, JsonElement> args)
         {
             var guidSegment = Guid.NewGuid().ToString().Split('-').Last();
             var referenceId = $"piral-blazor-{Sanitize(componentName)}-{guidSegment}";

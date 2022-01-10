@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Microsoft.AspNetCore.Components;
+using System.Text.Json;
 
 namespace Piral.Blazor.Core
 {
@@ -62,7 +63,7 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public void ActivateComponent(string componentName, string referenceId, IDictionary<string, object> args)
+        public void ActivateComponent(string componentName, string referenceId, IDictionary<string, JsonElement> args)
         {
             var component = GetComponent(componentName);
             try

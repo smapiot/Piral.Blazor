@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -17,7 +17,7 @@ namespace Piral.Blazor.Core
             public IDictionary<string, object> @params { get; set; }
         }
 
-        public static IDictionary<string, object> AdjustArguments(this Type type, IDictionary<string, object> args)
+        public static IDictionary<string, object> AdjustArguments(this Type type, IDictionary<string, JsonElement> args)
         {
             if (!allowedArgs.TryGetValue(type, out var allowed))
             {
@@ -29,43 +29,125 @@ namespace Piral.Blazor.Core
                 allowedArgs.Add(type, allowed);
             }
 
-            var allArgs = new List<IDictionary<string, object>> { args };
-            try
-            {
-                var routeParams = JsonSerializer.Deserialize<Match>(JsonSerializer.Serialize(args["match"]))?.@params;
+            var allArgs = args.Select(m => m).ToList();
 
-                if (!routeParams.IsNullOrEmpty())
-                {
-                    allArgs.Add(routeParams);
-                }
+            if (args.TryGetValue("match", out var match) && match.TryGetProperty("params", out var routeParams))
+            {
+                allArgs.AddRange(routeParams.EnumerateObject().Select(m => new KeyValuePair<string, JsonElement>(m.Name, m.Value)));
             }
-            catch (KeyNotFoundException) { }
 
             var adjustedArgs = allArgs
-                .SelectMany(dict => dict)
                 .Where(m => allowed.Contains(m.Key))
                 .ToDictionary(m => m.Key, m => type.NormalizeValue(m.Key, m.Value));
 
             return adjustedArgs;
         }
 
-        public static object NormalizeValue(this Type type, string key, object value)
+        public static object NormalizeValue(this Type type, string key, JsonElement value)
         {
             var property = type.GetProperty(key);
             var propType = property.PropertyType;
 
-            if (value is null || (value is JsonElement e && e.ValueKind == JsonValueKind.Null))
+            if (value.ValueKind == JsonValueKind.Null)
             {
                 return propType.GetDefaultValue();
             }
-
-            if (value.GetType() == propType)
+            else if (typeof(bool) == propType)
+            {
+                return value.GetBoolean();
+            }
+            else if (typeof(int) == propType)
+            {
+                return value.GetInt32();
+            }
+            else if (typeof(uint) == propType)
+            {
+                return value.GetUInt32();
+            }
+            else if (typeof(short) == propType)
+            {
+                return value.GetInt16();
+            }
+            else if (typeof(ushort) == propType)
+            {
+                return value.GetUInt16();
+            }
+            else if (typeof(long) == propType)
+            {
+                return value.GetInt64();
+            }
+            else if (typeof(ulong) == propType)
+            {
+                return value.GetUInt64();
+            }
+            else if (typeof(string) == propType)
+            {
+                return value.GetString();
+            }
+            else if (typeof(byte) == propType)
+            {
+                return value.GetByte();
+            }
+            else if (typeof(sbyte) == propType)
+            {
+                return value.GetSByte();
+            }
+            else if (typeof(DateTime) == propType)
+            {
+                return value.GetDateTime();
+            }
+            else if (typeof(DateTimeOffset) == propType)
+            {
+                return value.GetDateTimeOffset();
+            }
+            else if (typeof(double) == propType)
+            {
+                return value.GetDouble();
+            }
+            else if (typeof(float) == propType)
+            {
+                return value.GetSingle();
+            }
+            else if (typeof(Guid) == propType)
+            {
+                return value.GetGuid();
+            }
+            else if (typeof(decimal) == propType)
+            {
+                return value.GetDecimal();
+            }
+            else if (value.GetType() == propType)
             {
                 return value;
             }
+            else
+            {
+                return value.ToObject(propType);
+            }
+        }
 
-            var converter = TypeDescriptor.GetConverter(propType);
-            return converter.ConvertFrom(value.ToString());
+        public static T ToObject<T>(this JsonElement element)
+        {
+            var bufferWriter = new ArrayBufferWriter<byte>();
+
+            using (var writer = new Utf8JsonWriter(bufferWriter))
+            {
+                element.WriteTo(writer);
+            }
+
+            return JsonSerializer.Deserialize<T>(bufferWriter.WrittenSpan);
+        }
+
+        public static object ToObject(this JsonElement element, Type type)
+        {
+            var bufferWriter = new ArrayBufferWriter<byte>();
+
+            using (var writer = new Utf8JsonWriter(bufferWriter))
+            {
+                element.WriteTo(writer);
+            }
+
+            return JsonSerializer.Deserialize(bufferWriter.WrittenSpan, type);
         }
 
         public static object GetDefaultValue(this Type t)
