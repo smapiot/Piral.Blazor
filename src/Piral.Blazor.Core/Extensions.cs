@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Piral.Blazor.Utils;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -10,7 +11,15 @@ namespace Piral.Blazor.Core
 {
     static class Extensions
     {
-        private static readonly IDictionary<Type, string[]> allowedArgs = new Dictionary<Type, string[]>();
+        private static readonly IDictionary<Type, PropertyDesc[]> allowedArgs = new Dictionary<Type, PropertyDesc[]>();
+        private static readonly JsonElement JsonNull = JsonDocument.Parse("null").RootElement;
+
+        class PropertyDesc
+        {
+            public PropertyInfo Property;
+            public string OriginalName;
+            public string[] ParentPath;
+        }
 
         private class Match
         {
@@ -22,30 +31,76 @@ namespace Piral.Blazor.Core
             if (!allowedArgs.TryGetValue(type, out var allowed))
             {
                 allowed = type.GetProperties()
-                    .Where(m => m.GetCustomAttributes(typeof(ParameterAttribute), true).Any())
-                    .Select(m => m.Name)
+                    .Where(m => m.GetCustomAttributes<ParameterAttribute>(true).Any())
+                    .SelectMany(m =>
+                    {
+                        var parameters = m.GetCustomAttributes<PiralParameterAttribute>(true).ToArray();
+
+                        if (parameters.Length == 0)
+                        {
+                            return new PropertyDesc[]
+                            {
+                                new PropertyDesc
+                                {
+                                    Property = m,
+                                    OriginalName = m.Name,
+                                    ParentPath = new string[0],
+                                }
+                            };
+                        }
+
+                        return parameters.Select(p =>
+                        {
+                            var segments = p.JsParameterName.Split(".");
+
+                            return new PropertyDesc
+                            {
+                                Property = m,
+                                OriginalName = segments.Last(),
+                                ParentPath = segments.Take(segments.Length - 1).ToArray(),
+                            };
+                        }).ToArray();
+                    })
                     .ToArray();
 
                 allowedArgs.Add(type, allowed);
             }
 
-            var allArgs = args.Select(m => m).ToList();
-
-            if (args.TryGetValue("match", out var match) && match.TryGetProperty("params", out var routeParams))
-            {
-                allArgs.AddRange(routeParams.EnumerateObject().Select(m => new KeyValuePair<string, JsonElement>(m.Name, m.Value)));
-            }
-
-            var adjustedArgs = allArgs
-                .Where(m => allowed.Contains(m.Key))
-                .ToDictionary(m => m.Key, m => type.NormalizeValue(m.Key, m.Value));
-
-            return adjustedArgs;
+            return allowed.ToDictionary(m => m.Property.Name, m => m.Property.WithValue(args.GetValue(m)));
         }
 
-        public static object NormalizeValue(this Type type, string key, JsonElement value)
+        private static JsonElement GetValue(this IDictionary<string, JsonElement> obj, PropertyDesc property)
         {
-            var property = type.GetProperty(key);
+            if (property.ParentPath.Length > 0)
+            {
+                if (!obj.TryGetValue(property.ParentPath[0], out var parent))
+                {
+                    return JsonNull;
+                }
+
+                for (var i = 1; i < property.ParentPath.Length; i++)
+                {
+                    if (!parent.TryGetProperty(property.ParentPath[1], out parent))
+                    {
+                        return JsonNull;
+                    }
+                }
+
+                if (parent.TryGetProperty(property.OriginalName, out var result))
+                {
+                    return result;
+                }
+            }
+            else if (obj.TryGetValue(property.OriginalName, out var result))
+            {
+                return result;
+            }
+
+            return JsonNull;
+        }
+
+        private static object WithValue(this PropertyInfo property, JsonElement value)
+        {
             var propType = property.PropertyType;
 
             if (value.ValueKind == JsonValueKind.Null)
@@ -126,19 +181,7 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public static T ToObject<T>(this JsonElement element)
-        {
-            var bufferWriter = new ArrayBufferWriter<byte>();
-
-            using (var writer = new Utf8JsonWriter(bufferWriter))
-            {
-                element.WriteTo(writer);
-            }
-
-            return JsonSerializer.Deserialize<T>(bufferWriter.WrittenSpan);
-        }
-
-        public static object ToObject(this JsonElement element, Type type)
+        private static object ToObject(this JsonElement element, Type type)
         {
             var bufferWriter = new ArrayBufferWriter<byte>();
 
@@ -150,7 +193,7 @@ namespace Piral.Blazor.Core
             return JsonSerializer.Deserialize(bufferWriter.WrittenSpan, type);
         }
 
-        public static object GetDefaultValue(this Type t)
+        private static object GetDefaultValue(this Type t)
         {
             if (t.IsValueType)
             {
@@ -160,11 +203,6 @@ namespace Piral.Blazor.Core
             {
                 return null;
             }
-        }
-
-        public static bool IsNullOrEmpty<TKey, TValue>(this IDictionary<TKey, TValue> collection)
-        {
-            return (collection == null || collection.Count < 1);
         }
 
         public static IEnumerable<Type> GetTypesWithAttributes(this Assembly assembly,
