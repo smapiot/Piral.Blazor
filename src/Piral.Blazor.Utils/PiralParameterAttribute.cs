@@ -6,7 +6,9 @@ namespace Piral.Blazor.Utils
     public sealed class PiralParameterAttribute : Attribute
     {
         /// <summary>
-        /// Registers a Piral extension for a specific extensionId
+        /// Determines the original name of the parameter in JS code.
+        /// Alternatively, allows you to specify sub-queries, such as "a.b.c", which
+        /// may be relevant to avoid creating temporary classes.
         /// </summary>
         public PiralParameterAttribute(string jsParameterName)
         {
@@ -14,7 +16,7 @@ namespace Piral.Blazor.Utils
         }
 
         /// <summary>
-        /// The extension id provided. This has to correspond to the name of an extension slot.
+        /// The original parameter name of the JS object.
         /// </summary>
         public string JsParameterName { get; }
     }

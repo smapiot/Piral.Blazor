@@ -9,21 +9,23 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 <img src="https://piral.io/logo-simple.f8667084.png" height="10">
 &nbsp;Piral</a>.
 
-> This is the branch for Blazor 3.2.0 with .NET Core 3.1. If you want to switch to Blazor with the newer .NET 5.0, please refer to the [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) branch
+> This is the branch for Blazor 3.2.0 with .NET Core 3.1. If you want to switch to Blazor with the newer .NET 5.0, please refer to the [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) or the [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch
 
 ## Getting Started
 
 > You'll also find some information in the [piral-blazor](https://www.npmjs.com/package/piral-blazor) package.
 
+### Creating a Blazor Pilet
+
 To create a Blazor pilet using Piral.Blazor, two approaches can be used:
 
-#### 1. Creating a Blazor pilet from scratch.
+#### 1. From Scratch
 
 In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](/src/Piral.Blazor.Template)
 
 [![Using Piral Blazor](https://img.youtube.com/vi/8kWkkNgE3ao/0.jpg)](https://www.youtube.com/watch?v=8kWkkNgE3ao)
 
-#### 2. Transforming an existing Blazor application into a pilet
+#### 2. Transforming an Existing Application
 
 In this case, follow these steps:
 
@@ -31,8 +33,8 @@ In this case, follow these steps:
 
    ```xml
    <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <RazorLangVersion>3.0</RazorLangVersion>
+       <TargetFramework>netstandard2.1</TargetFramework>
+       <RazorLangVersion>3.0</RazorLangVersion>
        <PiralInstance>my-piral-instance</PiralInstance>
    </PropertyGroup>
    ```
@@ -81,7 +83,7 @@ To use an extension within a Blazor component, the `<Extension>` component can b
 <Extension Name="my-counter-slot"></Extension>
 ```
 
-### Components, tiles, menu items...
+### Components, Tiles, Menu Items...
 
 To register a Blazor component for use in the pilet API, the `PiralComponent` attribute can be used in two ways:
 
@@ -100,6 +102,60 @@ export default (app: PiletApi) => {
 	app.registerTile(app.fromBlazor('my-tile'));
 };
 ```
+
+### Using Parameters
+
+Parameters (or "props") are properly forwarded. Usually, it should be sufficient to declare `[Parameter]` properties in the Blazor components. Besides, there are more advanced ways.
+
+For instance, to access the `params` prop of an extension you can use the `PiralParameter` attribute. This way, you can "forward" props from JS to the .NET name of your choice (in this case "params" is renamed to "Parameters").
+
+```razor
+@attribute [PiralExtension("sample-extension")]
+
+<div>@Parameters.Test</div>
+
+@code {
+    public class MyParams
+    {
+        public string Test { get; set; }
+    }
+
+    [Parameter]
+    [PiralParameter("params")]
+    public MyParams Parameters { get; set; }
+}
+```
+
+For the serialization you'll need to use either a `JsonElement` or something that can be serialized into. In this case, we used a class called `MyParams`.
+
+With the `PiralParameter` you can also access / forward children to improve object access:
+
+```razor
+@attribute [PiralExtension("sample-extension")]
+
+<div>@Message</div>
+
+@code {
+    [Parameter]
+    [PiralParameter("params.Test")]
+    public string Message { get; set; }
+}
+```
+
+That way, we only have a property `Message` which reflects the `params.Test`. So if the extension is called like that:
+
+```jsx
+<app.Extension
+    name="sample-extension"
+    params={
+        {
+            Test: "Hello world",
+        }
+    }
+/>
+```
+
+It would just work.
 
 ### Dependency injection
 
