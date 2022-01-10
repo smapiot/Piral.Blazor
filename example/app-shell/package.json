@@ -24,7 +24,7 @@
   "dependencies": {
     "piral": "0.14.6",
     "piral-blazor": "0.14.6",
-    "blazor": "5.0.x"
+    "blazor": "6.0.x"
   },
   "devDependencies": {
     "@types/node": "latest",
