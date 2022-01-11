@@ -221,6 +221,22 @@ const extractBlazorVersion = manifest =>
         .map(x => x.match(/^dotnet\.(.*?)\.js/))
         .find(x => x)[1];
 
+/* 
+More advanced version compare that can handle versions 
+like '6.0.1.89w2uv5kng' vs '6.0.1.qyg28onfw5' -> converts to 6.0.1.0 and compares them number by number
+but only compare the first 2 numbers, major and minor versions, ignore patch versions and so on
+*/
+function isVersionSame (oldVer, newVer) {
+  const oldParts = oldVer.split('.')
+  const newParts = newVer.split('.')
+  for (var i = 0; i < newParts.length; i++) {
+    const a = ~~newParts[i] // parse int
+    const b = ~~oldParts[i] // parse int
+    if (a > b) return true
+    if (a < b) return false
+  }
+  return true
+}
 /*
  *
  * ----------------------------------------------------------------------------------------------------------------------
@@ -262,11 +278,11 @@ module.exports = async function () {
 
     const appshellBlazorVersion = extractBlazorVersion(originalManifest);
 
-    if (appshellBlazorVersion.slice(0, -2) !== piletBlazorVersion.slice(0, -2)) {
+    if (!isVersionSame(appshellBlazorVersion, piletBlazorVersion)) {
       throw new Error(`The Blazor versions of your pilet and Piral Instance are incompatible:
-      - Piral Instance Blazor version = ${appshellBlazorVersion}
-      - Pilet Blazor version = ${piletBlazorVersion}`);
-    }
+     - Piral Instance Blazor version = ${appshellBlazorVersion}
+     - Pilet Blazor version = ${piletBlazorVersion}`);
+   } 
   } else {
     blazorFiles = [getAllKeys(piletManifest, 'assembly'), getAllKeys(piletManifest, 'pdb')];
 
