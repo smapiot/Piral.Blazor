@@ -40,6 +40,15 @@
                 Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
         />
     </Target>
+
+    <Target Name="ModifyPackageJson" AfterTargets="CopyScaffoldFiles">
+        <Exec Command="echo 'Modifying the package.json file...'"/>
+        <WriteLinesToFile
+                File="$(_piletFolderPath)\package.json"
+                Lines="$([System.IO.File]::ReadAllText($(_piletFolderPath)\package.json).Replace('&quot;version&quot;: &quot;1.0.0&quot;','&quot;version&quot;: &quot;$(Version)&quot;'))"  
+                Overwrite="true"
+                Encoding="UTF-8"/>
+    </Target>
         
     <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
         <Exec Command="echo 'Modifying the index file...'"/>
