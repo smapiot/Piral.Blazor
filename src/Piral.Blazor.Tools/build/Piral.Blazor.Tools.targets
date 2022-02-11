@@ -35,7 +35,7 @@
 	</Target>
 
     <Target Name="InstallDependencies" AfterTargets="AddPackageJsonOverwrites">
-		<Exec Command="echo 'Installing dependencies...'"/>
+		    <Exec Command="echo 'Installing dependencies...'"/>
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install --silent"/> 
     </Target> 
     
@@ -55,7 +55,7 @@
         />
     </Target>
 
-	<Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
+	  <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
         <Exec Command="echo 'Modifying the index file...'"/>
         <WriteLinesToFile
                 File="$(_srcPath)\index.tsx"
