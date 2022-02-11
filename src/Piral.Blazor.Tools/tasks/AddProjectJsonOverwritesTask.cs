@@ -21,10 +21,12 @@ namespace Piral.Blazor.Tools.Tasks
             try
             { 
                 if (!File.Exists(PackageJsonPath)) {
+                    Log.LogError("The file 'PackageJsonPath' does not exist."); 
                     return false;
                 }
                 if (!File.Exists(OverwritesPath)) 
                 {
+                    Log.LogWarning("No 'overwrite.package.json'-file found to merge into package.json.");
                     return true;
                 }
                 var result = new JObject();
@@ -37,8 +39,9 @@ namespace Piral.Blazor.Tools.Tasks
 
                 File.WriteAllText(PackageJsonPath, JsonConvert.SerializeObject(result, Formatting.Indented));
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Log.LogError(error.Message);
                 return false;
             }
             return true; 
