@@ -1,13 +1,16 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <ItemGroup>
-        <Content Update="wwwroot\**" CopyToOutputDirectory="Always" />
+	<UsingTask TaskName="SetProjectJsonVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
+	<UsingTask TaskName="AddProjectJsonOverwritesTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
+	
+	<ItemGroup>
+        <Content Update="wwwroot\**" CopyToOutputDirectory="Always" /> 
     </ItemGroup>
     
     <PropertyGroup>
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
-        <_piletUrl>http://localhost:1234</_piletUrl>
+        <_piletUrl>http://localhost:1234</_piletUrl> 
         <_srcPath>$(_piletFolderPath)\src</_srcPath>
         <_bundler>webpack5</_bundler>
     </PropertyGroup>
@@ -18,12 +21,23 @@
     
     <Target Name="Scaffold">
         <Exec Command="echo 'Scaffolding the pilet...'"/>
-        <Exec Command="npx --package=piral-cli -y pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry) --bundler $(_bundler)"/>
+        <Exec Command="npx --package=piral-cli -y pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry) --bundler $(_bundler) --no-install"/>
     </Target>
 
-    <Target Name="InstallDependencies" AfterTargets="Scaffold">
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install"/>
-    </Target>
+	<Target Name="SetPackageJsonVersion" AfterTargets="Scaffold">
+		<Exec Command="echo 'Set version in package.json file...'"/>
+		<SetProjectJsonVersionTask PackageJsonPath="$(_piletFolderPath)\package.json" Version="$(Version)"  /> 
+	</Target>
+
+	<Target Name="AddPackageJsonOverwrites" AfterTargets="SetPackageJsonVersion">
+		<Exec Command="echo 'Add overwrites to package.json file...'"/>
+		<AddProjectJsonOverwritesTask PackageJsonPath="$(_piletFolderPath)\package.json" OverwritesPath="$(MSBuildProjectDirectory)\overwrite.package.json"  />
+	</Target>
+
+    <Target Name="InstallDependencies" AfterTargets="AddPackageJsonOverwrites">
+		    <Exec Command="echo 'Installing dependencies...'"/>
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install --silent"/> 
+    </Target> 
     
     <Target Name="DeleteIndexTsx" AfterTargets="Scaffold">
         <Delete Files="$(_srcPath)\index.tsx" />
@@ -41,16 +55,7 @@
         />
     </Target>
 
-    <Target Name="ModifyPackageJson" AfterTargets="CopyScaffoldFiles">
-        <Exec Command="echo 'Modifying the package.json file...'"/>
-        <WriteLinesToFile
-                File="$(_piletFolderPath)\package.json"
-                Lines="$([System.IO.File]::ReadAllText($(_piletFolderPath)\package.json).Replace('&quot;version&quot;: &quot;1.0.0&quot;','&quot;version&quot;: &quot;$(Version)&quot;'))"  
-                Overwrite="true"
-                Encoding="UTF-8"/>
-    </Target>
-        
-    <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
+	  <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
         <Exec Command="echo 'Modifying the index file...'"/>
         <WriteLinesToFile
                 File="$(_srcPath)\index.tsx"
@@ -68,7 +73,7 @@
                 Encoding="UTF-8"/>
     </Target>
 
-    <Target Name="InstallAnalyzer" AfterTargets="CopyScaffoldFiles" DependsOnTargets="RunResolvePackageDependencies">
+	<Target Name="InstallAnalyzer" AfterTargets="CopyScaffoldFiles" DependsOnTargets="RunResolvePackageDependencies">
         <PropertyGroup>
             <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
         </PropertyGroup>

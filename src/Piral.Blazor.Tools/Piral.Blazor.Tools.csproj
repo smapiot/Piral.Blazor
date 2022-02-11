@@ -10,7 +10,7 @@
         <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>netstandard2.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,5 +18,10 @@
         <None Include="build\**" Pack="True" PackagePath="build\" />
         <None Include="content\**" Pack="True" PackagePath="content\" />
     </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" /> 
+    </ItemGroup> 
 
 </Project>
