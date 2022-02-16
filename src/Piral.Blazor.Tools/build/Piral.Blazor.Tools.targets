@@ -1,114 +1,101 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-	<UsingTask TaskName="SetProjectJsonVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
-	<UsingTask TaskName="AddProjectJsonOverwritesTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
-	
-	<ItemGroup>
-        <Content Update="wwwroot\**" CopyToOutputDirectory="Always" /> 
+    <UsingTask TaskName="SetProjectJsonVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
+    <UsingTask TaskName="AddProjectJsonOverwritesTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
+    <UsingTask TaskName="CollectStaticWebAssetsTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
+
+    <ItemGroup>
+        <Content Update="wwwroot\**" CopyToOutputDirectory="Always" />
     </ItemGroup>
-    
+
     <PropertyGroup>
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
-        <_piletUrl>http://localhost:1234</_piletUrl> 
+        <_piletUrl>http://localhost:1234</_piletUrl>
         <_srcPath>$(_piletFolderPath)\src</_srcPath>
-        <_bundler>webpack5</_bundler>
+        <_bundler>$(Bundler)</_bundler>
     </PropertyGroup>
 
-    <Target Name="SetupPiral" BeforeTargets="Build">
-        <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)')"/>
+    <Target Name="SetupPiral" DependsOnTargets="ResolveStaticWebAssetsInputs" AfterTargets="Build">
+        <CallTarget Targets="Scaffold" Condition="!Exists('$(_piletFolderPath)')" />
+        <CallTarget Targets="CollectStaticWebAssets" Condition="Exists('$(_piletFolderPath)')" />
     </Target>
-    
+
     <Target Name="Scaffold">
-        <Exec Command="echo 'Scaffolding the pilet...'"/>
-        <Exec Command="npx --package=piral-cli -y pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry) --bundler $(_bundler) --no-install"/>
+        <Exec Command="echo 'Scaffolding the pilet...'" />
+        <Exec Command="npx --package=piral-cli -y pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry) --bundler $(_bundler) --no-install" />
     </Target>
 
-	<Target Name="SetPackageJsonVersion" AfterTargets="Scaffold">
-		<Exec Command="echo 'Set version in package.json file...'"/>
-		<SetProjectJsonVersionTask PackageJsonPath="$(_piletFolderPath)\package.json" Version="$(Version)"  /> 
-	</Target>
+    <Target Name="SetPackageJsonVersion" AfterTargets="Scaffold">
+        <Exec Command="echo 'Set version in package.json file...'" />
+        <SetProjectJsonVersionTask PackageJsonPath="$(_piletFolderPath)\package.json" Version="$(Version)" />
+    </Target>
 
-	<Target Name="AddPackageJsonOverwrites" AfterTargets="SetPackageJsonVersion">
-		<Exec Command="echo 'Add overwrites to package.json file...'"/>
-		<AddProjectJsonOverwritesTask PackageJsonPath="$(_piletFolderPath)\package.json" OverwritesPath="$(MSBuildProjectDirectory)\overwrite.package.json"  />
-	</Target>
+    <Target Name="AddPackageJsonOverwrites" AfterTargets="SetPackageJsonVersion">
+        <Exec Command="echo 'Add overwrites to package.json file...'" />
+        <AddProjectJsonOverwritesTask PackageJsonPath="$(_piletFolderPath)\package.json" OverwritesPath="$(MSBuildProjectDirectory)\overwrite.package.json" />
+    </Target> 
+
+    <Target Name="CollectStaticWebAssets" AfterTargets="SetPackageJsonVersion">
+        <Exec Command="echo 'Copying static web assets to blazor project via task...'" />
+        <CollectStaticWebAssetsTask AssetPath="%(StaticWebAsset.Identity)" TargetPath="$(_srcPath)/_content" ProjectsWithStaticFiles="$(ProjectsWithStaticFiles)" />
+    </Target>
 
     <Target Name="InstallDependencies" AfterTargets="AddPackageJsonOverwrites">
-		    <Exec Command="echo 'Installing dependencies...'"/>
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install --silent"/> 
-    </Target> 
-    
+        <Exec Command="echo 'Installing dependencies...'" />
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install --silent" />
+    </Target>
+
     <Target Name="DeleteIndexTsx" AfterTargets="Scaffold">
         <Delete Files="$(_srcPath)\index.tsx" />
     </Target>
-    
-    <Target Name="CopyScaffoldFiles" AfterTargets="DeleteIndexTsx" >
+
+    <Target Name="CopyScaffoldFiles" AfterTargets="DeleteIndexTsx">
         <ItemGroup>
-            <_piletFiles Include="$(MSBuildThisFileDirectory)..\content\**\*.*"/>
+            <_piletFiles Include="$(MSBuildThisFileDirectory)..\content\**\*.*" />
         </ItemGroup>
-        <Exec Command="echo 'Copying the files...'"/>
-        <Copy
-                SourceFiles="@(_piletFiles)"
-                DestinationFiles="@(_piletFiles -> '$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
-                Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
-        />
+        <Exec Command="echo 'Copying the files...'" />
+        <Copy SourceFiles="@(_piletFiles)" DestinationFiles="@(_piletFiles -> '$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')" Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')" />
     </Target>
 
-	  <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
-        <Exec Command="echo 'Modifying the index file...'"/>
-        <WriteLinesToFile
-                File="$(_srcPath)\index.tsx"
-                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)').Replace('**BlazorProjectName**','$(MSBuildProjectName)'))"
-                Overwrite="true"
-                Encoding="UTF-8"/>
+    <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
+        <Exec Command="echo 'Modifying the index file...'" />
+        <WriteLinesToFile File="$(_srcPath)\index.tsx" Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)').Replace('**BlazorProjectName**','$(MSBuildProjectName)'))" Overwrite="true" Encoding="UTF-8" />
     </Target>
 
     <Target Name="ModifyCodegen" AfterTargets="CopyScaffoldFiles">
-        <Exec Command="echo 'Modifying the codegen...'"/>
-        <WriteLinesToFile
-                File="$(_srcPath)\blazor.codegen"
-                Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))"
-                Overwrite="true"
-                Encoding="UTF-8"/>
+        <Exec Command="echo 'Modifying the codegen...'" />
+        <WriteLinesToFile File="$(_srcPath)\blazor.codegen" Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))" Overwrite="true" Encoding="UTF-8" />
     </Target>
 
-	<Target Name="InstallAnalyzer" AfterTargets="CopyScaffoldFiles" DependsOnTargets="RunResolvePackageDependencies">
+    <Target Name="InstallAnalyzer" AfterTargets="CopyScaffoldFiles" DependsOnTargets="RunResolvePackageDependencies">
         <PropertyGroup>
             <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
         </PropertyGroup>
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')"/>
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')" />
         <!-- Install analyzer with version that matches the Tools version -->
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local"/>
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
     </Target>
-    
+
     <Target Name="RestoreTools" BeforeTargets="Build" Condition="Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool restore"/>
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool restore" />
     </Target>
-    
+
     <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
         <PropertyGroup>
             <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
         </PropertyGroup>
-        <WriteLinesToFile
-                File="$(MSBuildProjectDirectory)\wwwroot\index.html"
-                Lines="$(_indexHtml)"
-                Overwrite="true"
-                Encoding="UTF-8"/>
+        <WriteLinesToFile File="$(MSBuildProjectDirectory)\wwwroot\index.html" Lines="$(_indexHtml)" Overwrite="true" Encoding="UTF-8" />
     </Target>
 
     <Target Name="CopyScopedCss" AfterTargets="Build">
         <!-- Always create an empty one first to avoid breaking index.tsx -->
-        <Touch Files="$(_srcPath)\$(MSBuildProjectName).styles.css" AlwaysCreate="true"/>
-        <Copy
-                SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css"
-                DestinationFolder="$(_srcPath)"
-                Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')"
-        />
+        <Touch Files="$(_srcPath)\$(MSBuildProjectName).styles.css" AlwaysCreate="true" />
+        <Copy SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css" DestinationFolder="$(_srcPath)" Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')" />
     </Target>
-    
+
     <Target Name="HotReload" AfterTargets="CopyScopedCss">
-        <Touch Files="$(_srcPath)\blazor.codegen" Condition="Exists('$(_srcPath)\blazor.codegen')"/>
+        <Touch Files="$(_srcPath)\blazor.codegen" Condition="Exists('$(_srcPath)\blazor.codegen')" />
     </Target>
-    
+
 </Project>
