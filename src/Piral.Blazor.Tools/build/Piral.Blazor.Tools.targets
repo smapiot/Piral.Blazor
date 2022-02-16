@@ -55,17 +55,31 @@
             <_piletFiles Include="$(MSBuildThisFileDirectory)..\content\**\*.*" />
         </ItemGroup>
         <Exec Command="echo 'Copying the files...'" />
-        <Copy SourceFiles="@(_piletFiles)" DestinationFiles="@(_piletFiles -> '$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')" Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Copy 
+            SourceFiles="@(_piletFiles)"
+            DestinationFiles="@(_piletFiles -> '$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
+            Condition="!Exists('$(_piletFolderPath)\%(RecursiveDir)%(Filename)%(Extension)')"
+        />
     </Target>
 
     <Target Name="ModifyIndexTsx" AfterTargets="CopyScaffoldFiles">
         <Exec Command="echo 'Modifying the index file...'" />
-        <WriteLinesToFile File="$(_srcPath)\index.tsx" Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)').Replace('**BlazorProjectName**','$(MSBuildProjectName)'))" Overwrite="true" Encoding="UTF-8" />
+        <WriteLinesToFile
+            File="$(_srcPath)\index.tsx"
+            Lines="$([System.IO.File]::ReadAllText($(_srcPath)\index.tsx).Replace('**PiralInstance**','$(PiralInstance)').Replace('**BlazorProjectName**','$(MSBuildProjectName)'))"
+            Overwrite="true"
+            Encoding="UTF-8"
+        />
     </Target>
 
     <Target Name="ModifyCodegen" AfterTargets="CopyScaffoldFiles">
         <Exec Command="echo 'Modifying the codegen...'" />
-        <WriteLinesToFile File="$(_srcPath)\blazor.codegen" Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))" Overwrite="true" Encoding="UTF-8" />
+        <WriteLinesToFile
+            File="$(_srcPath)\blazor.codegen"
+            Lines="$([System.IO.File]::ReadAllText($(_srcPath)\blazor.codegen).Replace('**MSBUILD_TargetFramework**','$(TargetFramework)').Replace('**MSBUILD_TargetFrameworkMoniker**','$(TargetFrameworkMoniker)'))"
+            Overwrite="true"
+            Encoding="UTF-8"
+        />
     </Target>
 
     <Target Name="InstallAnalyzer" AfterTargets="CopyScaffoldFiles" DependsOnTargets="RunResolvePackageDependencies">
@@ -85,13 +99,22 @@
         <PropertyGroup>
             <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
         </PropertyGroup>
-        <WriteLinesToFile File="$(MSBuildProjectDirectory)\wwwroot\index.html" Lines="$(_indexHtml)" Overwrite="true" Encoding="UTF-8" />
+        <WriteLinesToFile
+            File="$(MSBuildProjectDirectory)\wwwroot\index.html"
+            Lines="$(_indexHtml)"
+            Overwrite="true"
+            Encoding="UTF-8"
+        />
     </Target>
 
     <Target Name="CopyScopedCss" AfterTargets="Build">
         <!-- Always create an empty one first to avoid breaking index.tsx -->
         <Touch Files="$(_srcPath)\$(MSBuildProjectName).styles.css" AlwaysCreate="true" />
-        <Copy SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css" DestinationFolder="$(_srcPath)" Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')" />
+        <Copy
+            SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css"
+            DestinationFolder="$(_srcPath)"
+            Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')"
+        />
     </Target>
 
     <Target Name="HotReload" AfterTargets="CopyScopedCss">
