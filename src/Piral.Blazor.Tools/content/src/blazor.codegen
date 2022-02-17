@@ -34,7 +34,10 @@ const sourceDir = resolve(wwwRootDir, '_framework');
 const projectAssets = require(resolve(objectsDir, pajson));
 
 const project = require(resolve(piralPiletFolder, pjson));
-const appdir = resolve(piralPiletFolder, 'node_modules', project.piral.name);
+let appdir = resolve(piralPiletFolder, 'node_modules', project.piral.name);
+if(!existsSync(appdir + '/app') && existsSync(appdir + '/dist')){
+  appdir = appdir + "/dist";
+}
 const appFrameworkDir = resolve(appdir, 'app', '_framework');
 const piletManifest = require(resolve(sourceDir, bbjson));
 const piralVersion = getPiralVersion();
