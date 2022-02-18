@@ -21,6 +21,7 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.0.0" />
+      <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" /> 
     </ItemGroup> 
 
