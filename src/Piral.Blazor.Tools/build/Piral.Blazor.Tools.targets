@@ -102,7 +102,7 @@
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
     </Target>
 
-    <Target Name="RestoreTools" BeforeTargets="Build" Condition="Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
+    <Target Name="RestoreTools" BeforeTargets="Build" Condition="Exists('$(_piletFolderPath)') AND Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool restore" />
     </Target>
 
