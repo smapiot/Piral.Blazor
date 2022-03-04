@@ -52,7 +52,7 @@
 		<Delete Files="$(_piletFolderPath)\package-lock.json" />
 	</Target>
 
-    <Target Name="SetMonorepoAppShell" AfterTargets="RemoveNodeModulesAndLockFile">
+    <Target Name="SetMonorepoAppShell" AfterTargets="RemoveNodeModulesAndLockFile" Condition="'$(Monorepo)'=='enable'">
         <Exec Command="echo 'Symlinking to the piral instance inside the monorepo...'" />
         <SetMonorepoPiralInstanceTask PiralInstancePath="$(PiralInstance)" PiletPath="$(_piletFolderPath)" />
     </Target>
