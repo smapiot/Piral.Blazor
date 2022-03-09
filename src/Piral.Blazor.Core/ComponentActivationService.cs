@@ -81,7 +81,7 @@ namespace Piral.Blazor.Core
 
         public void DeactivateComponent(string componentName, string referenceId)
         {
-            var removed = _active.RemoveAll(m => m.ComponentName == componentName && m.ReferenceId == referenceId);
+            var removed = RemoveActivations(m => m.ComponentName == componentName && m.ReferenceId == referenceId);
 
             if (removed > 0)
             {
@@ -91,7 +91,7 @@ namespace Piral.Blazor.Core
 
         public void DeactivateComponent(string componentName)
         {
-            var removed = _active.RemoveAll(m => m.ComponentName == componentName);
+            var removed = RemoveActivations(m => m.ComponentName == componentName);
 
             if (removed > 0)
             {
@@ -113,6 +113,46 @@ namespace Piral.Blazor.Core
                     _logger.LogInformation($"registered {componentName}");
                 }
             }
+        }
+
+        private int RemoveActivations(Predicate<ActiveComponent> isActivation)
+        {            
+            var removed = 0;
+            var last = _active.Count - 1;
+
+            // Complicated algorithm to still allow Blazor projections to happen, otherwise
+            // we'll end up with some dead references if the element to be removed is not
+            // at the tail.
+            for (var i = last; i >= 0; i--)
+            {
+                var m = _active[i];
+
+                // Either we find the component already
+                if (isActivation(m))
+                {
+                    // Then let's decide if we can just remove it or mark it as "deprecated" (still giving it a placeholder)
+                    if (last == i)
+                    {
+                        _active.RemoveAt(i);
+                        last--;
+                    }
+                    else
+                    {
+                        _active[i] = new ActiveComponent(m.ComponentName, m.ReferenceId);
+                    }
+                    
+                    removed++;
+                }
+                // or we find elements that have been marked, but can now be removed.
+                else if (last == i && m.IsDeleted)
+                {
+                    _active.RemoveAt(i);
+                    removed++;
+                    last--;
+                }
+            }
+
+            return removed;
         }
 
         private Type GetComponent(string componentName)
