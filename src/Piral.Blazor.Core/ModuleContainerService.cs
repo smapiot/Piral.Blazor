@@ -9,12 +9,12 @@ namespace Piral.Blazor.Core
 {
     public class ModuleContainerService : IModuleContainerService
     {
-        private readonly IServiceProvider _parent;
+        private readonly IPiralServiceProvider _provider;
         private readonly Manipulator<ModuleContainerService> _manipulator;
 
-        public ModuleContainerService(IServiceProvider provider, ILogger<ModuleContainerService> logger)
+        public ModuleContainerService(IPiralServiceProvider provider, ILogger<ModuleContainerService> logger)
         {
-            _parent = provider;
+            _provider = provider;
             _manipulator = new Manipulator<ModuleContainerService>(logger);
         }
 
@@ -25,7 +25,7 @@ namespace Piral.Blazor.Core
 
         public void ForgetComponent(Type type) => _manipulator.RemoveComponentInitializer(type);
 
-        private IServiceProvider ConfigureLocal(Assembly assembly)
+        public IServiceProvider Configure(Assembly assembly)
         {
             var sc = new ServiceCollection();
             var configure = assembly
@@ -34,32 +34,8 @@ namespace Piral.Blazor.Core
                 ?.GetMethod("ConfigureServices", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(IServiceCollection) }, null);
 
             configure?.Invoke(null, new[] { sc });
-            return sc.BuildServiceProvider();
-        }
-
-        private IServiceProvider ConfigureGlobal(Assembly assembly)
-        {
-            var sc = new ServiceCollection();
-            var configure = assembly
-                .GetTypes()
-                .FirstOrDefault(x => string.Equals(x.Name, "Module", StringComparison.Ordinal))
-                ?.GetMethod("ConfigureShared", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(IServiceCollection) }, null);
-
-            configure?.Invoke(null, new[] { sc });
-            return sc.BuildServiceProvider();
-        }
-
-        public IServiceProvider Configure(Assembly assembly)
-        {
-            var child = ConfigureLocal(assembly);
-
-            if (_parent is IGlobalServiceProvider provider)
-            {
-                var shared = ConfigureGlobal(assembly);
-                provider.AddProvider(shared);
-            }
-
-            return new NestedServiceProvider(_parent, child);
+            _provider.AddPiletServices(sc);
+            return _provider;
         }
     }
 }
