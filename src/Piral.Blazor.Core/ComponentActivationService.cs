@@ -89,6 +89,21 @@ namespace Piral.Blazor.Core
             }
         }
 
+        public void ReactivateComponent(string componentName, string referenceId, IDictionary<string, JsonElement> args)
+        {
+            for (var i = 0; i < _active.Count; i++)
+            {
+                var component = _active[i];
+
+                if (component.ComponentName == componentName && component.ReferenceId == referenceId)
+                {
+                    _active[i] = new ActiveComponent(componentName, referenceId, component.Component, args);
+                    Changed?.Invoke(this, EventArgs.Empty);
+                    break;
+                }
+            }
+        }
+
         public void DeactivateComponent(string componentName)
         {
             var removed = RemoveActivations(m => m.ComponentName == componentName);

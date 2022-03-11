@@ -42,6 +42,13 @@ namespace Piral.Blazor.Core
         }
 
         [JSInvokable]
+        public static Task Reactivate(string componentName, string referenceId, IDictionary<string, JsonElement> args)
+        {
+            ActivationService?.ReactivateComponent(componentName, referenceId, args);
+            return Task.FromResult(true);
+        }
+
+        [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
             var dll = await _client.GetStreamAsync(url);
