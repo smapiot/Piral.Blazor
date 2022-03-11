@@ -24,7 +24,7 @@
 
     <Target Name="Scaffold">
         <Exec Command="echo 'Scaffolding the pilet...'" />
-        <Exec Command="npx --package=piral-cli -y pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry) --bundler $(_bundler) --no-install" />
+        <Exec Command="npx --package=piral-cli -y -- pilet new $(PiralInstance) --base $(_piletFolderBase) --target $(MSBuildProjectName) --registry $(NpmRegistry) --bundler $(_bundler) --no-install" />
     </Target>
 
     <Target Name="SetPackageJsonVersion" AfterTargets="Scaffold">
