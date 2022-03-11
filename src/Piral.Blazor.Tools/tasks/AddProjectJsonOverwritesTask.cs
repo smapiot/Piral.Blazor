@@ -17,20 +17,20 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
-            //System.Diagnostics.Debugger.Launch(); 
             try
             { 
                 if (!File.Exists(PackageJsonPath)) {
-                    Log.LogError("The file 'PackageJsonPath' does not exist."); 
+                    Log.LogError($"The file '{PackageJsonPath}' does not exist."); 
                     return false;
                 }
+
                 if (!File.Exists(OverwritesPath)) 
                 {
-                    Log.LogWarning("No 'overwrite.package.json'-file found to merge into package.json.");
+                    Log.LogMessage("No 'overwrite.package.json' file found to merge into package.json.");
                     return true;
                 }
-                var result = new JObject();
 
+                var result = new JObject();
                 var packageJson = JObject.Parse(File.ReadAllText(PackageJsonPath)); 
                 var overwritesJson = JObject.Parse(File.ReadAllText(OverwritesPath)); 
 
@@ -44,6 +44,7 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogError(error.Message);
                 return false;
             }
+
             return true; 
         }
     }

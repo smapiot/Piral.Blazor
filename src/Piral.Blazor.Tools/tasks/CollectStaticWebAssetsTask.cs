@@ -18,7 +18,6 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
-            // System.Diagnostics.Debugger.Launch(); 
             try
             {
                 foreach (string projectName in ProjectsWithStaticFiles)
@@ -34,7 +33,7 @@ namespace Piral.Blazor.Tools.Tasks
                         }
 
                         File.Copy(AssetPath, $"{folderName}/{fileName}", true); 
-                        Log.LogMessage($"File '{AssetPath}' copied.");  
+                        Log.LogMessage($"File '{AssetPath}' copied to '{folderName}/{fileName}'.");  
                     }
                 }
             }
@@ -43,6 +42,7 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogError(error.Message);  
                 return false;
             }
+
             return true; 
         }
     }

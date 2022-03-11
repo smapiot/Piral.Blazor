@@ -20,22 +20,19 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
-            // System.Diagnostics.Debugger.Launch(); 
             try
             {
                 var piletPackageJsonFile = $"{PiletPath}/package.json";
 
                 if (!File.Exists(piletPackageJsonFile))
                 {
-                    Log.LogError($"Could not find pilet package.json file here:'{piletPackageJsonFile}'."); 
+                    Log.LogError($"Could not find the pilet's package.json file at '{piletPackageJsonFile}'."); 
                     return false;
                 }
 
                 var piralInstanceVersion = GetPiralInstanceVersion();
                 var piralInstancePathInPackageJson = $"file:..\\\\{PiralInstancePath.Replace("\\", "\\\\").Replace("/", "\\\\")}";
-
-                var piletPackageJsonText = File.ReadAllText(piletPackageJsonFile); 
-                piletPackageJsonText = piletPackageJsonText.Replace(piralInstancePathInPackageJson, piralInstanceVersion);
+                var piletPackageJsonText = File.ReadAllText(piletPackageJsonFile).Replace(piralInstancePathInPackageJson, piralInstanceVersion);
                 File.WriteAllText(piletPackageJsonFile, piletPackageJsonText); 
             }
             catch (Exception error)
@@ -43,7 +40,8 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogError(error.Message);  
                 return false;
             }
-            return true; 
+
+            return true;
         }
 
         private dynamic GetPiralInstanceVersion(){
@@ -52,12 +50,11 @@ namespace Piral.Blazor.Tools.Tasks
             var piralInstancePackageJsonFile = $"{piralInstanceDirectory}/package.json";
             
             if (!File.Exists(piralInstancePackageJsonFile)) {
-                Log.LogError($"Could not find piral instance package.json file here:'{piralInstancePackageJsonFile}'."); 
+                Log.LogError($"Could not find Piral instance package.json file at '{piralInstancePackageJsonFile}'."); 
                 throw new FileNotFoundException();
             }
 
-            var piralInstancePackageJsonData = JsonConvert.DeserializeObject<PackageJsonObject>(File.ReadAllText(piralInstancePackageJsonFile));
-            return piralInstancePackageJsonData.Version; 
+            return JsonConvert.DeserializeObject<PackageJsonObject>(File.ReadAllText(piralInstancePackageJsonFile)).Version;
         }
     }
 }

@@ -15,14 +15,14 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
-            //System.Diagnostics.Debugger.Launch(); 
             try
             {
                 if (!File.Exists(PackageJsonPath))
                 {
-                    Log.LogError("The file 'PackageJsonPath' does not exist."); 
+                    Log.LogError($"The file '{PackageJsonPath}' does not exist."); 
                     return false;
                 }
+
                 var packageJsonText = File.ReadAllText(PackageJsonPath); 
                 packageJsonText = packageJsonText.Replace(@"""version"": ""1.0.0""", $@"""version"": ""{Version}""");
                 File.WriteAllText(PackageJsonPath, packageJsonText);
@@ -32,6 +32,7 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogError(error.Message);  
                 return false;
             }
+
             return true; 
         }
     }
