@@ -22,9 +22,9 @@
     "postUpgrade": ""
   },
   "dependencies": {
-    "piral": "0.14.6",
-    "piral-blazor": "0.14.6",
-    "blazor": "6.0.x"
+    "piral": "next",
+    "piral-blazor": "next",
+    "blazor": "next"
   },
   "devDependencies": {
     "@types/node": "latest",
@@ -33,8 +33,8 @@
     "@types/react-router": "latest",
     "@types/react-router-dom": "latest",
     "cross-env": "^7.0.2",
-    "piral-cli": "0.14.6",
-    "piral-cli-webpack": "0.14.6",
+    "piral-cli": "next",
+    "piral-cli-webpack": "next",
     "typescript": "latest"
   }
 }
