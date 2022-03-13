@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30002.166
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.Utils", "Piral.Blazor.Utils\Piral.Blazor.Utils.csproj", "{90D35A17-8F4C-4BE0-9D2C-4E5269E21D04}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.Core", "Piral.Blazor.Core\Piral.Blazor.Core.csproj", "{84C87783-E8AF-46A6-937E-FEE23360000B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Piral.Blazor.Template", "Piral.Blazor.Template\Piral.Blazor.Template.csproj", "{B1CBACE3-91BC-42E6-B1C0-51BA3877319C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.Template", "Piral.Blazor.Template\Piral.Blazor.Template.csproj", "{B1CBACE3-91BC-42E6-B1C0-51BA3877319C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Piral.Blazor.Tools", "Piral.Blazor.Tools\Piral.Blazor.Tools.csproj", "{7223A622-A5F6-40F2-8642-FF5850249392}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.Tools", "Piral.Blazor.Tools\Piral.Blazor.Tools.csproj", "{7223A622-A5F6-40F2-8642-FF5850249392}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Piral.Blazor.Analyzer", "Piral.Blazor.Analyzer\Piral.Blazor.Analyzer.csproj", "{B158A713-50AE-498F-8746-1F63CBB656C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.Analyzer", "Piral.Blazor.Analyzer\Piral.Blazor.Analyzer.csproj", "{B158A713-50AE-498F-8746-1F63CBB656C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
