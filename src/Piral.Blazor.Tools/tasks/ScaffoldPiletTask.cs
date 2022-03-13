@@ -65,6 +65,11 @@ namespace Piral.Blazor.Tools.Tasks
         {
             Log.LogMessage($"Checking the pilet infrastructure (Version={ToolsVersion}, Framework={Framework})...");
 
+            if (!Directory.Exists(Target))
+            {
+                Directory.CreateDirectory(Target);
+            }
+
             try
             {
                 var target = Path.Combine(Target, ProjectName);
@@ -96,7 +101,12 @@ namespace Piral.Blazor.Tools.Tasks
                 {
                     Log.LogMessage($"Scaffolding the pilet infrastructure using piral-cli@{CliVersion}...");
 
-                    Directory.Delete(target, true);
+                    if (Directory.Exists(target))
+                    {
+                        Directory.Delete(target, true);   
+                    }
+                    
+                    Directory.CreateDirectory(target);
 
                     Process
                         .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet new {PiralInstance} --base {target} --registry {NpmRegistry} --bundler {Bundler} --no-install")

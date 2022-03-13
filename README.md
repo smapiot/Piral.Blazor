@@ -1,6 +1,6 @@
 [![Piral Logo](https://github.com/smapiot/piral/raw/main/docs/assets/logo.png)](https://piral.io)
 
-# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/master/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-5.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-5.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/piral.svg)](https://github.com/smapiot/piral/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/community) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
+# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/blazor-6.0/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-6.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-6.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/piral.svg)](https://github.com/smapiot/piral/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/community) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
 
 All .NET things to make <a href="https://blazor.net" rel="nofollow"><img
 src="https://devblogs.microsoft.com/aspnet/wp-content/uploads/sites/16/2019/04/BrandBlazor_nohalo_1000x.png"
@@ -9,7 +9,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 <img src="https://piral.io/logo-simple.f8667084.png" height="10">
 &nbsp;Piral</a>.
 
-> This is the branch for Blazor 6.0.0 with .NET 6.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2) or [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) branch
+> This is the branch for Blazor 6.0 with .NET 6.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2) or [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) branch.
 
 ## Getting Started
 
@@ -17,7 +17,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 
 ### Creating a Blazor Pilet
 
-To create a Blazor pilet using Piral.Blazor, two approaches can be used:
+To create a Blazor pilet using `Piral.Blazor`, two approaches can be used:
 
 #### 1. From Scratch
 
@@ -33,14 +33,14 @@ In this case, follow these steps:
 
    ```xml
    <PropertyGroup>
-       <TargetFramework>net5.0</TargetFramework>
+       <TargetFramework>net6.0</TargetFramework>
        <PiralInstance>my-piral-instance</PiralInstance>
    </PropertyGroup>
    ```
 
    (You can optionally also specify an `NpmRegistry` property. The default for this is set to `https://registry.npmjs.org/`)
 
-2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages, make sure they both have a version number of format `5.0.x`
+2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages, make sure they both have a version number of format `6.0.x`
 3. rename `Program.cs` to `Module.cs`, and make sure to make the `Main` method an empty method.
 4. Build the project. The first time you do this, this can take some time as it will fully scaffold the pilet.
 
@@ -82,7 +82,7 @@ To use an extension within a Blazor component, the `<Extension>` component can b
 <Extension Name="my-counter-slot"></Extension>
 ```
 
-### Components, Tiles, Menu Items...
+### Components, Tiles, Menu Items, and Others
 
 To register a Blazor component for use in the pilet API, the `PiralComponent` attribute can be used in two ways:
 
@@ -156,7 +156,7 @@ That way, we only have a property `Message` which reflects the `params.Test`. So
 
 It would just work.
 
-### Dependency injection
+### Dependency Injection
 
 You can define services for dependency injection in a `Module` class. The name of the class is arbitrary, but it shows the difference to the standard `Program` class, which should not be available, as mentioned before.
 
@@ -177,9 +177,9 @@ public class Module
 }
 ```
 
-## Running and debugging the pilet :rocket:
+## Running and Debugging the Pilet :rocket:
 
-From your blazor project folder, run your pilet via the Piral CLI:
+From your Blazor project folder, run your pilet via the Piral CLI:
 
 ```sh
 cd ../piral~/<project-name>
