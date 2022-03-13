@@ -28,6 +28,9 @@ namespace Piral.Blazor.Tools.Tasks
         public string ContentFolder { get; set; }
 
         [Required]
+        public string Source { get; set; }
+
+        [Required]
         public string Target { get; set; }
 
         [Required]
@@ -47,7 +50,7 @@ namespace Piral.Blazor.Tools.Tasks
 
         private static string GetRelativePath(string relativeTo, string path)
         {
-            var source = new Uri(relativeTo);
+            var source = new Uri($"{relativeTo}{Path.DirectorySeparatorChar}");
             var target = source.MakeRelativeUri(new Uri(path));
             var rel = Uri
                 .UnescapeDataString(target.ToString())
@@ -74,6 +77,7 @@ namespace Piral.Blazor.Tools.Tasks
             {
                 var target = Path.Combine(Target, ProjectName);
                 var infoFile = Path.Combine(target, ".blazorrc");
+                var emulator = Path.Combine(Source, PiralInstance.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
 
                 if (File.Exists(infoFile))
                 {
@@ -103,13 +107,13 @@ namespace Piral.Blazor.Tools.Tasks
 
                     if (Directory.Exists(target))
                     {
-                        Directory.Delete(target, true);   
+                        Directory.Delete(target, true);
                     }
-                    
+
                     Directory.CreateDirectory(target);
 
                     Process
-                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet new {PiralInstance} --base {target} --registry {NpmRegistry} --bundler {Bundler} --no-install")
+                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet new {emulator} --base {target} --registry {NpmRegistry} --bundler {Bundler} --no-install")
                         .WaitForExit();
                 }
 
@@ -133,7 +137,7 @@ namespace Piral.Blazor.Tools.Tasks
             }
             catch (Exception error)
             {
-                Log.LogError(error.Message);  
+                Log.LogError(error.Message);
                 return false;
             }
 

@@ -26,6 +26,7 @@
             <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
         </PropertyGroup>
         <ScaffoldPiletTask
+            Source="$(MSBuildProjectDirectory)"
             Target="$(_piletFolderBase)"
             Framework="$(TargetFramework)"
             FrameworkMoniker="$(TargetFrameworkMoniker)"
