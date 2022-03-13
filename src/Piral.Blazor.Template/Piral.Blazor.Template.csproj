@@ -10,7 +10,7 @@
     <Description>Template for creating a new Piral Blazor pilet.</Description>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>aspnet;templates;blazor;spa;piral;microfrontend;pilet;mife;react</PackageTags>
-    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
     <TargetFramework>net6.0</TargetFramework>

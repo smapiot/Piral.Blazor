@@ -8,7 +8,7 @@
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
         <PackageIcon>icon.png</PackageIcon>
-        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
+        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
         

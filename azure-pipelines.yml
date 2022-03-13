@@ -21,7 +21,6 @@ steps:
     version: '6.0.x'
     packageType: sdk
 
-
 - script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
   displayName: 'Build Core'
 
@@ -33,6 +32,11 @@ steps:
 
 - script: dotnet build ./src/Piral.Blazor.Tools --configuration $(buildConfiguration)
   displayName: 'Build Tools'
+
+- script: |
+    dotnet build tests
+    dotnet test tests
+  displayName: 'Run Tests'
 
 - script: |
     dotnet build ./src/Piral.Blazor.Core --configuration Release --output ./dist/release
