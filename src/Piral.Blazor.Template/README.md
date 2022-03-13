@@ -11,8 +11,7 @@ For getting started easily, a Blazor template is available. This will set up a B
 
 ### Usage
 
-Create a new folder in your solution (the folder name will be used as your
-project name) and run the template using
+Create a new folder in your solution (the folder name will be used as your project name) and run the template using
 
 ```sh
 dotnet new blazorpilet --piralInstance <piral-instance-name>
