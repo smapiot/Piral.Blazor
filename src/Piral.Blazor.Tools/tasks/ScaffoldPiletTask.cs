@@ -63,7 +63,7 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
-            Log.LogMessage($"Checking the pilet infrastructure...");
+            Log.LogMessage($"Checking the pilet infrastructure (Version={ToolsVersion}, Framework={Framework})...");
 
             try
             {
@@ -86,7 +86,7 @@ namespace Piral.Blazor.Tools.Tasks
                         return true;
                     }
 
-                    Log.LogMessage($"Updating the pilet infrastructure...");
+                    Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
 
                     Process
                         .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet update latest --base {target}")
@@ -94,7 +94,7 @@ namespace Piral.Blazor.Tools.Tasks
                 }
                 else
                 {
-                    Log.LogMessage($"Scaffolding the pilet infrastructure...");
+                    Log.LogMessage($"Scaffolding the pilet infrastructure using piral-cli@{CliVersion}...");
 
                     Directory.Delete(target, true);
 
@@ -103,6 +103,7 @@ namespace Piral.Blazor.Tools.Tasks
                         .WaitForExit();
                 }
 
+                Log.LogMessage($"Updating source files from '{ContentFolder}/**/*'...");
                 var files = Directory.GetFiles(ContentFolder, "*", SearchOption.AllDirectories);
 
                 foreach (var sourceFile in files)

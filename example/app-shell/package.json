@@ -23,8 +23,8 @@
   },
   "dependencies": {
     "piral": "next",
-    "piral-blazor": "6.0.0-pre.20220313.1",
-    "blazor": "next"
+    "piral-blazor": "next",
+    "blazor": "6.0.1-pre.20220313.2"
   },
   "devDependencies": {
     "@types/node": "latest",
