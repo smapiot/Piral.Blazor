@@ -17,6 +17,8 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
+            Log.LogMessage("Add overwrites to package.json file...");
+            
             try
             { 
                 if (!File.Exists(PackageJsonPath)) {

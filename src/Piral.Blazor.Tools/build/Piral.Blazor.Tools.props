@@ -6,5 +6,6 @@
         <Bundler>webpack5</Bundler>
         <ProjectsWithStaticFiles></ProjectsWithStaticFiles>
         <Monorepo></Monorepo>
+        <PiralCliVersion>latest<PiralCliVersion>
     </PropertyGroup>
 </Project>

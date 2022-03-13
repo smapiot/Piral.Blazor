@@ -20,9 +20,11 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
+            Log.LogMessage("Symlinking to the piral instance inside the monorepo...");
+
             try
             {
-                var piletPackageJsonFile = $"{PiletPath}/package.json";
+                var piletPackageJsonFile = Path.Combine(PiletPath, "package.json");
 
                 if (!File.Exists(piletPackageJsonFile))
                 {
@@ -31,8 +33,13 @@ namespace Piral.Blazor.Tools.Tasks
                 }
 
                 var piralInstanceVersion = GetPiralInstanceVersion();
-                var piralInstancePathInPackageJson = $"file:..\\\\{PiralInstancePath.Replace("\\", "\\\\").Replace("/", "\\\\")}";
-                var piletPackageJsonText = File.ReadAllText(piletPackageJsonFile).Replace(piralInstancePathInPackageJson, piralInstanceVersion);
+                var escapedPath = PiralInstancePath
+                    .Replace("\\", Path.DirectorySeparatorChar != '/' ? "\\\\" : "/")
+                    .Replace("/", Path.DirectorySeparatorChar != '/' ? "\\\\" : "/");
+                var piralInstancePathInPackageJson = $"file:..\\\\{escapedPath}";
+                var piletPackageJsonText = File.ReadAllText(piletPackageJsonFile)
+                    .Replace(piralInstancePathInPackageJson, piralInstanceVersion);
+
                 File.WriteAllText(piletPackageJsonFile, piletPackageJsonText); 
             }
             catch (Exception error)
@@ -45,16 +52,17 @@ namespace Piral.Blazor.Tools.Tasks
         }
 
         private dynamic GetPiralInstanceVersion(){
-            var emulatorDirectory = Path.GetDirectoryName(PiralInstancePath);
-            var piralInstanceDirectory = emulatorDirectory.Replace("\\dist\\emulator", "");
-            var piralInstancePackageJsonFile = $"{piralInstanceDirectory}/package.json";
+            var piralInstanceDirectory = Path.GetDirectoryName(PiralInstancePath)
+                .Replace("\\dist\\emulator", "");
+            var piralInstancePackageJsonFile = Path.Combine(piralInstanceDirectory, "package.json");
             
             if (!File.Exists(piralInstancePackageJsonFile)) {
                 Log.LogError($"Could not find Piral instance package.json file at '{piralInstancePackageJsonFile}'."); 
                 throw new FileNotFoundException();
             }
 
-            return JsonConvert.DeserializeObject<PackageJsonObject>(File.ReadAllText(piralInstancePackageJsonFile)).Version;
+            var content = File.ReadAllText(piralInstancePackageJsonFile);
+            return JsonConvert.DeserializeObject<PackageJsonObject>(content).Version;
         }
     }
 }

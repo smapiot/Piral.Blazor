@@ -15,6 +15,8 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
+            Log.LogMessage("Set version in package.json file...");
+
             try
             {
                 if (!File.Exists(PackageJsonPath))
@@ -23,8 +25,9 @@ namespace Piral.Blazor.Tools.Tasks
                     return false;
                 }
 
-                var packageJsonText = File.ReadAllText(PackageJsonPath); 
-                packageJsonText = packageJsonText.Replace(@"""version"": ""1.0.0""", $@"""version"": ""{Version}""");
+                var packageJsonText = File.ReadAllText(PackageJsonPath)
+                    .Replace(@"""version"": ""1.0.0""", $@"""version"": ""{Version}""");
+
                 File.WriteAllText(PackageJsonPath, packageJsonText);
             }
             catch (Exception error)

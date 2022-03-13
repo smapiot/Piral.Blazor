@@ -18,6 +18,8 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
+            Log.LogMessage($"Copying static web assets to blazor project via task...");
+
             try
             {
                 foreach (string projectName in ProjectsWithStaticFiles)
@@ -25,15 +27,16 @@ namespace Piral.Blazor.Tools.Tasks
                     if (AssetPath.Contains(projectName))
                     {
                         var fileName = Path.GetFileName(AssetPath);
-                        var folderName = $"{TargetPath}/{projectName}";
+                        var folderName = Path.Combine(TargetPath, projectName);
+                        var filePath = Path.Combine(folderName, fileName);
 
                         if (!Directory.Exists(folderName))
                         {
                             Directory.CreateDirectory(folderName);
                         }
 
-                        File.Copy(AssetPath, $"{folderName}/{fileName}", true); 
-                        Log.LogMessage($"File '{AssetPath}' copied to '{folderName}/{fileName}'.");  
+                        File.Copy(AssetPath, filePath, true); 
+                        Log.LogMessage($"File '{AssetPath}' copied to '{filePath}'.");  
                     }
                 }
             }
