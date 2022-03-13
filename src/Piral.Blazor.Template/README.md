@@ -1,13 +1,13 @@
 # Piral.Blazor.Template
 
-[![Nuget](https://img.shields.io/badge/nuget-v6.0.0-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/6.0.0)
+[![Nuget](https://img.shields.io/badge/nuget-v5.0.1-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/5.0.1)
 
 For getting started easily, a Blazor template is available. This will set up a Blazor pilet for the preferred Piral instance.
 
 ### Installation
 
-- Make sure that [.NET 5 SDK](https://dotnet.microsoft.com/download/dotnet/6.0) is installed.
-- Run `dotnet new --install Piral.Blazor.Template::6.0.0` to install the project template globally.
+- Make sure that [.NET 5 SDK](https://dotnet.microsoft.com/download/dotnet/5.0) is installed.
+- Run `dotnet new --install Piral.Blazor.Template::5.0.1` to install the project template globally.
 
 ### Usage
 
@@ -22,5 +22,4 @@ You can optionally also specify a `--npmRegistry` option. The default for this i
 
 The Piral instance name should be the name of the Piral instance as it is published on npm.
 
-Build the project. The first time you do this, this can take some time as it
-will scaffold the pilet.
+Build the project. The first time you do this, this can take some time as it will scaffold the pilet.

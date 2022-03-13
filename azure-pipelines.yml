@@ -34,6 +34,11 @@ steps:
   displayName: 'Build Tools'
 
 - script: |
+    dotnet build tests
+    dotnet test tests
+  displayName: 'Run Tests'
+
+- script: |
     dotnet build ./src/Piral.Blazor.Core --configuration Release --output ./dist/release
     dotnet build ./src/Piral.Blazor.Core --configuration Debug --output ./dist/debug
     cd dist
