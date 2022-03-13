@@ -98,7 +98,7 @@ namespace Piral.Blazor.Tools.Tasks
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
 
                     Process
-                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet update latest --base {target}")
+                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet upgrade latest --base {target}")
                         .WaitForExit();
                 }
                 else
@@ -119,13 +119,16 @@ namespace Piral.Blazor.Tools.Tasks
 
                 Log.LogMessage($"Updating source files from '{ContentFolder}/**/*'...");
                 var files = Directory.GetFiles(ContentFolder, "*", SearchOption.AllDirectories);
+                var packageJsonFile = Path.Combine(target, "package.json");
+                var packageJsonContent = File.ReadAllText(packageJsonFile);
+                var piralInstanceName = JsonConvert.DeserializeObject<PackageJsonObject>(packageJsonContent).Piral.Name;
 
                 foreach (var sourceFile in files)
                 {
                     var fn = GetRelativePath(ContentFolder, sourceFile);
                     var targetFile = Path.Combine(target, fn);
                     var content = File.ReadAllText(sourceFile)
-                        .Replace("**PiralInstance**", PiralInstance)
+                        .Replace("**PiralInstance**", piralInstanceName)
                         .Replace("**BlazorProjectName**", ProjectName)
                         .Replace("**MSBUILD_TargetFramework**", Framework)
                         .Replace("**MSBUILD_TargetFrameworkMoniker**", FrameworkMoniker);

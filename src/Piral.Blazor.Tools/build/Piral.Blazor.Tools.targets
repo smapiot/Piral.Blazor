@@ -54,7 +54,7 @@
     <Target Name="CollectStaticWebAssets" AfterTargets="SetPackageJsonVersion">
         <CollectStaticWebAssetsTask
             AssetPath="%(StaticWebAsset.Identity)"
-            TargetPath="$(_srcPath)\src\_content"
+            TargetPath="$(_piletFolderPath)\src\_content"
             ProjectsWithStaticFiles="$(ProjectsWithStaticFiles)" />
     </Target>
 
@@ -101,16 +101,16 @@
 
     <Target Name="CopyScopedCss" AfterTargets="Build">
         <!-- Always create an empty one first to avoid breaking index.tsx -->
-        <Touch Files="$(_srcPath)\src\$(MSBuildProjectName).styles.css" AlwaysCreate="true" />
+        <Touch Files="$(_piletFolderPath)\src\$(MSBuildProjectName).styles.css" AlwaysCreate="true" />
         <Copy
             SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css"
-            DestinationFolder="$(_srcPath)\src"
+            DestinationFolder="$(_piletFolderPath)\src"
             Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')"
         />
     </Target>
 
     <Target Name="HotReload" AfterTargets="CopyScopedCss">
-        <Touch Files="$(_srcPath)\src\blazor.codegen" Condition="Exists('$(_srcPath)\blazor.codegen')" />
+        <Touch Files="$(_piletFolderPath)\src\blazor.codegen" Condition="Exists('$(_piletFolderPath)\blazor.codegen')" />
     </Target>
 
 </Project>
