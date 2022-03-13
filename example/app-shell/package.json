@@ -24,7 +24,7 @@
   "dependencies": {
     "piral": "next",
     "piral-blazor": "next",
-    "blazor": "6.0.1-pre.20220313.6"
+    "blazor": "~6.0"
   },
   "devDependencies": {
     "@types/node": "latest",

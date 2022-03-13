@@ -98,7 +98,7 @@ namespace Piral.Blazor.Tools.Tasks
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
 
                     Process
-                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet upgrade latest --base {target}")
+                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet upgrade {emulator} --base {target}")
                         .WaitForExit();
                 }
                 else
