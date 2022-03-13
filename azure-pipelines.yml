@@ -16,11 +16,10 @@ variables:
 steps:
 
 - task: UseDotNet@2
-  displayName: Install dotnet 6 SDK
+  displayName: Install dotnet 5 SDK
   inputs:
-    version: '6.0.x'
+    version: '5.0.x'
     packageType: sdk
-
 
 - script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
   displayName: 'Build Core'

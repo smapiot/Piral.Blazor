@@ -2,13 +2,13 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
         <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-        <VersionPrefix>6.0.1</VersionPrefix>
+        <VersionPrefix>5.0.1</VersionPrefix>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
         <PackageIcon>icon.png</PackageIcon>
-        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/master/LICENSE</PackageLicenseUrl>
+        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-5.0/LICENSE</PackageLicenseUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
         
