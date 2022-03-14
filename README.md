@@ -46,6 +46,84 @@ In this case, follow these steps:
 
 ## Usage
 
+### Build Configuration
+
+The `*.csproj` file of your pilet offers you some configuration steps to actually tailor the build to your needs.
+
+Here is a minimal example configuration:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PiralInstance>../../app-shell/dist/emulator/app-shell-1.0.0.tgz</PiralInstance>
+  </PropertyGroup>
+
+  <!-- ... -->
+</Project>
+```
+
+This one gets the app shell from a local directory. Realistically, you'd have your app shell on a registry. In case of the default registry it could look like
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PiralInstance>@mycompany/app-shell</PiralInstance>
+  </PropertyGroup>
+
+  <!-- ... -->
+</Project>
+```
+
+but realistically you'd publish the app shell to a private registry on a different URL. In such scenarios you'd also make use of the `NpmRegistry` setting:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PiralInstance>@mycompany/app-shell</PiralInstance>
+    <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
+  </PropertyGroup>
+
+  <!-- ... -->
+</Project>
+```
+
+Besides these two options (required `PiralInstance` and optional `NpmRegistry`) the following settings exist:
+
+- `PiralInstance`: Sets the name (or local path) of the app shell.
+- `NpmRegistry`: Sets the URL of the npm registry to use. Will be used for getting npm dependencies of the app shell (and the app shell itself).
+- `Bundler`: Sets the name of the bundler to use. By default this is `webpack5`. The list of all available bundlers can be found [in the Piral documentation](https://docs.piral.io/reference/documentation/bundlers).
+- `ProjectsWithStaticFiles`: Sets the names of the projects that contain static files, which require to be copied to the output directory. Separate the names of these projects by semicolons.
+- `Monorepo`: Sets the behavior of the scaffolding to a monorepo mode. The value must be `enable` to switch this on.
+- `PiralCliVersion`: Determines the version of the `piral-cli` tooling to use. By default this is `latest`.
+
+A more extensive example:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PiralInstance>@mycompany/app-shell</PiralInstance>
+    <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
+    <Bundler>esbuild</Bundler>
+    <Monorepo>disable</Monorepo>
+    <ProjectsWithStaticFiles>
+      designsystem;
+      someotherproject;
+      thirdproj
+    </ProjectsWithStaticFiles>
+  </PropertyGroup>
+
+  <!-- ... -->
+</Project>
+```
+
 ### Pages
 
 A standard page in Blazor, using the `@page` directive, will work as expected, and will be automatically registered on the pilet API.
