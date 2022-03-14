@@ -73,6 +73,8 @@ namespace Piral.Blazor.Tools.Tasks
                 Directory.CreateDirectory(Target);
             }
 
+            var cmd = Environment.OSVersion.Platform == PlatformID.Win32NT ? "npx.cmd" : "npx";
+
             try
             {
                 var target = Path.Combine(Target, ProjectName);
@@ -98,7 +100,7 @@ namespace Piral.Blazor.Tools.Tasks
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
 
                     Process
-                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet upgrade {emulator} --base {target}")
+                        .Start(cmd, $"--package=piral-cli@{CliVersion} -y -- pilet upgrade {emulator} --base {target}")
                         .WaitForExit();
                 }
                 else
@@ -113,7 +115,7 @@ namespace Piral.Blazor.Tools.Tasks
                     Directory.CreateDirectory(target);
 
                     Process
-                        .Start("npx", $"--package=piral-cli@{CliVersion} -y -- pilet new {emulator} --base {target} --registry {NpmRegistry} --bundler {Bundler} --no-install")
+                        .Start(cmd, $"--package=piral-cli@{CliVersion} -y -- pilet new {emulator} --base {target} --registry {NpmRegistry} --bundler {Bundler} --no-install")
                         .WaitForExit();
                 }
 
