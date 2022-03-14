@@ -43,7 +43,7 @@ const binariesdir = resolve(
 const objectsDir = resolve(blazorprojectfolder, "obj");
 const wwwRootDir = resolve(binariesdir, wwwroot);
 const frameworkDir = resolve(wwwRootDir, "_framework");
-const sourceDir = resolve(frameworkDir, _bin);
+const sourceDir = resolve(frameworkDir, "_bin");
 const projectAssets = require(resolve(objectsDir, pajson));
 
 const project = require(resolve(piralPiletFolder, pjson));
