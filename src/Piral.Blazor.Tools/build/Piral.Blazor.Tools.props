@@ -3,5 +3,9 @@
     <PropertyGroup>
         <PiralInstance></PiralInstance>
         <NpmRegistry>https://registry.npmjs.org/</NpmRegistry>
+        <Bundler>webpack5</Bundler>
+        <ProjectsWithStaticFiles></ProjectsWithStaticFiles>
+        <Monorepo></Monorepo>
+        <PiralCliVersion>latest</PiralCliVersion>
     </PropertyGroup>
 </Project>

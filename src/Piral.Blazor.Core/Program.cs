@@ -13,6 +13,7 @@ namespace Piral.Blazor.Core
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             var baseAddress = new Uri(builder.HostEnvironment.BaseAddress);
+            var factory = new PiralServiceProviderFactory();
 
             builder.RootComponents
                 .Add<App>("#blazor-root");
@@ -21,6 +22,8 @@ namespace Piral.Blazor.Core
                 .AddSingleton(new HttpClient { BaseAddress = baseAddress })
                 .AddSingleton<IComponentActivationService, ComponentActivationService>()
                 .AddSingleton<IModuleContainerService, ModuleContainerService>();
+
+            builder.ConfigureContainer(factory);
 
             var host = builder.Build();
 

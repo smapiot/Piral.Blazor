@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "description": "Shared dependencies for running Blazor in microfrontend applications.",
   "main": "release/wwwroot/_framework/blazor.webassembly.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "scripts": {},
+  "homepage": "https://piral.io",
+  "repository": {
+    "url": "https://github.com/smapiot/Piral.Blazor",
+    "type": "git"
+  },
+  "bugs": {
+    "url": "https://github.com/smapiot/Piral.Blazor/issues"
   },
   "keywords": ["blazor", "spa", "microfrontends"],
   "author": "smapiot",

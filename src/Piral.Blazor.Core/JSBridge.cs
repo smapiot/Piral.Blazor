@@ -38,6 +38,13 @@ namespace Piral.Blazor.Core
         }
 
         [JSInvokable]
+        public static Task Reactivate(string componentName, string referenceId, IDictionary<string, JsonElement> args)
+        {
+            ActivationService?.ReactivateComponent(componentName, referenceId, args);
+            return Task.FromResult(true);
+        }
+
+        [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
             var data = await _client.GetByteArrayAsync(url);
@@ -55,9 +62,6 @@ namespace Piral.Blazor.Core
         }
         
         /// <summary>Every series of characters that is not alphanumeric gets consolidated into a dash</summary>
-        private static string Sanitize(string value)
-        {
-            return Regex.Replace(value, @"[^a-zA-Z0-9]+", "-");
-        }
+        private static string Sanitize(string value) => Regex.Replace(value, @"[^a-zA-Z0-9]+", "-");
     }
 }

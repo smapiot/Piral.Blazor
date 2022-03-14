@@ -1,6 +1,6 @@
-[![Piral Logo](https://github.com/smapiot/piral/raw/master/docs/assets/logo.png)](https://piral.io)
+[![Piral Logo](https://github.com/smapiot/piral/raw/main/docs/assets/logo.png)](https://piral.io)
 
-# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/master/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-3.2)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-3.2) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/piral.svg)](https://github.com/smapiot/piral/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/community) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
+# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/blazor-3.2/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-3.2)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-3.2) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/piral.svg)](https://github.com/smapiot/piral/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/community) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
 
 All .NET things to make <a href="https://blazor.net" rel="nofollow"><img
 src="https://devblogs.microsoft.com/aspnet/wp-content/uploads/sites/16/2019/04/BrandBlazor_nohalo_1000x.png"
@@ -17,7 +17,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 
 ### Creating a Blazor Pilet
 
-To create a Blazor pilet using Piral.Blazor, two approaches can be used:
+To create a Blazor pilet using `Piral.Blazor`, two approaches can be used:
 
 #### 1. From Scratch
 
@@ -83,7 +83,7 @@ To use an extension within a Blazor component, the `<Extension>` component can b
 <Extension Name="my-counter-slot"></Extension>
 ```
 
-### Components, Tiles, Menu Items...
+### Components, Tiles, Menu Items, and Others
 
 To register a Blazor component for use in the pilet API, the `PiralComponent` attribute can be used in two ways:
 
@@ -157,7 +157,7 @@ That way, we only have a property `Message` which reflects the `params.Test`. So
 
 It would just work.
 
-### Dependency injection
+### Dependency Injection
 
 You can define services for dependency injection in a `Module` class. The name of the class is arbitrary, but it shows the difference to the standard `Program` class, which should not be available, as mentioned before.
 
@@ -178,9 +178,9 @@ public class Module
 }
 ```
 
-## Running and debugging the pilet :rocket:
+## Running and Debugging the Pilet :rocket:
 
-From your blazor project folder, run your pilet via the Piral CLI:
+From your Blazor project folder, run your pilet via the Piral CLI:
 
 ```sh
 cd ../piral~/<project-name>

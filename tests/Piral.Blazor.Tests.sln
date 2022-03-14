@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.SmokeTests", "Piral.Blazor.SmokeTests\Piral.Blazor.SmokeTests.csproj", "{1E64926E-0ECC-4127-8BAB-449C68B536FE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.UnitTests", "Piral.Blazor.UnitTests\Piral.Blazor.UnitTests.csproj", "{6608FF97-AB59-42E0-8B52-AFF466C907E5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.Core", "..\src\Piral.Blazor.Core\Piral.Blazor.Core.csproj", "{55A97FDD-1224-4183-8B10-37F0DF6C26BD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.SmokeTests.PiletA", "Piral.Blazor.SmokeTests.PiletA\Piral.Blazor.SmokeTests.PiletA.csproj", "{289EDB0C-B05A-41F3-8C63-28F6C915B95E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.SmokeTests.PiletB", "Piral.Blazor.SmokeTests.PiletB\Piral.Blazor.SmokeTests.PiletB.csproj", "{EE84FF14-E742-475A-AA87-C800CFEDDDFF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1E64926E-0ECC-4127-8BAB-449C68B536FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E64926E-0ECC-4127-8BAB-449C68B536FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E64926E-0ECC-4127-8BAB-449C68B536FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E64926E-0ECC-4127-8BAB-449C68B536FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6608FF97-AB59-42E0-8B52-AFF466C907E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6608FF97-AB59-42E0-8B52-AFF466C907E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6608FF97-AB59-42E0-8B52-AFF466C907E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6608FF97-AB59-42E0-8B52-AFF466C907E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55A97FDD-1224-4183-8B10-37F0DF6C26BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55A97FDD-1224-4183-8B10-37F0DF6C26BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55A97FDD-1224-4183-8B10-37F0DF6C26BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55A97FDD-1224-4183-8B10-37F0DF6C26BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{289EDB0C-B05A-41F3-8C63-28F6C915B95E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{289EDB0C-B05A-41F3-8C63-28F6C915B95E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{289EDB0C-B05A-41F3-8C63-28F6C915B95E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{289EDB0C-B05A-41F3-8C63-28F6C915B95E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE84FF14-E742-475A-AA87-C800CFEDDDFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE84FF14-E742-475A-AA87-C800CFEDDDFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE84FF14-E742-475A-AA87-C800CFEDDDFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE84FF14-E742-475A-AA87-C800CFEDDDFF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {788217E0-A942-46E7-A051-85336B1790DE}
+	EndGlobalSection
+EndGlobal
