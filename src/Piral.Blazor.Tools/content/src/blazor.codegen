@@ -42,7 +42,8 @@ const binariesdir = resolve(
 );
 const objectsDir = resolve(blazorprojectfolder, "obj");
 const wwwRootDir = resolve(binariesdir, wwwroot);
-const sourceDir = resolve(wwwRootDir, "_framework");
+const frameworkDir = resolve(wwwRootDir, "_framework");
+const sourceDir = resolve(frameworkDir, _bin);
 const projectAssets = require(resolve(objectsDir, pajson));
 
 const project = require(resolve(piralPiletFolder, pjson));
@@ -53,7 +54,7 @@ if (!existsSync(appdir + "/app") && existsSync(appdir + "/dist")) {
 }
 
 const appFrameworkDir = resolve(appdir, "app", "_framework");
-const piletManifest = require(resolve(sourceDir, bbjson));
+const piletManifest = require(resolve(frameworkDir, bbjson));
 const piralVersion = getPiralVersion();
 
 const definePathCode = `function computePath() {
