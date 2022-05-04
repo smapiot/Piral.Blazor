@@ -33,7 +33,6 @@ namespace Piral.Blazor.Tools.Tasks
                         var fileName = Path.GetFileName(AssetPath);
                         var folderName = $"{TargetPath}/_content/{projectName}/"; 
                         var sourcePath = AssetPath.Replace(fileName, "");
-                        var jsImports = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(JsImportsPath)); 
 
                         if (!Directory.Exists(folderName))
                         {
@@ -52,16 +51,21 @@ namespace Piral.Blazor.Tools.Tasks
                             File.Copy(filePath, filePath.Replace(sourcePath, folderName), true);
                         }
 
-                        var indexTsxFielPath = $"{TargetPath}/index.tsx";
-                        var jsImportsString = "";
-                        foreach (var jsImport in jsImports)
-                        {
-                            if(!File.ReadAllText(indexTsxFielPath).Contains($"import '{jsImport}';"))
+                        if(File.Exists(JsImportsPath)){
+                            var jsImports = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(JsImportsPath)); 
+                            var indexTsxFielPath = $"{TargetPath}/index.tsx";
+                            var jsImportsString = "";
+                            foreach (var jsImport in jsImports)
                             {
-                                jsImportsString += $"import '{jsImport}';\n";
+                                if(!File.ReadAllText(indexTsxFielPath).Contains($"import '{jsImport}';"))
+                                {
+                                    jsImportsString += $"import '{jsImport}';\n";
+                                }
                             }
+                            File.WriteAllText(indexTsxFielPath, jsImportsString + File.ReadAllText(indexTsxFielPath));
+                        } else{
+                            Log.LogError($"The file '{JsImportsPath}' does not exist."); 
                         }
-                        File.WriteAllText(indexTsxFielPath, jsImportsString + File.ReadAllText(indexTsxFielPath));
 
                         Log.LogMessage($"'{AssetPath}' copied to '{folderName}'.");  
                     }
