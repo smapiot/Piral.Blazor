@@ -52,13 +52,15 @@ namespace Piral.Blazor.Tools.Tasks
                             File.Copy(filePath, filePath.Replace(sourcePath, folderName), true);
                         }
 
+                        var indexTsxFielPath = $"{TargetPath}/index.tsx";
                         var jsImportsString = "";
                         foreach (var jsImport in jsImports)
                         {
-                            jsImportsString += $"import '{jsImport}';\n";
+                            if(!File.ReadAllText(indexTsxFielPath).Contains($"import '{jsImport}';"))
+                            {
+                                jsImportsString += $"import '{jsImport}';\n";
+                            }
                         }
-
-                        var indexTsxFielPath = $"{TargetPath}/index.tsx";
                         File.WriteAllText(indexTsxFielPath, jsImportsString + File.ReadAllText(indexTsxFielPath));
 
                         Log.LogMessage($"'{AssetPath}' copied to '{folderName}'.");  
@@ -70,7 +72,7 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogError(error.Message);  
                 return false;
             }
-
+            
             return true; 
         }
     }
