@@ -54,8 +54,9 @@
     <Target Name="CollectStaticWebAssets" AfterTargets="SetPackageJsonVersion">
         <CollectStaticWebAssetsTask
             AssetPath="%(StaticWebAsset.Identity)"
-            TargetPath="$(_piletFolderPath)\src\_content"
-            ProjectsWithStaticFiles="$(ProjectsWithStaticFiles)" />
+            TargetPath="$(_piletFolderPath)\src"
+            ProjectsWithStaticFiles="$(ProjectsWithStaticFiles)"
+            JsImportsPath="$(MSBuildProjectDirectory)\jsImports.json" />
     </Target>
 
     <Target Name="InstallDependencies" AfterTargets="AddPackageJsonOverwrites" Condition="'$(Monorepo)'!='enable'">
