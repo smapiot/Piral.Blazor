@@ -1,6 +1,8 @@
 ﻿using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Piral.Blazor.Tools.Tasks
@@ -16,10 +18,12 @@ namespace Piral.Blazor.Tools.Tasks
         [Required]
         public string[] ProjectsWithStaticFiles { get; set; }
 
+        [Required]
+        public string JsImportsPath { get; set; }
+
         public override bool Execute()
         {
             Log.LogMessage($"Copying static web assets to blazor project via task...");
-
             try
             {
                 foreach (string projectName in ProjectsWithStaticFiles)
@@ -27,16 +31,39 @@ namespace Piral.Blazor.Tools.Tasks
                     if (AssetPath.Contains(projectName))
                     {
                         var fileName = Path.GetFileName(AssetPath);
-                        var folderName = Path.Combine(TargetPath, projectName);
-                        var filePath = Path.Combine(folderName, fileName);
+                        var folderName = $"{TargetPath}/_content/{projectName}/"; 
+                        var sourcePath = AssetPath.Replace(fileName, "");
+                        var jsImports = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(JsImportsPath)); 
 
                         if (!Directory.Exists(folderName))
                         {
                             Directory.CreateDirectory(folderName);
                         }
 
-                        File.Copy(AssetPath, filePath, true); 
-                        Log.LogMessage($"File '{AssetPath}' copied to '{filePath}'.");  
+                        // copy all directories
+                        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+                        {
+                            Directory.CreateDirectory(dirPath.Replace(sourcePath, folderName));
+                        }
+
+                        // copy all files
+                        foreach (string filePath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
+                        {
+                            File.Copy(filePath, filePath.Replace(sourcePath, folderName), true);
+                        }
+
+                        var indexTsxFielPath = $"{TargetPath}/index.tsx";
+                        var jsImportsString = "";
+                        foreach (var jsImport in jsImports)
+                        {
+                            if(!File.ReadAllText(indexTsxFielPath).Contains($"import '{jsImport}';"))
+                            {
+                                jsImportsString += $"import '{jsImport}';\n";
+                            }
+                        }
+                        File.WriteAllText(indexTsxFielPath, jsImportsString + File.ReadAllText(indexTsxFielPath));
+
+                        Log.LogMessage($"'{AssetPath}' copied to '{folderName}'.");  
                     }
                 }
             }
@@ -45,7 +72,7 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogError(error.Message);  
                 return false;
             }
-
+            
             return true; 
         }
     }
