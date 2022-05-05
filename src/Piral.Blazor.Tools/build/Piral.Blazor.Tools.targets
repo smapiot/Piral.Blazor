@@ -75,11 +75,19 @@
             PiletPath="$(_piletFolderPath)" />
     </Target>
 
-    <Target Name="InstallAnalyzer" AfterTargets="Scaffold">
+	<Target Name="UpdateAnalyzer" AfterTargets="Scaffold" Condition="Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
+		<PropertyGroup>
+			<_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
+		</PropertyGroup>
+		<!-- Update analyzer with version that matches the Tools version -->
+		<Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool update Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
+	</Target>
+
+    <Target Name="InstallAnalyzer" AfterTargets="UpdateAnalyzer" Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
         <PropertyGroup>
             <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
         </PropertyGroup>
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')" />
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." />
         <!-- Install analyzer with version that matches the Tools version -->
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
     </Target>

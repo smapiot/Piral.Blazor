@@ -1,17 +1,16 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.RenderTree;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
-using Microsoft.AspNetCore.Components.RenderTree;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Piral.Blazor.Core
 {
     public class Manipulator<T>
     {
         private readonly ILogger<T> _logger;
-        private object _componentFactory;
         private ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>> _initializers;
 
         public Manipulator(ILogger<T> logger)
@@ -22,13 +21,14 @@ namespace Piral.Blazor.Core
         public void OverrideComponentInitializer(Type componentType, IServiceProvider provider, WebAssemblyHost host)
         {
             const BindingFlags privateInstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+
             try
             {
                 var renderer = typeof(WebAssemblyHost)
                     .GetField("_renderer", privateInstanceFlags)
                     .GetValue(host);
 
-                _componentFactory = typeof(Renderer)
+                var _componentFactory = typeof(Renderer)
                     .GetField("_componentFactory", privateInstanceFlags)
                     .GetValue(renderer);
 
@@ -53,7 +53,7 @@ namespace Piral.Blazor.Core
         {
             try
             {
-                _initializers.TryRemove(componentType, out var _);
+                _initializers.TryRemove(componentType, out _);
             }
             catch (Exception ex)
             {
