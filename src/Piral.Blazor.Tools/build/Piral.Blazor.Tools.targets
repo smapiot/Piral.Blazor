@@ -111,7 +111,7 @@
     </Target>
 
     <Target Name="HotReload" AfterTargets="CopyScopedCss">
-        <Touch Files="$(_piletFolderPath)\src\blazor.codegen" Condition="Exists('$(_piletFolderPath)\blazor.codegen')" />
+        <Touch Files="$(_piletFolderPath)\src\blazor.codegen" Condition="Exists('$(_piletFolderPath)\src\blazor.codegen')" />
     </Target>
 
 </Project>
