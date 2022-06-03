@@ -16,6 +16,12 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
+            if (string.IsNullOrEmpty(Version))
+            {
+                Log.LogMessage("Keeping the current version set in the 'package.json'.");
+                return true;
+            }
+
             Log.LogMessage("Set version in package.json file...");
 
             try
@@ -37,7 +43,7 @@ namespace Piral.Blazor.Tools.Tasks
                     {
                         FileName = command,
                         WorkingDirectory = Path.GetDirectoryName(PackageJsonPath),
-                        Arguments = $"{prefix}version ${Version} --no-git-tag",
+                        Arguments = $"{prefix}version ${Version} --allow-same-version --no-git-tag-version",
                         UseShellExecute = false,
                         CreateNoWindow = true
                     }

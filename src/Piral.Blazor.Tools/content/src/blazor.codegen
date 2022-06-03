@@ -350,7 +350,7 @@ async function checkBlazorInstallation(piletBlazorVersion) {
       "The npm packages `blazor` and `piral-blazor` have not been not found. Installing them now..."
     );
     const piralVersion = getPiralVersion();
-    const npmBlazorVersion = matchVersion.exec(piletBlazorVersion);
+    const [npmBlazorVersion] = matchVersion.exec(piletBlazorVersion);
     const [blazorRelease] = npmBlazorVersion.split(".");
     const installCmd = `npm i blazor@^${blazorRelease} piral-blazor@${piralVersion}`;
     await execAsync(installCmd);
@@ -358,6 +358,7 @@ async function checkBlazorInstallation(piletBlazorVersion) {
 }
 
 function copyAll([dllFiles, pdbFiles], ignoredFiles, targetDir) {
+  const wwwRootFiles = readdirSync(wwwRootDir);
   const staticFiles = wwwRootFiles.filter((x) => !ignoredFiles.includes(x));
 
   //File copy
@@ -394,7 +395,6 @@ module.exports = async function () {
   const bbpath = resolve(appFrameworkDir, bbjson);
   const blazorInAppshell = existsSync(bbpath);
   const piletBlazorVersion = extractBlazorVersion(piletManifest);
-  const wwwRootFiles = readdirSync(wwwRootDir);
   const blazorFiles = [];
 
   if (blazorInAppshell) {
