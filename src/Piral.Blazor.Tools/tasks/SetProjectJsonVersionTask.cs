@@ -27,7 +27,7 @@ namespace Piral.Blazor.Tools.Tasks
                 }
 
                 var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-                var cmd = isWindows ? "cmd.exe" : "npm";
+                var command = isWindows ? "cmd.exe" : "npm";
                 var prefix = isWindows ? "/c npm.cmd " : "";
                 var startInfo = new ProcessStartInfo();
 
