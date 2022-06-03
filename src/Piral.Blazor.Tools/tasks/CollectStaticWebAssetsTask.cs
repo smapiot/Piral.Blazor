@@ -24,9 +24,10 @@ namespace Piral.Blazor.Tools.Tasks
         public override bool Execute()
         {
             Log.LogMessage($"Copying static web assets to blazor project via task...");
+
             try
             {
-                foreach (string projectName in ProjectsWithStaticFiles)
+                foreach (var projectName in ProjectsWithStaticFiles)
                 {
                     if (AssetPath.Contains(projectName))
                     {
@@ -40,30 +41,38 @@ namespace Piral.Blazor.Tools.Tasks
                         }
 
                         // copy all directories
-                        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+                        foreach (var dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
                         {
                             Directory.CreateDirectory(dirPath.Replace(sourcePath, folderName));
                         }
 
                         // copy all files
-                        foreach (string filePath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
+                        foreach (var filePath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
                         {
                             File.Copy(filePath, filePath.Replace(sourcePath, folderName), true);
                         }
 
-                        if(File.Exists(JsImportsPath)){
-                            var jsImports = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(JsImportsPath)); 
-                            var indexTsxFielPath = $"{TargetPath}/index.tsx";
+                        if (File.Exists(JsImportsPath))
+                        {
+                            var content = File.ReadAllText(JsImportsPath);
+                            var jsImports = JsonConvert.DeserializeObject<List<string>>(content); 
+                            var indexTsxFilePath = $"{TargetPath}/index.tsx";
                             var jsImportsString = "";
+
                             foreach (var jsImport in jsImports)
                             {
-                                if(!File.ReadAllText(indexTsxFielPath).Contains($"import '{jsImport}';"))
+                                var importStr = $"import '{jsImport}';";
+
+                                if (!File.ReadAllText(indexTsxFilePath).Contains(importStr))
                                 {
-                                    jsImportsString += $"import '{jsImport}';\n";
+                                    jsImportsString += $"{importStr}\n";
                                 }
                             }
-                            File.WriteAllText(indexTsxFielPath, jsImportsString + File.ReadAllText(indexTsxFielPath));
-                        } else{
+
+                            File.WriteAllText(indexTsxFilePath, jsImportsString + File.ReadAllText(indexTsxFilePath));
+                        }
+                        else
+                        {
                             Log.LogError($"The file '{JsImportsPath}' does not exist."); 
                         }
 
