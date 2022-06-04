@@ -10,3 +10,7 @@ export function setup(app: PiletApi) {
     Blazor.registerExtensions(app);
     Blazor.setupPilet(app);
 }
+
+export function teardown(app: PiletApi) {
+    app.releaseBlazorReferences?.();
+}

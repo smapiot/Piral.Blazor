@@ -48,12 +48,15 @@ namespace Piral.Blazor.Core
             return Task.FromResult(true);
         }
 
+        private static Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
+
         [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
             var dll = await _client.GetStreamAsync(url);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
             ActivationService?.LoadComponentsFromAssembly(assembly, _host);
+            _assemblies[url] = assembly;
         }
 
         [JSInvokable]
@@ -63,6 +66,16 @@ namespace Piral.Blazor.Core
             var pdb = await _client.GetStreamAsync(pdbUrl);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
             ActivationService?.LoadComponentsFromAssembly(assembly, _host);
+            _assemblies[dllUrl] = assembly;
+        }
+
+        [JSInvokable]
+        public static async Task UnloadComponentsFromLibrary(string url)
+        {
+            if (_assemblies.TryGetValue(url, out var assembly))
+            {
+                ActivationService?.UnloadComponentsFromAssembly(assembly);
+            }
         }
 
         /// <summary>Every series of characters that is not alphanumeric gets consolidated into a dash</summary>

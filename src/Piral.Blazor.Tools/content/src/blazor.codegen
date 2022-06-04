@@ -429,7 +429,7 @@ module.exports = async function () {
 
   if (!blazorInAppshell) {
     allImports.push(
-      `import { defineBlazorReferences, fromBlazor } from 'piral-blazor/convert';`
+      `import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`
     );
   }
 
@@ -437,7 +437,12 @@ module.exports = async function () {
     ${
       blazorInAppshell
         ? ""
-        : `app.defineBlazorReferences = defineBlazorReferences; app.defineBlazorOptions = () => {}; app.fromBlazor = fromBlazor;`
+        : `
+          app.defineBlazorReferences = defineBlazorReferences;
+          app.defineBlazorOptions = () => {};
+          app.fromBlazor = fromBlazor;
+          app.releaseBlazorReferences = releaseBlazorReferences;
+      `
     }
   }`;
 

@@ -122,10 +122,27 @@ namespace Piral.Blazor.Core
             foreach (var componentType in componentTypes)
             {
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
+
                 foreach (var componentName in componentNames)
                 {
                     Register(componentName, componentType, serviceProvider, host);
                     _logger.LogInformation($"registered {componentName}");
+                }
+            }
+        }
+
+        public void UnloadComponentsFromAssembly(Assembly assembly)
+        {
+            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
+
+            foreach (var componentType in componentTypes)
+            {
+                var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
+                
+                foreach (var componentName in componentNames)
+                {
+                    Unregister(componentName);
+                    _logger.LogInformation($"unregistered {componentName}");
                 }
             }
         }
