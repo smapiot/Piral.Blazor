@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Piral.Blazor.Utils</PackageId>
-    <VersionPrefix>6.0.1</VersionPrefix>
+    <VersionPrefix>6.0.2</VersionPrefix>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>

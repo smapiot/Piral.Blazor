@@ -325,9 +325,7 @@ function isVersionSame(oldVer, newVer) {
   return "match";
 }
 
-function checkBlazorVersion(piletManifest, appShellManifest) {
-  const piletBlazorVersion = extractBlazorVersion(piletManifest);
-  const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
+function checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion) {
   const versionMatch = isVersionSame(appshellBlazorVersion, piletBlazorVersion);
 
   if (versionMatch === "incompatible") {
