@@ -37,14 +37,14 @@ namespace Piral.Blazor.Core
         public static Task Deactivate(string componentName, string referenceId)
         {
             ActivationService?.DeactivateComponent(componentName, referenceId);
-            return Task.FromResult(true);
+            return Task.CompletedTask;
         }
 
         [JSInvokable]
         public static Task Reactivate(string componentName, string referenceId, IDictionary<string, JsonElement> args)
         {
             ActivationService?.ReactivateComponent(componentName, referenceId, args);
-            return Task.FromResult(true);
+            return Task.CompletedTask;
         }
 
         private static Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
@@ -71,12 +71,14 @@ namespace Piral.Blazor.Core
         }
 
         [JSInvokable]
-        public static async Task UnloadComponentsFromLibrary(string url)
+        public static Task UnloadComponentsFromLibrary(string url)
         {
             if (_assemblies.TryGetValue(url, out var assembly))
             {
                 ActivationService?.UnloadComponentsFromAssembly(assembly);
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
