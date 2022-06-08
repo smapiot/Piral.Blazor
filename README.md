@@ -56,7 +56,7 @@ Here is a minimal example configuration:
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <PiralInstance>../../app-shell/dist/emulator/app-shell-1.0.0.tgz</PiralInstance>
   </PropertyGroup>
 
@@ -70,7 +70,7 @@ This one gets the app shell from a local directory. Realistically, you'd have yo
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
   </PropertyGroup>
 
@@ -84,7 +84,7 @@ but realistically you'd publish the app shell to a private registry on a differe
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
     <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
   </PropertyGroup>
@@ -109,7 +109,7 @@ A more extensive example:
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <Version>1.2.3</Version>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
     <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
