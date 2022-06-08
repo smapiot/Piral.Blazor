@@ -59,6 +59,8 @@ namespace Piral.Blazor.Tools.Tasks
                             var indexTsxFilePath = $"{TargetPath}/index.tsx";
                             var jsImportsString = "";
 
+                            Log.LogMessage($"The file '{JsImportsPath}' will be used for prepending imports."); 
+
                             foreach (var jsImport in jsImports)
                             {
                                 var importStr = $"import '{jsImport}';";
@@ -70,10 +72,6 @@ namespace Piral.Blazor.Tools.Tasks
                             }
 
                             File.WriteAllText(indexTsxFilePath, jsImportsString + File.ReadAllText(indexTsxFilePath));
-                        }
-                        else
-                        {
-                            Log.LogError($"The file '{JsImportsPath}' does not exist."); 
                         }
 
                         Log.LogMessage($"'{AssetPath}' copied to '{folderName}'.");  

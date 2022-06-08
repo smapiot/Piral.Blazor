@@ -43,7 +43,7 @@ namespace Piral.Blazor.Tools.Tasks
                     {
                         FileName = command,
                         WorkingDirectory = Path.GetDirectoryName(PackageJsonPath),
-                        Arguments = $"{prefix}version ${Version} --allow-same-version --no-git-tag-version",
+                        Arguments = $"{prefix}version {Version} --allow-same-version --no-git-tag-version",
                         UseShellExecute = false,
                         CreateNoWindow = true
                     }

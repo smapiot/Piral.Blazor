@@ -192,7 +192,7 @@ function defineTargets(uniqueDependencies, projectAssets) {
       .replace(".dll", "");
   };
 
-  const getcsprojname = (x) => `${/.*\\+(.*)\.csproj/.exec(x)[1]}`; // C:\\path\\to\\proj\\proj.csproj --> proj
+  const getcsprojname = (x) => basename(x).slice(0, -7); // C:\\path\\to\\proj\\proj.csproj --> proj
 
   const filterDeps = (deps) =>
     deps.map(getDllName).filter((d) => !!d && isNotSharedDep(d));
