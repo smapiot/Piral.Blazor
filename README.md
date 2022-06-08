@@ -252,10 +252,21 @@ public class Module
 
     public static void ConfigureServices(IServiceCollection services)
     {
-        // configure dependency injection here
+        // configure dependency injection for the components in the pilet here
+        // -> use this for pilet-exclusive deps here
+        // -> the method is optional; you can remove it if not needed
+    }
+
+    public static void ConfigureShared(IServiceCollection services)
+    {
+        // configure dependency injection for the whole application here
+        // -> use this for third-party libraries or if you want to share deps with other pilets
+        // -> the method is optional; you can remove it if not needed
     }
 }
 ```
+
+The `ConfigureServices` and `ConfigureShared` methods are optional. If you want to configure dependency injection in your pilet then use this. Our recommendation is to use `ConfigureServices` is much as possible, however, for using third-party libraries you should use `ConfigureShared`. Third-party libraries require globally shared dependencies, as the third-party libraries are also globally shared (i.e., if two pilets depend on the same assembly it would only be loaded once, making it implicitly shared).
 
 ## Running and Debugging the Pilet :rocket:
 

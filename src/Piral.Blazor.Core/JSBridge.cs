@@ -1,4 +1,3 @@
-using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +8,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 
 namespace Piral.Blazor.Core
 {
@@ -16,13 +17,11 @@ namespace Piral.Blazor.Core
     {
         public static ComponentActivationService ActivationService { get; set; }
 
-        private static HttpClient _client;
-        private static WebAssemblyHost _host;
+        public static WebAssemblyHost Host { get; set; }
 
-        public static void Configure(HttpClient client, WebAssemblyHost host)
+        public static void Initialize(WebAssemblyHost host)
         {
-            _client = client;
-            _host = host;
+            Host = host;
         }
 
         [JSInvokable]
@@ -53,19 +52,21 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
-            var dll = await _client.GetStreamAsync(url);
+            var client = Host.Services.GetRequiredService<HttpClient>();
+            var dll = await client.GetStreamAsync(url);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
-            ActivationService?.LoadComponentsFromAssembly(assembly, _host);
+            ActivationService?.LoadComponentsFromAssembly(assembly);
             _assemblies[url] = assembly;
         }
 
         [JSInvokable]
         public static async Task LoadComponentsWithSymbolsFromLibrary(string dllUrl, string pdbUrl)
         {
-            var dll = await _client.GetStreamAsync(dllUrl);
-            var pdb = await _client.GetStreamAsync(pdbUrl);
+            var client = Host.Services.GetRequiredService<HttpClient>();
+            var dll = await client.GetStreamAsync(dllUrl);
+            var pdb = await client.GetStreamAsync(pdbUrl);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-            ActivationService?.LoadComponentsFromAssembly(assembly, _host);
+            ActivationService?.LoadComponentsFromAssembly(assembly);
             _assemblies[dllUrl] = assembly;
         }
 
@@ -78,7 +79,9 @@ namespace Piral.Blazor.Core
             }
         }
 
-        /// <summary>Every series of characters that is not alphanumeric gets consolidated into a dash</summary>
+        /// <summary>
+        /// Every series of characters that is not alphanumeric gets consolidated into a dash
+        /// </summary>
         private static string Sanitize(string value) => Regex.Replace(value, @"[^a-zA-Z0-9]+", "-");
     }
 }

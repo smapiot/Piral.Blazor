@@ -15,7 +15,9 @@ namespace Piral.Blazor.Core
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
 
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
+
         private readonly ILogger<ComponentActivationService> _logger;
+        
         private readonly IModuleContainerService _container;
 
         public event EventHandler Changed;
@@ -35,9 +37,10 @@ namespace Piral.Blazor.Core
             _container = container;
             _logger = logger;
             JSBridge.ActivationService = this;
+            container.ConfigureHost(JSBridge.Host);
         }
 
-        public void Register(string componentName, Type componentType, IServiceProvider provider, WebAssemblyHost host)
+        public void Register(string componentName, Type componentType, IServiceProvider provider)
         {
             if (_services.ContainsKey(componentName))
             {
@@ -46,7 +49,7 @@ namespace Piral.Blazor.Core
             else
             {
                 _services.Add(componentName, componentType);
-                _container.ConfigureComponent(componentType, provider, host);
+                _container.ConfigureComponent(componentType, provider);
             }
         }
 
@@ -114,9 +117,9 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public void LoadComponentsFromAssembly(Assembly assembly, WebAssemblyHost host)
+        public void LoadComponentsFromAssembly(Assembly assembly)
         {
-            var serviceProvider = _container.Configure(assembly);
+            var serviceProvider = _container.ConfigureModule(assembly);
             var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
 
             foreach (var componentType in componentTypes)
@@ -125,7 +128,7 @@ namespace Piral.Blazor.Core
 
                 foreach (var componentName in componentNames)
                 {
-                    Register(componentName, componentType, serviceProvider, host);
+                    Register(componentName, componentType, serviceProvider);
                     _logger.LogInformation($"registered {componentName}");
                 }
             }

@@ -8,13 +8,14 @@ namespace Piral.Blazor.Core
 {
     public class PiralServiceProvider : IPiralServiceProvider
     {
+        private static readonly IServiceCollection emptyServices = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
         private readonly IServiceCollection _globalServices;
         private readonly List<PiletServiceProvider> _piletServiceProviders = new();
         private IServiceProvider _globalServiceProvider;
 
         public PiralServiceProvider(IServiceCollection globalServices)
         {
-            _globalServices = globalServices ?? new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+            _globalServices = globalServices ?? emptyServices;
             _globalServices.AddSingleton<IPiralServiceProvider>(this);
             _globalServiceProvider = _globalServices.BuildServiceProvider();
         }
@@ -35,30 +36,25 @@ namespace Piral.Blazor.Core
                 {
                     _globalServices.Add(service);
                 }
-
-                foreach (var piletProvider in _piletServiceProviders)
-                {
-                    piletProvider.Update(_globalServiceProvider, globalServices);
-                }
             }
         }
 
         public PiletServiceProvider CreatePiletServiceProvider(IServiceCollection piletServices)
         {
-            var serviceProvider = new PiletServiceProvider(_globalServiceProvider, _globalServices, piletServices);
+            var serviceProvider = new PiletServiceProvider(this, piletServices);
             _piletServiceProviders.Add(serviceProvider);
             return serviceProvider;
         }
 
-
         internal static IServiceProvider CreatePiletServiceProvider(
             IServiceProvider globalServiceProvider,
-            IServiceCollection globalServices,
             IServiceCollection piletServices) =>
-                globalServiceProvider.CreateChildServiceProvider(globalServices, childServices =>
+                globalServiceProvider.CreateChildServiceProvider(emptyServices, childServices =>
                 {
                     foreach (var service in piletServices)
-                    { childServices.Add(service); }
+                    {
+                        childServices.Add(service);
+                    }
                 }, sp => sp.BuildServiceProvider(), ParentSingletonOpenGenericRegistrationsBehaviour.Delegate);
 
         public object GetService(Type serviceType) => _globalServiceProvider.GetService(serviceType);
