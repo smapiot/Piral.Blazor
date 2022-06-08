@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Loader;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
@@ -37,14 +36,14 @@ namespace Piral.Blazor.Core
         public static Task Deactivate(string componentName, string referenceId)
         {
             ActivationService?.DeactivateComponent(componentName, referenceId);
-            return Task.FromResult(true);
+            return Task.CompletedTask;
         }
 
         [JSInvokable]
         public static Task Reactivate(string componentName, string referenceId, IDictionary<string, JsonElement> args)
         {
             ActivationService?.ReactivateComponent(componentName, referenceId, args);
-            return Task.FromResult(true);
+            return Task.CompletedTask;
         }
 
         private static Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
@@ -53,8 +52,8 @@ namespace Piral.Blazor.Core
         public static async Task LoadComponentsFromLibrary(string url)
         {
             var client = Host.Services.GetRequiredService<HttpClient>();
-            var dll = await client.GetStreamAsync(url);
-            var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
+            var dll = await client.GetByteArrayAsync(url);
+            var assembly = Assembly.Load(dll);
             ActivationService?.LoadComponentsFromAssembly(assembly);
             _assemblies[url] = assembly;
         }
@@ -63,20 +62,22 @@ namespace Piral.Blazor.Core
         public static async Task LoadComponentsWithSymbolsFromLibrary(string dllUrl, string pdbUrl)
         {
             var client = Host.Services.GetRequiredService<HttpClient>();
-            var dll = await client.GetStreamAsync(dllUrl);
-            var pdb = await client.GetStreamAsync(pdbUrl);
-            var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
+            var dll = await client.GetByteArrayAsync(dllUrl);
+            var pdb = await client.GetByteArrayAsync(pdbUrl);
+            var assembly = Assembly.Load(dll, pdb);
             ActivationService?.LoadComponentsFromAssembly(assembly);
             _assemblies[dllUrl] = assembly;
         }
 
         [JSInvokable]
-        public static async Task UnloadComponentsFromLibrary(string url)
+        public static Task UnloadComponentsFromLibrary(string url)
         {
             if (_assemblies.TryGetValue(url, out var assembly))
             {
                 ActivationService?.UnloadComponentsFromAssembly(assembly);
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

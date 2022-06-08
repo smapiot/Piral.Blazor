@@ -9,7 +9,7 @@ namespace Piral.Blazor.Core
     public class PiralServiceProvider : IPiralServiceProvider
     {
         private readonly IServiceCollection _globalServices;
-        private readonly List<PiletServiceProvider> _piletServiceProviders = new();
+        private readonly List<PiletServiceProvider> _piletServiceProviders = new List<PiletServiceProvider>();
         private IServiceProvider _globalServiceProvider;
 
         public PiralServiceProvider(IServiceCollection globalServices)

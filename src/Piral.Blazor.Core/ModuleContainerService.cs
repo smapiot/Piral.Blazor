@@ -38,7 +38,7 @@ namespace Piral.Blazor.Core
             _provider.AddGlobalServices(globalServices);
             return _provider.CreatePiletServiceProvider(piletServices);
         }
-
+        
         private static IServiceCollection ConfigureGlobalServices(Assembly assembly)
         {
             var sc = new ServiceCollection();
@@ -52,27 +52,6 @@ namespace Piral.Blazor.Core
         }
 
         private static IServiceCollection ConfigurePiletServices(Assembly assembly)
-        {
-            var globalServices = ConfigureGlobal(assembly);
-            var piletServices = ConfigurePilet(assembly);
-
-            _provider.AddGlobalServices(globalServices);
-            return _provider.CreatePiletServiceProvider(piletServices);
-        }
-
-        private static IServiceCollection ConfigureGlobal(Assembly assembly)
-        {
-            var sc = new ServiceCollection();
-            var configure = assembly
-                .GetTypes()
-                .FirstOrDefault(x => string.Equals(x.Name, "Module", StringComparison.Ordinal))
-                ?.GetMethod("ConfigureShared", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(IServiceCollection) }, null);
-
-            configure?.Invoke(null, new[] { sc });
-            return sc;
-        }
-
-        private static IServiceCollection ConfigurePilet(Assembly assembly)
         {
             var sc = new ServiceCollection();
             var configure = assembly
