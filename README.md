@@ -11,6 +11,8 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 
 > This is the branch for Blazor 3.2 with .NET Core 3.1. If you want to switch to Blazor with the older .NET 5.0, please refer to the [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) or [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch.
 
+**:warning: Caution: The 3.2 releases will no longer receive feature updates. We will only provide maintenance / hotfix updates, if any.**
+
 ## Getting Started
 
 > You'll also find some information in the [piral-blazor](https://www.npmjs.com/package/piral-blazor) package.
