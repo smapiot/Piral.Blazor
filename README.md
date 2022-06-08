@@ -9,7 +9,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 <img src="https://piral.io/logo-simple.f8667084.png" height="10">
 &nbsp;Piral</a>.
 
-> This is the branch for Blazor 3.2.0 with .NET Core 3.1. If you want to switch to Blazor with the newer .NET 5.0, please refer to the [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) or the [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch
+> This is the branch for Blazor 3.2 with .NET Core 3.1. If you want to switch to Blazor with the older .NET 5.0, please refer to the [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) or [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch.
 
 ## Getting Started
 
@@ -34,7 +34,6 @@ In this case, follow these steps:
    ```xml
    <PropertyGroup>
        <TargetFramework>netstandard2.1</TargetFramework>
-       <RazorLangVersion>3.0</RazorLangVersion>
        <PiralInstance>my-piral-instance</PiralInstance>
    </PropertyGroup>
    ```
@@ -54,10 +53,10 @@ The `*.csproj` file of your pilet offers you some configuration steps to actuall
 Here is a minimal example configuration:
 
 ```xml
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PiralInstance>../../app-shell/dist/emulator/app-shell-1.0.0.tgz</PiralInstance>
   </PropertyGroup>
 
@@ -68,10 +67,10 @@ Here is a minimal example configuration:
 This one gets the app shell from a local directory. Realistically, you'd have your app shell on a registry. In case of the default registry it could look like
 
 ```xml
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
   </PropertyGroup>
 
@@ -82,10 +81,10 @@ This one gets the app shell from a local directory. Realistically, you'd have yo
 but realistically you'd publish the app shell to a private registry on a different URL. In such scenarios you'd also make use of the `NpmRegistry` setting:
 
 ```xml
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
     <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
   </PropertyGroup>
@@ -102,14 +101,15 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `ProjectsWithStaticFiles`: Sets the names of the projects that contain static files, which require to be copied to the output directory. Separate the names of these projects by semicolons.
 - `Monorepo`: Sets the behavior of the scaffolding to a monorepo mode. The value must be `enable` to switch this on.
 - `PiralCliVersion`: Determines the version of the `piral-cli` tooling to use. By default this is `latest`.
+- `Version`: Sets the version of the pilet. This is a/the standard project property.
 
 A more extensive example:
 
 ```xml
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
     <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
     <Bundler>esbuild</Bundler>
@@ -251,10 +251,21 @@ public class Module
 
     public static void ConfigureServices(IServiceCollection services)
     {
-        // configure dependency injection here
+        // configure dependency injection for the components in the pilet here
+        // -> use this for pilet-exclusive deps here
+        // -> the method is optional; you can remove it if not needed
+    }
+
+    public static void ConfigureShared(IServiceCollection services)
+    {
+        // configure dependency injection for the whole application here
+        // -> use this for third-party libraries or if you want to share deps with other pilets
+        // -> the method is optional; you can remove it if not needed
     }
 }
 ```
+
+The `ConfigureServices` and `ConfigureShared` methods are optional. If you want to configure dependency injection in your pilet then use this. Our recommendation is to use `ConfigureServices` is much as possible, however, for using third-party libraries you should use `ConfigureShared`. Third-party libraries require globally shared dependencies, as the third-party libraries are also globally shared (i.e., if two pilets depend on the same assembly it would only be loaded once, making it implicitly shared).
 
 ## Running and Debugging the Pilet :rocket:
 
@@ -271,6 +282,76 @@ In addition to this, if you want to debug your Blazor pilet using for example Vi
 - debug your Blazor pilet using IISExpress
 
 > :warning: if you want to run your pilet and directly visit it in the browser without debugging via IISExpress, you will have to disable a [kras](https://github.com/FlorianRappl/kras) script injector **before** visiting the pilet. To do this, go to `http://localhost:1234/manage-mock-server/#/injectors`, disable the `debug.js` script, and save your changes. Afterwards, you can visit `http://localhost:1234`.
+
+## Special Files
+
+There are some special files that you can add in your project (adjacent to the *.csproj* file):
+
+- *setup.tsx*
+- *package-overwrites.json*
+- *js-imports.json*
+
+Let's see what they do and how they can be used.
+
+### Extending the Pilet's Setup
+
+The *setup.tsx* file can be used to define more things that should be done in a pilet's `setup` function. By default, the content of the `setup` function is auto generated. Things such as `@page /path-to-use` components or components with `@attribute [PiralExtension("name-of-slot")]` would be automatically registered. However, already in case of `@attribute [PiralComponent]` we have a problem. What should this component do? Where is it used?
+
+The solution is to use the *setup.tsx* file. An example:
+
+```js
+export default (app) => {
+  app.registerMenu(app.fromBlazor('counter-menu'));
+
+  app.registerExtension("ListToggle", app.fromBlazor('counter-preview'));
+};
+```
+
+This example registers a pilet's component named "counter-menu" as a menu entry. Furthermore, it also adds the "counter-preview" component as an extension to the "ListToggle" slot.
+
+Anything that is available on the Pilet API provided via the `app` argument is available in the function. The only import part of *setup.tsx* is that has a default export - which is actually a function.
+
+### Overwriting the Package Manifest
+
+The generated / used pilet is a standard npm package. Therefore, it will have a *package.json*. The content of this *package.json* is mostly pre-determined. Things such as `piral-cli` or the pilet's app shell package are in there. In some cases, additional JS dependencies for runtime or development aspects are necessary or useful. In such cases the *package-overwrites.json* comes in handy.
+
+For instance, to actually extend the `devDependencies` you could write:
+
+```json
+{
+  "devDependencies": {
+    "axios": "^0.20.0"
+  }
+}
+```
+
+This would add a development dependency to the `axios` package. Likewise, other details, such as a publish config or a description could also be added / overwritten:
+
+```json
+{
+  "description": "This is my pilet description.",
+  "publishConfig": {
+    "access": "public"
+  }
+}
+```
+
+The rules for the merge follow the [Json.NET](https://www.newtonsoft.com/json/help/html/MergeJson.htm) approach.
+
+### Defining Additional JavaScript Imports
+
+Some Blazor dependencies require additional JavaScript packages in order to work correctly. The *js-imports.json* file can be to declare all these. The files will then be added via a generated `import` statement in the pilet's root module.
+
+The content of the *js-imports.json* file is a JSON array. For example:
+
+```json
+[
+  "axios",
+  "global-date-functions"
+]
+```
+
+Includes the two dependencies via the respective `import` statements.
 
 ## License
 

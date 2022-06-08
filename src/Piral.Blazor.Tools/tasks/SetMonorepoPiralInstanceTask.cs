@@ -20,6 +20,12 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
+            if (!PiralInstancePath.StartsWith("."))
+            {
+                Log.LogMessage("Nothing to do here - the given Piral instance already refers to a package.");
+                return true;
+            }
+
             Log.LogMessage("Symlinking to the piral instance inside the monorepo...");
 
             try
@@ -33,10 +39,8 @@ namespace Piral.Blazor.Tools.Tasks
                 }
 
                 var piralInstanceVersion = GetPiralInstanceVersion();
-                var escapedPath = PiralInstancePath
-                    .Replace("\\", Path.DirectorySeparatorChar != '/' ? "\\\\" : "/")
-                    .Replace("/", Path.DirectorySeparatorChar != '/' ? "\\\\" : "/");
-                var piralInstancePathInPackageJson = $"file:..\\\\{escapedPath}";
+                var escapedPath = PiralInstancePath.Replace('\\', '/');
+                var piralInstancePathInPackageJson = $"file:../{escapedPath}";
                 var piletPackageJsonText = File.ReadAllText(piletPackageJsonFile)
                     .Replace(piralInstancePathInPackageJson, piralInstanceVersion);
 
@@ -51,12 +55,14 @@ namespace Piral.Blazor.Tools.Tasks
             return true;
         }
 
-        private dynamic GetPiralInstanceVersion(){
+        private dynamic GetPiralInstanceVersion()
+        {
             var piralInstanceDirectory = Path.GetDirectoryName(PiralInstancePath)
-                .Replace("\\dist\\emulator", "");
+                .Replace($"{Path.DirectorySeparatorChar}dist{Path.DirectorySeparatorChar}emulator", "");
             var piralInstancePackageJsonFile = Path.Combine(piralInstanceDirectory, "package.json");
-
-            if (!File.Exists(piralInstancePackageJsonFile)) {
+            
+            if (!File.Exists(piralInstancePackageJsonFile))
+            {
                 Log.LogError($"Could not find Piral instance package.json file at '{piralInstancePackageJsonFile}'."); 
                 throw new FileNotFoundException();
             }

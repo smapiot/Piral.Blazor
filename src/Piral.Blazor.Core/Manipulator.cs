@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.RenderTree;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -8,26 +10,61 @@ namespace Piral.Blazor.Core
 {
     public class Manipulator<T>
     {
+        const BindingFlags privateInstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+
         private readonly ILogger<T> _logger;
-        private readonly Type _factory;
-        private readonly object _instance;
-        private readonly object _initializers;
+        private ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>> _initializers;
+        private Action<IServiceProvider, Type> InstantiateComponent;
 
         public Manipulator(ILogger<T> logger)
         {
             _logger = logger;
-            _factory = typeof(ComponentBase).Assembly.GetType("Microsoft.AspNetCore.Components.ComponentFactory");
-            _instance = _factory.GetField("Instance").GetValue(null);
-            _initializers = _factory.GetField("_cachedInitializers", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(_instance);
         }
 
+        public void InitializeRenderer(WebAssemblyHost host, IServiceProvider provider)
+        {
+            try
+            {
+                Console.WriteLine("A");
+
+                var renderer = typeof(WebAssemblyHost)
+                    .GetField("_renderer", privateInstanceFlags)
+                    .GetValue(host);
+                    
+                var componentFactory = typeof(Renderer)
+                    .GetField("_componentFactory", privateInstanceFlags)
+                    .GetValue(renderer);
+
+                typeof(Renderer)
+                    .GetField("_serviceProvider", privateInstanceFlags)
+                    .SetValue(renderer, provider);
+
+                var ComponentFactory = componentFactory!.GetType();
+
+                _initializers = ComponentFactory
+                    .GetField("_cachedInitializers", privateInstanceFlags)
+                    .GetValue(componentFactory) as ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>>;
+
+                InstantiateComponent = (provider, componentType) => {
+                    ComponentFactory
+                        .GetMethod("InstantiateComponent")
+                        .Invoke(componentFactory, new object[] { provider, componentType });
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Could not establish local dependency injection. Error: {0}", ex);
+            }
+        }
+        
         public void OverrideComponentInitializer(Type componentType, IServiceProvider provider)
         {
             try
             {
-                _factory.GetMethod("InstantiateComponent").Invoke(_instance, new object[] { provider, componentType });
-                var converters = _initializers as ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>>;
-                converters.AddOrUpdate(componentType, _ => null, (_, initializer) => (_, comp) => initializer(provider, comp));
+                InstantiateComponent(provider, componentType);
+
+                _initializers.AddOrUpdate(componentType, _ => null,
+                    (_, initializer) => (_, comp) => initializer(provider, comp));
             }
             catch (Exception ex)
             {
@@ -39,8 +76,7 @@ namespace Piral.Blazor.Core
         {
             try
             {
-                var converters = _initializers as ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>>;
-                converters.TryRemove(componentType, out var _);
+                _initializers.TryRemove(componentType, out _);
             }
             catch (Exception ex)
             {

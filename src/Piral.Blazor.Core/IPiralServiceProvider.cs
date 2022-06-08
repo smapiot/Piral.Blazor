@@ -8,7 +8,6 @@ namespace Piral.Blazor.Core
     /// </summary>
     public interface IPiralServiceProvider : IServiceProvider
     {
-
         /// <summary>
         /// Adds the pilet's global and local <see cref="IServiceCollection"/>
         /// </summary>

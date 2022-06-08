@@ -1,6 +1,8 @@
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Piral.Blazor.Tools.Tasks
@@ -16,27 +18,63 @@ namespace Piral.Blazor.Tools.Tasks
         [Required]
         public string[] ProjectsWithStaticFiles { get; set; }
 
+        [Required]
+        public string JsImportsPath { get; set; }
+
         public override bool Execute()
         {
             Log.LogMessage($"Copying static web assets to blazor project via task...");
 
             try
             {
-                foreach (string projectName in ProjectsWithStaticFiles)
+                foreach (var projectName in ProjectsWithStaticFiles)
                 {
                     if (AssetPath.Contains(projectName))
                     {
                         var fileName = Path.GetFileName(AssetPath);
-                        var folderName = Path.Combine(TargetPath, projectName);
-                        var filePath = Path.Combine(folderName, fileName);
+                        var folderName = $"{TargetPath}/_content/{projectName}/"; 
+                        var sourcePath = AssetPath.Replace(fileName, "");
 
                         if (!Directory.Exists(folderName))
                         {
                             Directory.CreateDirectory(folderName);
                         }
 
-                        File.Copy(AssetPath, filePath, true); 
-                        Log.LogMessage($"File '{AssetPath}' copied to '{filePath}'.");  
+                        // copy all directories
+                        foreach (var dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+                        {
+                            Directory.CreateDirectory(dirPath.Replace(sourcePath, folderName));
+                        }
+
+                        // copy all files
+                        foreach (var filePath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
+                        {
+                            File.Copy(filePath, filePath.Replace(sourcePath, folderName), true);
+                        }
+
+                        if (File.Exists(JsImportsPath))
+                        {
+                            var content = File.ReadAllText(JsImportsPath);
+                            var jsImports = JsonConvert.DeserializeObject<List<string>>(content); 
+                            var indexTsxFilePath = $"{TargetPath}/index.tsx";
+                            var jsImportsString = "";
+
+                            Log.LogMessage($"The file '{JsImportsPath}' will be used for prepending imports."); 
+
+                            foreach (var jsImport in jsImports)
+                            {
+                                var importStr = $"import '{jsImport}';";
+
+                                if (!File.ReadAllText(indexTsxFilePath).Contains(importStr))
+                                {
+                                    jsImportsString += $"{importStr}\n";
+                                }
+                            }
+
+                            File.WriteAllText(indexTsxFilePath, jsImportsString + File.ReadAllText(indexTsxFilePath));
+                        }
+
+                        Log.LogMessage($"'{AssetPath}' copied to '{folderName}'.");  
                     }
                 }
             }
@@ -45,7 +83,7 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogError(error.Message);  
                 return false;
             }
-
+            
             return true; 
         }
     }

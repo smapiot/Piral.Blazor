@@ -1,10 +1,17 @@
 ﻿using System;
 using System.Reflection;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Piral.Blazor.Core
 {
     public interface IModuleContainerService
     {
+        /// <summary>
+        /// Configures the host for rendering.
+        /// </summary>
+        /// <param name="host">The current WebAssemblyHost.</param>
+        void ConfigureHost(WebAssemblyHost host);
+
         /// <summary>
         /// Configures the component for rendering.
         /// </summary>
@@ -19,10 +26,10 @@ namespace Piral.Blazor.Core
         void ForgetComponent(Type type);
 
         /// <summary>
-        /// Configures the whole assembly returning a dedicated service provider.
+        /// Configures the whole assembly (pilet) returning a dedicated service provider.
         /// </summary>
-        /// <param name="assembly"></param>
-        /// <returns></returns>
-        IServiceProvider Configure(Assembly assembly);
+        /// <param name="assembly">The pilet's assembly.</param>
+        /// <returns>The service provider for the pilet.</returns>
+        IServiceProvider ConfigureModule(Assembly assembly);
     }
 }

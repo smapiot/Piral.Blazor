@@ -15,6 +15,12 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
+            if (string.IsNullOrEmpty(Version))
+            {
+                Log.LogMessage("Keeping the current version set in the 'package.json'.");
+                return true;
+            }
+
             Log.LogMessage("Set version in package.json file...");
 
             try
@@ -25,10 +31,25 @@ namespace Piral.Blazor.Tools.Tasks
                     return false;
                 }
 
-                var packageJsonText = File.ReadAllText(PackageJsonPath)
-                    .Replace(@"""version"": ""1.0.0""", $@"""version"": ""{Version}""");
+                var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+                var command = isWindows ? "cmd.exe" : "npm";
+                var prefix = isWindows ? "/c npm.cmd " : "";
+                var startInfo = new ProcessStartInfo();
 
-                File.WriteAllText(PackageJsonPath, packageJsonText);
+                var proc = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = command,
+                        WorkingDirectory = Path.GetDirectoryName(PackageJsonPath),
+                        Arguments = $"{prefix}version {Version} --allow-same-version --no-git-tag-version",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+
+                proc.Start();
+                proc.WaitForExit();
             }
             catch (Exception error)
             {

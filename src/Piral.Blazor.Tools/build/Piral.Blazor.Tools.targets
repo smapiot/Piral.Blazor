@@ -9,7 +9,7 @@
     <ItemGroup>
         <Content Update="wwwroot\**" CopyToOutputDirectory="Always" />
     </ItemGroup>
-    
+
     <PropertyGroup>
         <_piletFolderBase>..\piral~</_piletFolderBase>
         <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
@@ -38,7 +38,7 @@
             Bundler="$(Bundler)"
             NpmRegistry="$(NpmRegistry)" />
     </Target>
-    
+
     <Target Name="SetPackageJsonVersion" AfterTargets="Scaffold">
         <SetProjectJsonVersionTask
             PackageJsonPath="$(_piletFolderPath)\package.json"
@@ -48,14 +48,15 @@
     <Target Name="AddPackageJsonOverwrites" AfterTargets="SetPackageJsonVersion">
         <AddProjectJsonOverwritesTask
             PackageJsonPath="$(_piletFolderPath)\package.json"
-            OverwritesPath="$(MSBuildProjectDirectory)\overwrite.package.json" />
-    </Target>
+            OverwritesPath="$(MSBuildProjectDirectory)\package-overwrites.json" />
+    </Target> 
 
     <Target Name="CollectStaticWebAssets" AfterTargets="SetPackageJsonVersion">
         <CollectStaticWebAssetsTask
             AssetPath="%(StaticWebAsset.Identity)"
-            TargetPath="$(_piletFolderPath)\src\_content"
-            ProjectsWithStaticFiles="$(ProjectsWithStaticFiles)" />
+            TargetPath="$(_piletFolderPath)\src"
+            ProjectsWithStaticFiles="$(ProjectsWithStaticFiles)"
+            JsImportsPath="$(MSBuildProjectDirectory)\js-imports.json" />
     </Target>
 
     <Target Name="InstallDependencies" AfterTargets="AddPackageJsonOverwrites" Condition="'$(Monorepo)'!='enable'">
@@ -63,7 +64,7 @@
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install --silent" />
     </Target>
 
-    <Target Name="RemoveNodeModulesAndLockFile" AfterTargets="InstallDependencies" Condition="'$(Monorepo)'=='enable'"> 
+	<Target Name="RemoveNodeModulesAndLockFile" AfterTargets="InstallDependencies" Condition="'$(Monorepo)'=='enable'"> 
 		<RemoveDir Directories="$(_piletFolderPath)\node_modules" />
 		<Delete Files="$(_piletFolderPath)\package-lock.json" />
 	</Target>
@@ -74,11 +75,19 @@
             PiletPath="$(_piletFolderPath)" />
     </Target>
 
-    <Target Name="InstallAnalyzer" AfterTargets="Scaffold">
+	<Target Name="UpdateAnalyzer" AfterTargets="Scaffold" Condition="Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
+		<PropertyGroup>
+			<_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
+		</PropertyGroup>
+		<!-- Update analyzer with version that matches the Tools version -->
+		<Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool update Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
+	</Target>
+
+    <Target Name="InstallAnalyzer" AfterTargets="UpdateAnalyzer" Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
         <PropertyGroup>
             <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
         </PropertyGroup>
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')" />
+        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." />
         <!-- Install analyzer with version that matches the Tools version -->
         <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
     </Target>
@@ -95,21 +104,21 @@
             File="$(MSBuildProjectDirectory)\wwwroot\index.html"
             Lines="$(_indexHtml)"
             Overwrite="true"
-            Encoding="UTF-8"/>
+            Encoding="UTF-8" />
     </Target>
 
     <Target Name="CopyScopedCss" AfterTargets="Build">
         <!-- Always create an empty one first to avoid breaking index.tsx -->
-        <Touch Files="$(_piletFolderPath)\src\$(MSBuildProjectName).styles.css" AlwaysCreate="true"/>
+        <Touch Files="$(_piletFolderPath)\src\$(MSBuildProjectName).styles.css" AlwaysCreate="true" />
         <Copy
             SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css"
             DestinationFolder="$(_piletFolderPath)\src"
             Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')"
         />
     </Target>
-    
+
     <Target Name="HotReload" AfterTargets="CopyScopedCss">
-        <Touch Files="$(_piletFolderPath)\src\blazor.codegen" Condition="Exists('$(_piletFolderPath)\blazor.codegen')" />
+        <Touch Files="$(_piletFolderPath)\src\blazor.codegen" Condition="Exists('$(_piletFolderPath)\src\blazor.codegen')" />
     </Target>
-    
+
 </Project>

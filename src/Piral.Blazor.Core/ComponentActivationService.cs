@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
 using System;
@@ -14,7 +15,9 @@ namespace Piral.Blazor.Core
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
 
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
+
         private readonly ILogger<ComponentActivationService> _logger;
+        
         private readonly IModuleContainerService _container;
 
         public event EventHandler Changed;
@@ -34,6 +37,7 @@ namespace Piral.Blazor.Core
             _container = container;
             _logger = logger;
             JSBridge.ActivationService = this;
+            container.ConfigureHost(JSBridge.Host);
         }
 
         public void Register(string componentName, Type componentType, IServiceProvider provider)
@@ -115,16 +119,33 @@ namespace Piral.Blazor.Core
 
         public void LoadComponentsFromAssembly(Assembly assembly)
         {
-            var serviceProvider = _container.Configure(assembly);
+            var serviceProvider = _container.ConfigureModule(assembly);
             var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
 
             foreach (var componentType in componentTypes)
             {
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
+
                 foreach (var componentName in componentNames)
                 {
                     Register(componentName, componentType, serviceProvider);
                     _logger.LogInformation($"registered {componentName}");
+                }
+            }
+        }
+
+        public void UnloadComponentsFromAssembly(Assembly assembly)
+        {
+            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
+
+            foreach (var componentType in componentTypes)
+            {
+                var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
+                
+                foreach (var componentName in componentNames)
+                {
+                    Unregister(componentName);
+                    _logger.LogInformation($"unregistered {componentName}");
                 }
             }
         }
@@ -154,7 +175,7 @@ namespace Piral.Blazor.Core
                     {
                         _active[i] = new ActiveComponent(m.ComponentName, m.ReferenceId);
                     }
-
+                    
                     removed++;
                 }
                 // or we find elements that have been marked, but can now be removed.

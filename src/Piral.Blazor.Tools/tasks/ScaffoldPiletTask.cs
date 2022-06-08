@@ -3,13 +3,14 @@ using Microsoft.Build.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Converters;
+using Piral.Blazor.Tools.Models;
 using System;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Piral.Blazor.Tools.Models;
+using System.Text.RegularExpressions;
 
 namespace Piral.Blazor.Tools.Tasks
 {
@@ -48,6 +49,8 @@ namespace Piral.Blazor.Tools.Tasks
         [Required]
         public string FrameworkMoniker { get; set; }
 
+        private string PiralInstanceFile => Path.Combine(Source, PiralInstance.Replace('\\', '/'));
+
         private static string GetRelativePath(string relativeTo, string path)
         {
             var source = new Uri($"{relativeTo}{Path.DirectorySeparatorChar}");
@@ -64,6 +67,48 @@ namespace Piral.Blazor.Tools.Tasks
             return rel;
         }
 
+        private int GetNpmVersion(string command, string prefix)
+        {
+            var version = "0.0.0";
+            var regex = new Regex(@"\d+\.\d+\.\d+");
+            var proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = command,
+                    Arguments = $"{prefix}--version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            proc.Start();
+
+            while (!proc.StandardOutput.EndOfStream)
+            {
+                var line = proc.StandardOutput.ReadLine();
+                var match = regex.Match(line);
+
+                if (match.Success)
+                {
+                    version = match.Value;
+                }
+            }
+
+            proc.WaitForExit();
+
+            var majorVersion = version.Split('.').First();
+
+            if (int.TryParse(majorVersion, out var ver))
+            {
+                return ver;
+            }
+
+            Log.LogError("Could not determine the version of npm. Potentially npm is not installed or too old.");
+            return 0;
+        }
+
         public override bool Execute()
         {
             Log.LogMessage($"Checking the pilet infrastructure (Version={ToolsVersion}, Framework={Framework})...");
@@ -76,12 +121,24 @@ namespace Piral.Blazor.Tools.Tasks
             var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
             var cmd = isWindows ? "cmd.exe" : "npx";
             var prefix = isWindows ? "/c npx.cmd " : "";
+            var npmVersion = GetNpmVersion(cmd, prefix);
+
+            if (npmVersion < 6)
+            {
+                Log.LogError("At least npm version 6 is required to use Piral.Blazor.");
+                return false;
+            }
+            else if (npmVersion > 8)
+            {
+                Log.LogWarning("This version of npm has not been tested yet.");
+            }
 
             try
             {
                 var target = Path.Combine(Target, ProjectName);
                 var infoFile = Path.Combine(target, ".blazorrc");
-                var emulator = Path.Combine(Source, PiralInstance.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+                // local file paths have to start with .., such as "./foo.tgz" or "../app-shell/foo.tgz"
+                var emulator = PiralInstance.StartsWith(".") ? PiralInstanceFile : PiralInstance;
 
                 if (File.Exists(infoFile))
                 {
@@ -140,7 +197,7 @@ namespace Piral.Blazor.Tools.Tasks
                     File.WriteAllText(targetFile, content, Encoding.UTF8);
                 }
 
-                File.WriteAllText(infoFile, $"Date={DateTime.Now.ToString()}\nVersion={ToolsVersion}");
+                File.WriteAllText(infoFile, $"Date={DateTime.Now}\nVersion={ToolsVersion}");
             }
             catch (Exception error)
             {
