@@ -10,6 +10,7 @@ namespace Piral.Blazor.Core
     public class ModuleContainerService : IModuleContainerService
     {
         private readonly IPiralServiceProvider _provider;
+
         private readonly Manipulator<ModuleContainerService> _manipulator;
 
         public ModuleContainerService(IPiralServiceProvider provider, ILogger<ModuleContainerService> logger)
@@ -18,23 +19,28 @@ namespace Piral.Blazor.Core
             _manipulator = new Manipulator<ModuleContainerService>(logger);
         }
 
-        public void ConfigureComponent(Type type, IServiceProvider provider, WebAssemblyHost host)
+        public void ConfigureHost(WebAssemblyHost host)
         {
-            _manipulator.OverrideComponentInitializer(type, provider, host);
+            _manipulator.InitializeRenderer(host, _provider);
+        }
+
+        public void ConfigureComponent(Type type, IServiceProvider provider)
+        {
+            _manipulator.OverrideComponentInitializer(type, provider);
         }
 
         public void ForgetComponent(Type type) => _manipulator.RemoveComponentInitializer(type);
 
-        public IServiceProvider Configure(Assembly assembly)
+        public IServiceProvider ConfigureModule(Assembly assembly)
         {
-            var globalServices = ConfigureGlobal(assembly);
-            var piletServices = ConfigurePilet(assembly);
+            var globalServices = ConfigureGlobalServices(assembly);
+            var piletServices = ConfigurePiletServices(assembly);
 
             _provider.AddGlobalServices(globalServices);
             return _provider.CreatePiletServiceProvider(piletServices);
         }
 
-        private static IServiceCollection ConfigureGlobal(Assembly assembly)
+        private static IServiceCollection ConfigureGlobalServices(Assembly assembly)
         {
             var sc = new ServiceCollection();
             var configure = assembly
@@ -46,7 +52,7 @@ namespace Piral.Blazor.Core
             return sc;
         }
 
-        private static IServiceCollection ConfigurePilet(Assembly assembly)
+        private static IServiceCollection ConfigurePiletServices(Assembly assembly)
         {
             var sc = new ServiceCollection();
             var configure = assembly

@@ -15,6 +15,7 @@ const execAsync = promisify(exec);
 // filled in by MSBuild
 const targetFramework = "**MSBUILD_TargetFramework**";
 const targetFrameworkAlt = "**MSBUILD_TargetFrameworkMoniker**";
+const matchVersion = /\d+\.\d+\.\d+/;
 
 // dependent on the NODE_ENV variable set by piral cli
 const RELEASE = process.env.NODE_ENV === "production";
@@ -28,7 +29,8 @@ const pjson = "package.json";
 const analyzer = "Piral.Blazor.Analyzer";
 const setupfile = "setup.tsx";
 
-const ignoredFromWwwroot = ["index.html", "_framework"];
+const ignoredFromWwwrootStandalone = ["index.html"];
+const ignoredFromWwwroot = [...ignoredFromWwwrootStandalone, "_framework"];
 
 const piralPiletFolder = resolve(__dirname, "..");
 const rootFolder = resolve(piralPiletFolder, "..", "..");
@@ -54,7 +56,6 @@ if (!existsSync(appdir + "/app") && existsSync(appdir + "/dist")) {
 
 const appFrameworkDir = resolve(appdir, "app", "_framework");
 const piletManifest = require(resolve(sourceDir, bbjson));
-const piralVersion = getPiralVersion();
 
 const definePathCode = `function computePath() {
   try {
@@ -191,7 +192,7 @@ function defineTargets(uniqueDependencies, projectAssets) {
       .replace(".dll", "");
   };
 
-  const getcsprojname = (x) => `${/.*\\+(.*)\.csproj/.exec(x)[1]}`; // C:\\path\\to\\proj\\proj.csproj --> proj
+  const getcsprojname = (x) => basename(x).slice(0, -7); // C:\\path\\to\\proj\\proj.csproj --> proj
 
   const filterDeps = (deps) =>
     deps.map(getDllName).filter((d) => !!d && isNotSharedDep(d));
@@ -324,6 +325,46 @@ function isVersionSame(oldVer, newVer) {
   return "match";
 }
 
+function checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion) {
+  const versionMatch = isVersionSame(appshellBlazorVersion, piletBlazorVersion);
+
+  if (versionMatch === "incompatible") {
+    throw new Error(`The Blazor versions of your pilet and Piral Instance are incompatible:
+   - Piral Instance Blazor version = ${appshellBlazorVersion}
+   - Pilet Blazor version = ${piletBlazorVersion}`);
+  } else if (versionMatch === "compatible") {
+    console.warn(`The Blazor versions of your pilet and Piral Instance do not match, but seem to be compatible:
+    - Piral Instance Blazor version = ${appshellBlazorVersion}
+    - Pilet Blazor version = ${piletBlazorVersion}`);
+  }
+}
+
+async function checkBlazorInstallation(piletBlazorVersion) {
+  try {
+    require.resolve("piral-blazor/package.json");
+    require.resolve("blazor/package.json");
+  } catch {
+    console.warn(
+      "The npm packages `blazor` and `piral-blazor` have not been not found. Installing them now..."
+    );
+    const piralVersion = getPiralVersion();
+    const [npmBlazorVersion] = matchVersion.exec(piletBlazorVersion);
+    const [blazorRelease] = npmBlazorVersion.split(".");
+    const installCmd = `npm i blazor@^${blazorRelease} piral-blazor@${piralVersion}`;
+    await execAsync(installCmd);
+  }
+}
+
+function copyAll([dllFiles, pdbFiles], ignoredFiles, targetDir) {
+  const wwwRootFiles = readdirSync(wwwRootDir);
+  const staticFiles = wwwRootFiles.filter((x) => !ignoredFiles.includes(x));
+
+  //File copy
+  copySync(pdbFiles, sourceDir, targetDir);
+  copySync(dllFiles, sourceDir, targetDir);
+  copySync(staticFiles, wwwRootDir, targetDir);
+}
+
 /*
  *
  * ----------------------------------------------------------------------------------------------------------------------
@@ -349,69 +390,57 @@ module.exports = async function () {
   }
 
   // Piral Blazor checks
-  const blazorInAppshell = existsSync(appFrameworkDir);
+  const bbpath = resolve(appFrameworkDir, bbjson);
+  const blazorInAppshell = existsSync(bbpath);
   const piletBlazorVersion = extractBlazorVersion(piletManifest);
-  const wwwRootFiles = readdirSync(wwwRootDir);
-  let blazorFiles = [];
+  const blazorFiles = [];
 
   if (blazorInAppshell) {
-    const originalManifest = require(resolve(appFrameworkDir, bbjson));
-    blazorFiles = diffBlazorBootFiles(piletManifest, originalManifest);
-
-    const [dllFiles, pdbFiles] = blazorFiles;
-
-    //File copy
-    const staticFiles = wwwRootFiles.filter(
-      (x) => !ignoredFromWwwroot.includes(x)
+    console.log(
+      "The app shell already integrates `piral-blazor` with `blazor`."
     );
 
-    copySync(pdbFiles, sourceDir, targetDir);
-    copySync(dllFiles, sourceDir, targetDir);
-    copySync(staticFiles, wwwRootDir, targetDir);
+    const appShellManifest = require(bbpath);
+    const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
+    blazorFiles.push(...diffBlazorBootFiles(piletManifest, appShellManifest));
 
-    const appshellBlazorVersion = extractBlazorVersion(originalManifest);
-    const versionMatch = isVersionSame(appshellBlazorVersion, piletBlazorVersion);
+    checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
 
-    if (versionMatch === 'incompatible') {
-      throw new Error(`The Blazor versions of your pilet and Piral Instance are incompatible:
-     - Piral Instance Blazor version = ${appshellBlazorVersion}
-     - Pilet Blazor version = ${piletBlazorVersion}`);
-    } else if (versionMatch === 'compatible') {
-      console.warn(`The Blazor versions of your pilet and Piral Instance do not match, but seem to be compatible:
-      - Piral Instance Blazor version = ${appshellBlazorVersion}
-      - Pilet Blazor version = ${piletBlazorVersion}`);
-    }
+    copyAll(blazorFiles, ignoredFromWwwroot, targetDir);
   } else {
-    blazorFiles = [
-      getAllKeys(piletManifest, "assembly"),
-      getAllKeys(piletManifest, "pdb"),
-    ];
+    console.log(
+      "The app shell does not contain `piral-blazor`. Using standalone mode."
+    );
 
-    //File copy
-    copySync(wwwRootFiles, wwwRootDir, targetDir);
+    await checkBlazorInstallation(piletBlazorVersion);
 
-    try {
-      require.resolve("piral-blazor/convert");
-      require.resolve("blazor");
-    } catch {
-      console.warn(
-        "Piral Blazor was not found in the Piral Instance, and the needed dependencies are also not found. Installing them now..."
-      );
-      const npmBlazorVersion = `${piletBlazorVersion.slice(0, -2)}.0`;
-      const installCmd = `npm i blazor@^${npmBlazorVersion} piral-blazor@^${piralVersion}`;
-      await execAsync(installCmd);
-    }
+    const variant = RELEASE ? "release" : "debug";
+    const originalManifest = require(`blazor/${variant}/wwwroot/_framework/${bbjson}`);
+    blazorFiles.push(...diffBlazorBootFiles(piletManifest, originalManifest));
+
+    copyAll(blazorFiles, ignoredFromWwwrootStandalone, targetDir);
   }
+
+  const allImports = [];
 
   // Piral Blazor API
 
-  const getPiralBlazorApiCode = `initPiralBlazorApi : (app) => {
+  if (!blazorInAppshell) {
+    allImports.push(
+      `import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`
+    );
+  }
+
+  const getPiralBlazorApiCode = `export function initPiralBlazorApi(app) {
     ${
       blazorInAppshell
         ? ""
-        : `const pb = require('piral-blazor/convert')
-      app.defineBlazorReferences = pb.defineBlazorReferences;
-      app.fromBlazor = pb.fromBlazor;`
+        : `
+          app.defineBlazorReferences = defineBlazorReferences;
+          app.defineBlazorOptions = () => {};
+          app.fromBlazor = fromBlazor;
+          app.releaseBlazorReferences = releaseBlazorReferences;
+      `
     }
   }`;
 
@@ -420,7 +449,7 @@ module.exports = async function () {
   const uniqueDependencies = dllFiles.map((f) => f.replace(".dll", ""));
   const targets = defineTargets(uniqueDependencies, projectAssets);
   const refs = createAllRefs(...targets);
-  const registerDependenciesCode = `registerDependencies: (app) => { 
+  const registerDependenciesCode = `export function registerDependencies(app) { 
     const references = [
       ${refs.map((ref) => `path + "${ref}.dll"`).join(",")}, 
       ${pdbFiles.map((pdb) => `path + "${pdb}"`).join(",")}
@@ -429,7 +458,7 @@ module.exports = async function () {
   }`;
 
   //Options
-  const registerOptionsCode = `registerOptions: (app) =>{
+  const registerOptionsCode = `export function registerOptions(app) {
     app.defineBlazorOptions({ resourcePathRoot: path });
   }`;
 
@@ -442,8 +471,13 @@ module.exports = async function () {
     "/"
   );
   const setupFileExists = existsSync(setupFilePath);
-  const setupPiletCode = `setupPilet: ${
-    setupFileExists ? `require('${setupFilePath}').default` : "() => {}"
+
+  if (setupFileExists) {
+    allImports.push(`import projectSetup from '${setupFilePath}';`);
+  }
+
+  const setupPiletCode = `export const setupPilet = ${
+    setupFileExists ? "projectSetup" : "() => {}"
   }`;
 
   try {
@@ -452,39 +486,51 @@ module.exports = async function () {
 
     const { routes, extensions } = JSON.parse(stdout.trim());
 
-    return `    
+    return `
+    ${allImports.join("\n")}
+
     ${definePathCode}
-    module.exports = {
-      ${getPiralBlazorApiCode},
-      ${setupPiletCode},
-      ${registerDependenciesCode},
-      ${registerOptionsCode},
-      registerPages: (app) => { 
-        ${routes.map(toPageRegistration).join("\n")} 
-      },
-      registerExtensions : (app) => {
-        ${Object.entries(extensions).map(toExtensionRegistration).join("\n")} 
-      },
-      routes: ${JSON.stringify(routes)},
-      paths: ${JSON.stringify(routes.map(toPath))}
-    }`;
+    
+    ${getPiralBlazorApiCode}
+    ${setupPiletCode}
+    ${registerDependenciesCode}
+    ${registerOptionsCode}
+
+    export function registerPages(app) { 
+      ${routes.map(toPageRegistration).join("\n")}
+    }
+
+    export function registerExtensions(app) {
+      ${Object.entries(extensions).map(toExtensionRegistration).join("\n")} 
+    }
+
+    export const routes = ${JSON.stringify(routes)};
+
+    export const paths = ${JSON.stringify(routes.map(toPath))};
+    `;
   } catch (err) {
     console.error(err);
     return `
+    ${allImports.join("\n")}
+
     ${definePathCode}
-    module.exports = {
-      ${getPiralBlazorApiCode},
-      ${setupPiletCode},
-      ${registerDependenciesCode},
-      ${registerOptionsCode},
-      registerPages: (...args) => {
-        console.warn('${__filename}: \`registerPages\` was called, but no Blazor routes were found.')
-      },
-      registerExtensions: (...args) => {
-        console.warn('${__filename}: \`registerExtensions\` was called, but no Blazor extensions were found.')
-      },
-      routes: [],
-      paths: []
-    }`;
+    
+    ${getPiralBlazorApiCode}
+    ${setupPiletCode}
+    ${registerDependenciesCode}
+    ${registerOptionsCode}
+
+    export function registerPages(...args) {
+      console.warn('${__filename}: \`registerPages\` was called, but no Blazor routes were found.');
+    }
+
+    export function registerExtensions(...args) {
+      console.warn('${__filename}: \`registerExtensions\` was called, but no Blazor extensions were found.');
+    }
+
+    export const routes = [];
+
+    export const paths = [];
+    `;
   }
 };

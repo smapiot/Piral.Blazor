@@ -45,11 +45,10 @@ namespace Piral.Blazor.Core
 
         public PiletServiceProvider CreatePiletServiceProvider(IServiceCollection piletServices)
         {
-            var serviceProvider = new PiletServiceProvider(_globalServiceProvider, _globalServices, piletServices);
+            var serviceProvider = new PiletServiceProvider(this, _globalServices, piletServices);
             _piletServiceProviders.Add(serviceProvider);
             return serviceProvider;
         }
-
 
         internal static IServiceProvider CreatePiletServiceProvider(
             IServiceProvider globalServiceProvider,

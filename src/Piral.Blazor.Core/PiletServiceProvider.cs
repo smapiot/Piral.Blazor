@@ -17,6 +17,7 @@ namespace Piral.Blazor.Core
         /// Constructs a new <see cref="PiletServiceProvider"/>.
         /// </summary>
         /// <param name="globalProvider">The current global service provider </param>
+        /// <param name="globalServices">A collection of global service registrations.</param>
         /// <param name="piletServices">A collection of pilet specific service registrations.</param>
         public PiletServiceProvider(IServiceProvider globalProvider, IServiceCollection globalServices, IServiceCollection piletServices)
         {
@@ -36,8 +37,6 @@ namespace Piral.Blazor.Core
             _piletProvider = PiralServiceProvider.CreatePiletServiceProvider(globalProvider, globalServices, _piletServices);
         }
 
-        public object GetService(Type serviceType) =>
-            _piletProvider.GetService(serviceType) ??
-            _globalProvider.GetService(serviceType);
+        public object GetService(Type serviceType) => _piletProvider.GetService(serviceType) ?? _globalProvider.GetService(serviceType);
     }
 }
