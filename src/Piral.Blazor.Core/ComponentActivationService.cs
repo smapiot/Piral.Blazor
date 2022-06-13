@@ -198,35 +198,44 @@ namespace Piral.Blazor.Core
 
         private static IEnumerable<string> GetComponentNamesToRegister(Type member, IEnumerable<Type> attributeTypes)
         {
-            return attributeTypes.Select(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
+            return attributeTypes.SelectMany<string>(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
         }
 
-        private static string GetComponentNameToRegister(Type member, Type attributeType)
+        private static IEnumerable<string> GetComponentNameToRegister(Type member, Type attributeType)
         {
-            // get only the first occurence of the attribute.
-            // This is only relevant for extensions, which can have multiple attributes,
+            var attributes = member.GetCustomAttributes(attributeType, false);
+
+            // get only the first occurence of the attribute for all but pages.
+            // This is mostly relevant for extensions, which can have multiple attributes,
             // but the name to register (FQN) will be the same for every occurence anyway.
-            var attribute = member
-                .GetCustomAttributes(attributeType, false)
-                .FirstOrDefault(); 
+            if(attributeType != typeof(RouteAttribute)){
+                attributes = attributes.Take(1);
+            }
             
-            if (attribute is null)
+            if (attributes is null)
             {
                 return null;
             }
-            
-            return attributeType switch
+
+            List<string> result = new();
+
+            foreach (var attribute in attributes)
             {
-                Type _ when attributeType == typeof(RouteAttribute) =>
-                    $"page-{((RouteAttribute) attribute).Template}",
-                Type _ when attributeType == typeof(PiralExtensionAttribute) => 
-                    $"extension-{member.FullName}",
-                Type _ when attributeType == typeof(PiralComponentAttribute) =>
-                    $"{((PiralComponentAttribute) attribute).Name ?? member.FullName}",
-                Type _ when attributeType == typeof(ExposePiletAttribute) =>
-                    $"{((ExposePiletAttribute) attribute).Name ?? member.FullName}",
-                _ => null
-            };
+                result.Add(attributeType switch
+                {
+                    Type _ when attributeType == typeof(RouteAttribute) =>
+                        $"page-{((RouteAttribute) attribute).Template}",
+                    Type _ when attributeType == typeof(PiralExtensionAttribute) =>
+                        $"extension-{member.FullName}",
+                    Type _ when attributeType == typeof(PiralComponentAttribute) =>
+                        $"{((PiralComponentAttribute) attribute).Name ?? member.FullName}",
+                    Type _ when attributeType == typeof(ExposePiletAttribute) =>
+                        $"{((ExposePiletAttribute) attribute).Name ?? member.FullName}",
+                    _ => null
+                });
+            }
+            
+            return result; 
         }
     }
 }
