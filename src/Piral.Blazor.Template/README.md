@@ -1,13 +1,13 @@
 # Piral.Blazor.Template
 
-[![Nuget](https://img.shields.io/badge/nuget-v5.0.2-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/5.0.2)
+[![Nuget](https://img.shields.io/badge/nuget-v5.0.3-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/5.0.3)
 
 For getting started easily, a Blazor template is available. This will set up a Blazor pilet for the preferred Piral instance.
 
 ### Installation
 
 - Make sure that [.NET 5 SDK](https://dotnet.microsoft.com/download/dotnet/5.0) is installed.
-- Run `dotnet new --install Piral.Blazor.Template::5.0.2` to install the project template globally.
+- Run `dotnet new --install Piral.Blazor.Template::5.0.3` to install the project template globally.
 
 ### Usage
 

@@ -28,6 +28,7 @@ const pajson = "project.assets.json";
 const pjson = "package.json";
 const analyzer = "Piral.Blazor.Analyzer";
 const setupfile = "setup.tsx";
+const teardownfile = "teardown.tsx";
 
 const ignoredFromWwwrootStandalone = ["index.html"];
 const ignoredFromWwwroot = [...ignoredFromWwwrootStandalone, "_framework"];
@@ -465,6 +466,7 @@ module.exports = async function () {
   // Analyzer
   const projectName = await getProjectName(blazorprojectfolder);
   const command = `dotnet ${analyzer} --base-dir "${blazorprojectfolder}" --dll-name "${projectName}.dll" --target-framework "${targetFramework}" --configuration "${configuration}"`;
+
   // Setup file
   const setupFilePath = join(blazorprojectfolder, setupfile).replace(
     /\\/g,
@@ -478,6 +480,21 @@ module.exports = async function () {
 
   const setupPiletCode = `export const setupPilet = ${
     setupFileExists ? "projectSetup" : "() => {}"
+  }`;
+
+  // Teardown file
+  const teardownFilePath = join(blazorprojectfolder, teardownfile).replace(
+    /\\/g,
+    "/"
+  );
+  const teardownFileExists = existsSync(teardownFilePath);
+
+  if (teardownFileExists) {
+    allImports.push(`import projectTeardown from '${teardownFilePath}';`);
+  }
+
+  const teardownPiletCode = `export const teardownPilet = ${
+    teardownFileExists ? "projectTeardown" : "() => {}"
   }`;
 
   try {
@@ -495,6 +512,7 @@ module.exports = async function () {
     ${setupPiletCode}
     ${registerDependenciesCode}
     ${registerOptionsCode}
+    ${teardownPiletCode}
 
     export function registerPages(app) { 
       ${routes.map(toPageRegistration).join("\n")}
@@ -519,6 +537,7 @@ module.exports = async function () {
     ${setupPiletCode}
     ${registerDependenciesCode}
     ${registerOptionsCode}
+    ${teardownPiletCode}
 
     export function registerPages(...args) {
       console.warn('${__filename}: \`registerPages\` was called, but no Blazor routes were found.');

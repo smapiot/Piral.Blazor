@@ -13,4 +13,5 @@ export function setup(app: PiletApi) {
 
 export function teardown(app: PiletApi) {
     app.releaseBlazorReferences?.();
+    Blazor.teardownPilet(app);
 }

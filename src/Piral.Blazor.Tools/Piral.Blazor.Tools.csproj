@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageId>Piral.Blazor.Tools</PackageId>
-        <VersionPrefix>5.0.2</VersionPrefix>
+        <VersionPrefix>5.0.3</VersionPrefix>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
         <IsPackable>true</IsPackable>
