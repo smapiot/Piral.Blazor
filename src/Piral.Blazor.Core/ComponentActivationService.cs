@@ -198,7 +198,7 @@ namespace Piral.Blazor.Core
 
         private static IEnumerable<string> GetComponentNamesToRegister(Type member, IEnumerable<Type> attributeTypes)
         {
-            return attributeTypes.SelectMany<string>(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
+            return attributeTypes.SelectMany(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
         }
 
         private static IEnumerable<string> GetComponentNameToRegister(Type member, Type attributeType)
@@ -209,7 +209,7 @@ namespace Piral.Blazor.Core
             // This is mostly relevant for extensions, which can have multiple attributes,
             // but the name to register (FQN) will be the same for every occurence anyway.
             if(attributeType != typeof(RouteAttribute)){
-                attributes = attributes.Take(1);
+                attributes = attributes[1..1];
             }
             
             if (attributes is null)
