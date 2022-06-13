@@ -25,8 +25,6 @@ namespace Piral.Blazor.Core
         {
             try
             {
-                Console.WriteLine("A");
-
                 var renderer = typeof(WebAssemblyHost)
                     .GetField("_renderer", privateInstanceFlags)
                     .GetValue(host);
