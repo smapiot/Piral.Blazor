@@ -208,8 +208,8 @@ namespace Piral.Blazor.Core
             // get only the first occurence of the attribute for all but pages.
             // This is mostly relevant for extensions, which can have multiple attributes,
             // but the name to register (FQN) will be the same for every occurence anyway.
-            if(attributeType != typeof(RouteAttribute)){
-                attributes = attributes[1..1];
+            if(attributeType != typeof(RouteAttribute) && attributes.Count() > 1){
+                attributes = attributes.ToList().Take(1).ToArray();
             }
             
             if (attributes is null)
