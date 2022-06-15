@@ -46,6 +46,8 @@ namespace Piral.Blazor.Tools.Tasks
         [Required]
         public string FrameworkMoniker { get; set; }
 
+        public string ConfigFolderName { get; set; } = "";
+
         private string PiralInstanceFile => Path.Combine(Source, PiralInstance.Replace('\\', '/'));
 
         private static string GetRelativePath(string relativeTo, string path)
@@ -189,7 +191,8 @@ namespace Piral.Blazor.Tools.Tasks
                         .Replace("**PiralInstance**", piralInstanceName)
                         .Replace("**BlazorProjectName**", ProjectName)
                         .Replace("**MSBUILD_TargetFramework**", Framework)
-                        .Replace("**MSBUILD_TargetFrameworkMoniker**", FrameworkMoniker);
+                        .Replace("**MSBUILD_TargetFrameworkMoniker**", FrameworkMoniker)
+                        .Replace("**ConfigFolder**", ConfigFolderName);
 
                     File.WriteAllText(targetFile, content, Encoding.UTF8);
                 }
