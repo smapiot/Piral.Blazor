@@ -37,6 +37,7 @@ const piralPiletFolder = resolve(__dirname, "..");
 const rootFolder = resolve(piralPiletFolder, "..", "..");
 const blazorfolderName = basename(piralPiletFolder);
 const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
+const piralconfigfolder = resolve(blazorprojectfolder, ".piralconfig");
 const binariesdir = resolve(
   blazorprojectfolder,
   "bin",
@@ -468,7 +469,7 @@ module.exports = async function () {
   const command = `dotnet ${analyzer} --base-dir "${blazorprojectfolder}" --dll-name "${projectName}.dll" --target-framework "${targetFramework}" --configuration "${configuration}"`;
 
   // Setup file
-  const setupFilePath = join(blazorprojectfolder, setupfile).replace(
+  const setupFilePath = join(piralconfigfolder, setupfile).replace(
     /\\/g,
     "/"
   );
@@ -483,7 +484,7 @@ module.exports = async function () {
   }`;
 
   // Teardown file
-  const teardownFilePath = join(blazorprojectfolder, teardownfile).replace(
+  const teardownFilePath = join(piralconfigfolder, teardownfile).replace(
     /\\/g,
     "/"
   );

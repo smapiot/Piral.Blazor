@@ -288,9 +288,10 @@ In addition to this, if you want to debug your Blazor pilet using for example Vi
 
 There are some special files that you can add in your project (adjacent to the *.csproj* file):
 
-- *setup.tsx*
-- *package-overwrites.json*
-- *js-imports.json*
+- *.piralconfig/setup.tsx*
+- *.piralconfig/teardown.tsx*
+- *.piralconfig/package-overwrites.json*
+- *.piralconfig/js-imports.json*
 
 Let's see what they do and how they can be used.
 
@@ -338,6 +339,10 @@ This would add a development dependency to the `axios` package. Likewise, other 
 ```
 
 The rules for the merge follow the [Json.NET](https://www.newtonsoft.com/json/help/html/MergeJson.htm) approach.
+
+### Extending the Pilet's Teardown
+
+The *teardown.tsx* file can be used to define more things that should be done in a pilet's `teardown` function. By default, the content of the `teardown` function is auto generated. Things such as `pages` and `extensions` would be automatically unregistered. However, in some cases you will need to unregister things manually. You can do this here.
 
 ### Defining Additional JavaScript Imports
 
