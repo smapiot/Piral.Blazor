@@ -186,6 +186,8 @@ export default (app: PiletApi) => {
 
 Parameters (or "props") are properly forwarded. Usually, it should be sufficient to declare `[Parameter]` properties in the Blazor components. Besides, there are more advanced ways.
 
+#### Generic Approach
+
 For instance, to access the `params` prop of an extension you can use the `PiralParameter` attribute. This way, you can "forward" props from JS to the .NET name of your choice (in this case "params" is renamed to "Parameters").
 
 ```razor
@@ -235,6 +237,50 @@ That way, we only have a property `Message` which reflects the `params.Test`. So
 ```
 
 It would just work.
+
+#### Routes
+
+If you want to match the route parameter you can use the generic approach, too:
+
+```razor
+@page "/foo/{id}"
+
+<div>@Id</div>
+
+@code {
+    [Parameter]
+    [PiralParameter("match.params.id")]
+    public string Id { get; set; }
+}
+```
+
+However, since using `match.params` is quite verbose and easy to get wrong you can also use the special `PiralRouteParameter` attribute.
+
+```razor
+@page "/foo/{id}"
+
+<div>@Id</div>
+
+@code {
+    [Parameter]
+    [PiralRouteParameter("id")]
+    public string Id { get; set; }
+}
+```
+
+Note that there is another convenience deriving from the use of `PiralRouteParameter`. If your route parameter name matches the name of the property then you can also omit the argument:
+
+```razor
+@page "/foo/{Id}"
+
+<div>@Id</div>
+
+@code {
+    [Parameter]
+    [PiralRouteParameter]
+    public string Id { get; set; }
+}
+```
 
 ### Dependency Injection
 
