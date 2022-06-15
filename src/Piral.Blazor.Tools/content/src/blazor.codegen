@@ -37,7 +37,7 @@ const piralPiletFolder = resolve(__dirname, "..");
 const rootFolder = resolve(piralPiletFolder, "..", "..");
 const blazorfolderName = basename(piralPiletFolder);
 const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
-const piralconfigfolder = resolve(blazorprojectfolder, ".piralconfig");
+const piralconfigfolder = resolve(blazorprojectfolder, "**ConfigFolder**");
 const binariesdir = resolve(
   blazorprojectfolder,
   "bin",
