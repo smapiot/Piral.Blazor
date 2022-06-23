@@ -117,7 +117,7 @@ namespace Piral.Blazor.Tools.Tasks
                 var sourceFile = Path.Combine(source, configurationFile);
                 if(File.Exists(sourceFile)){
                     Log.LogMessage($"Copying file '{configurationFile}' from '{sourceFile}'");
-                    File.Copy(sourceFile, Path.Combine(target, configurationFile));
+                    File.Copy(sourceFile, Path.Combine(target, configurationFile), true);
                 }
             }
         }
