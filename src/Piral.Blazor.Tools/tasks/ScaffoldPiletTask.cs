@@ -108,6 +108,20 @@ namespace Piral.Blazor.Tools.Tasks
             return 0;
         }
 
+        private void CopyConfigurationFiles(){
+            var configurationFiles = new string [1]{".npmrc"};
+            var source = Path.Combine(Source, ConfigFolderName);
+            var target = Path.Combine(Target, ProjectName);
+            foreach (var configurationFile in configurationFiles)
+            {
+                var sourceFile = Path.Combine(source, configurationFile);
+                if(File.Exists(sourceFile)){
+                    Log.LogMessage($"Copying file '{configurationFile}' from '{sourceFile}'");
+                    File.Copy(sourceFile, Path.Combine(target, configurationFile));
+                }
+            }
+        }
+
         public override bool Execute()
         {
             Log.LogMessage($"Checking the pilet infrastructure (Version={ToolsVersion}, Framework={Framework})...");
@@ -176,6 +190,8 @@ namespace Piral.Blazor.Tools.Tasks
                         .Start(cmd, $"{prefix}--package=piral-cli@{CliVersion} -y -- pilet new {emulator} --base {target} --registry {NpmRegistry} --bundler {Bundler} --no-install")
                         .WaitForExit();
                 }
+
+                CopyConfigurationFiles();
 
                 Log.LogMessage($"Updating source files from '{ContentFolder}/**/*'...");
                 var files = Directory.GetFiles(ContentFolder, "*", SearchOption.AllDirectories);
