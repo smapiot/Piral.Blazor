@@ -60,7 +60,7 @@ namespace Piral.Blazor.Tools.Tasks
 
             if (rel.Contains(Path.DirectorySeparatorChar.ToString()) == false)
             {
-                rel = $".{ Path.DirectorySeparatorChar }{ rel }";
+                rel = $".{Path.DirectorySeparatorChar}{rel}";
             }
 
             return rel;
@@ -108,16 +108,21 @@ namespace Piral.Blazor.Tools.Tasks
             return 0;
         }
 
-        private void CopyConfigurationFiles(){
-            var configurationFiles = new string [1]{".npmrc"};
+        private void CopyConfigurationFiles()
+        {
+            var configurationFiles = new[] { ".npmrc" };
             var source = Path.Combine(Source, ConfigFolderName);
             var target = Path.Combine(Target, ProjectName);
+
             foreach (var configurationFile in configurationFiles)
             {
                 var sourceFile = Path.Combine(source, configurationFile);
-                if(File.Exists(sourceFile)){
-                    Log.LogMessage($"Copying file '{configurationFile}' from '{sourceFile}'");
-                    File.Copy(sourceFile, Path.Combine(target, configurationFile), true);
+
+                if (File.Exists(sourceFile))
+                {
+                    var targetFile = Path.Combine(target, configurationFile);
+                    Log.LogMessage($"Copying file '{configurationFile}' from '{sourceFile}'.");
+                    File.Copy(sourceFile, targetFile, true);
                 }
             }
         }
@@ -150,6 +155,7 @@ namespace Piral.Blazor.Tools.Tasks
             {
                 var target = Path.Combine(Target, ProjectName);
                 var infoFile = Path.Combine(target, ".blazorrc");
+
                 // local file paths have to start with .., such as "./foo.tgz" or "../app-shell/foo.tgz"
                 var emulator = PiralInstance.StartsWith(".") ? PiralInstanceFile : PiralInstance;
 
@@ -194,6 +200,7 @@ namespace Piral.Blazor.Tools.Tasks
                 CopyConfigurationFiles();
 
                 Log.LogMessage($"Updating source files from '{ContentFolder}/**/*'...");
+
                 var files = Directory.GetFiles(ContentFolder, "*", SearchOption.AllDirectories);
                 var packageJsonFile = Path.Combine(target, "package.json");
                 var packageJsonContent = File.ReadAllText(packageJsonFile);
