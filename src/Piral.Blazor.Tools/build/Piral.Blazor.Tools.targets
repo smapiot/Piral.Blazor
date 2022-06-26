@@ -2,7 +2,6 @@
 
     <UsingTask TaskName="SetProjectJsonVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
     <UsingTask TaskName="AddProjectJsonOverwritesTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
-    <UsingTask TaskName="CollectStaticWebAssetsTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
     <UsingTask TaskName="SetMonorepoPiralInstanceTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
     <UsingTask TaskName="ScaffoldPiletTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
 
@@ -18,7 +17,6 @@
 
     <Target Name="SetupPiral" DependsOnTargets="ResolveStaticWebAssetsInputs" AfterTargets="Build">
         <CallTarget Targets="Scaffold" />
-        <CallTarget Targets="CollectStaticWebAssets" />
     </Target>
 
     <Target Name="Scaffold" DependsOnTargets="RunResolvePackageDependencies">
@@ -50,14 +48,6 @@
         <AddProjectJsonOverwritesTask
             PackageJsonPath="$(_piletFolderPath)\package.json"
             OverwritesPath="$(MSBuildProjectDirectory)\$(ConfigFolder)\package-overwrites.json" />
-    </Target> 
-
-    <Target Name="CollectStaticWebAssets" AfterTargets="SetPackageJsonVersion">
-        <CollectStaticWebAssetsTask
-            AssetPath="%(StaticWebAsset.Identity)"
-            TargetPath="$(_piletFolderPath)\src"
-            ProjectsWithStaticFiles="$(ProjectsWithStaticFiles)"
-            JsImportsPath="$(MSBuildProjectDirectory)\$(ConfigFolder)\js-imports.json" />
     </Target>
 
     <Target Name="InstallDependencies" AfterTargets="AddPackageJsonOverwrites" Condition="'$(Monorepo)'!='enable'">
@@ -109,17 +99,7 @@
         />
     </Target>
 
-    <Target Name="CopyScopedCss" AfterTargets="Build">
-        <!-- Always create an empty one first to avoid breaking index.tsx -->
-        <Touch Files="$(_piletFolderPath)\src\$(MSBuildProjectName).styles.css" AlwaysCreate="true" />
-        <Copy
-            SourceFiles="obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css"
-            DestinationFolder="$(_piletFolderPath)\src"
-            Condition="Exists('obj\$(Configuration)\$(TargetFrameWork)\scopedcss\bundle\$(MSBuildProjectName).styles.css')"
-        />
-    </Target>
-
-    <Target Name="HotReload" AfterTargets="CopyScopedCss">
+    <Target Name="HotReload" AfterTargets="Build">
         <Touch Files="$(_piletFolderPath)\src\blazor.codegen" Condition="Exists('$(_piletFolderPath)\src\blazor.codegen')" />
     </Target>
 

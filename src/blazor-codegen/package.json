@@ -1,0 +1,17 @@
+{
+  "name": "blazor-codegen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Original source to generate the blazor.codegen template file.",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --outfile=../Piral.Blazor.Tools/content/src/blazor.codegen --platform=node --target=node12 --external:glob"
+  },
+  "keywords": ["blazor", "codegen", "template"],
+  "author": "smapiot",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/glob": "^7.2.0",
+    "@types/node": "^18.0.0",
+    "esbuild": "^0.14.47"
+  }
+}
