@@ -1,19 +1,24 @@
-import { basename } from "path";
+import { getProjName } from "./utils";
+import { stripVersion } from "./version";
 import { targetFramework, targetFrameworkAlt } from "./constants";
 import { ProjectAssets, Targets } from "./types";
 
-function createAllRefs(
-  internaltargets: Record<string, Array<string>>,
-  externalTargets: Record<string, Array<string>>
-) {
-  //Sets de-duplicate AND keep their insertion order
+function createAllRefs(internaltargets: Targets, externalTargets: Targets) {
+  // Sets de-duplicate AND keep their insertion order
   const refs = new Set<string>();
 
   const createExternalRefs = (fileName: string) => {
-    //depth-first post-order traversal of the dependencies
-    if (!fileName) return;
+    // depth-first post-order traversal of the dependencies
+    if (!fileName) {
+      return;
+    }
+
     const deps = externalTargets[fileName];
-    if (!deps || deps.length === 0) return refs.add(fileName);
+
+    if (!deps || deps.length === 0) {
+      return refs.add(fileName);
+    }
+
     deps.forEach(createExternalRefs);
     refs.add(fileName);
   };
@@ -32,14 +37,13 @@ function defineTargets(
 ): [internal: Targets, external: Targets] {
   const isNotSharedDep = (x: string | undefined) =>
     typeof x === "string" && uniqueDependencies.includes(x);
-  const stripVersion = (x: string) => x.split("/")[0];
 
   // Get all external dependencies
   const targets =
     projectAssets.targets?.[targetFrameworkAlt] ??
     projectAssets.targets?.[targetFramework];
 
-  /**Looks up the dll name for a project id */
+  // Looks up the dll name for a project id
   const getDllName = (projectId: string) => {
     const target = Object.entries(targets).find(
       (t) => stripVersion(t[0]) === projectId
@@ -57,8 +61,6 @@ function defineTargets(
     );
   };
 
-  const getcsprojname = (x: string) => basename(x).slice(0, -7); // C:\\path\\to\\proj\\proj.csproj --> proj
-
   const filterDeps = (deps: Array<string>) =>
     deps
       .map(getDllName)
@@ -66,9 +68,9 @@ function defineTargets(
 
   const externalTargets = Object.entries(targets)
     .map(([id, data]) => [getDllName(stripVersion(id)), data] as const)
-    //filter out targets that are shared deps
+    // filter out targets that are shared deps
     .filter(([dllName, _]) => isNotSharedDep(dllName))
-    //filter out dependencies that are shared deps
+    // filter out dependencies that are shared deps
     .map(
       ([dllName, data]) =>
         [
@@ -79,22 +81,23 @@ function defineTargets(
     // key-value to object
     .reduce((acc, [k, v]) => ({ [k]: v, ...acc }), {});
 
-  // Get internal project
-  const projectName = projectAssets.project?.restore?.projectName;
-
   const projectDependencies = filterDeps(
     Object.keys(
       projectAssets.project?.frameworks?.[targetFramework]?.dependencies ?? {}
     )
   );
 
-  const projectReferences = Object.keys(
+  const rawReferences =
     projectAssets.project?.restore?.frameworks?.[targetFramework]
-      ?.projectReferences ?? {}
-  ).map(getcsprojname);
+      ?.projectReferences ?? {};
 
+  const projectReferences = Object.keys(rawReferences).map(getProjName);
+
+  // Get internal project
+  const projectName = projectAssets.project?.restore?.projectName;
+
+  // depencency arr = deps + references
   const internalTargets = {
-    // depencency arr = deps + references
     [projectName]: [...projectDependencies, ...projectReferences],
   };
 

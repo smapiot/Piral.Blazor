@@ -6,7 +6,11 @@
   "scripts": {
     "build": "esbuild src/index.ts --bundle --outfile=../Piral.Blazor.Tools/content/src/blazor.codegen --platform=node --target=node12 --external:glob"
   },
-  "keywords": ["blazor", "codegen", "template"],
+  "keywords": [
+    "blazor",
+    "codegen",
+    "template"
+  ],
   "author": "smapiot",
   "license": "MIT",
   "devDependencies": {

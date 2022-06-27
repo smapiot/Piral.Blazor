@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Piral.Blazor.Utils
 {
@@ -14,6 +15,6 @@ namespace Piral.Blazor.Utils
         public string Pilet { get; set; }
 
         [JsonPropertyName("defaults")]
-        public object Defaults { get; set; }
+        public JsonElement Defaults { get; set; }
     }
 }

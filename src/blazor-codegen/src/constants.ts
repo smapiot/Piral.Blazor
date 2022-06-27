@@ -1,7 +1,7 @@
 // filled in by MSBuild
 export const targetFramework = "**MSBUILD_TargetFramework**";
 export const targetFrameworkAlt = "**MSBUILD_TargetFrameworkMoniker**";
-export const configFolderName = "**ConfigFolder**";
+export const configFolderName = "**MSBUILD_ConfigFolder**";
 
 // dependent on the NODE_ENV variable set by piral cli
 export const isRelease = process.env.NODE_ENV === "production";
@@ -17,8 +17,12 @@ export const setupfile = "setup.tsx";
 export const teardownfile = "teardown.tsx";
 export const swajson = `staticwebassets.${action}.json`;
 
-export const ignoredFromWwwrootStandalone = ["index.html", "favicon.ico", "icon-192.png"];
+export const ignoredFromWwwrootStandalone = [
+  "index.html",
+  "favicon.ico",
+  "icon-192.png",
+];
 export const ignoredFromWwwroot = [
   ...ignoredFromWwwrootStandalone,
-  "_framework",
+  "_framework/",
 ];

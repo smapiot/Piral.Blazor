@@ -6,9 +6,7 @@ export function toPageRegistration(route: string) {
 }
 
 /** Generates the source code line to register a blazor extension */
-export function toExtensionRegistration(entry: [string, Array<string>]) {
-  const fqn = entry[0];
-  const ids = entry[1];
+export function toExtensionRegistration([fqn, ids]: [string, Array<string>]) {
   return ids
     .map(
       (id) =>

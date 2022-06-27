@@ -1,13 +1,5 @@
 import { BlazorManifest } from "./types";
 
-export function extractBlazorVersion(manifest: BlazorManifest) {
-  return (
-    Object.keys(manifest.resources.runtime)
-      .map((x) => x.match(/^dotnet\.(.*?)\.js/))
-      .find(Boolean)?.[1] || "0.0.0"
-  );
-}
-
 /* 
   More advanced version compare that can handle versions 
   like '6.0.1.89w2uv5kng' vs '6.0.1.qyg28onfw5' -> converts to 6.0.1.0 and compares them number by number
@@ -38,6 +30,18 @@ function isVersionSame(oldVer: string, newVer: string) {
   }
 
   return "match";
+}
+
+export function stripVersion(x: string) {
+  return x.split("/")[0];
+}
+
+export function extractBlazorVersion(manifest: BlazorManifest) {
+  return (
+    Object.keys(manifest.resources.runtime)
+      .map((x) => x.match(/^dotnet\.(.*?)\.js/))
+      .find(Boolean)?.[1] || "0.0.0"
+  );
 }
 
 export function checkBlazorVersion(

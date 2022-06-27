@@ -19,19 +19,16 @@ function copyFiles(assets: Array<StaticAsset>, target: string) {
 }
 
 export function copyAll(
-  dllFiles: Array<string>,
-  pdbFiles: Array<string>,
+  forcedFiles: Array<string>,
   ignoredFiles: Array<string>,
   source: StaticAssets,
   targetDir: string
 ) {
-  const staticFiles = source.Assets.map((asset) => ({
-    ...asset,
-    IsDll: dllFiles.includes(asset.RelativePath),
-    IsPdb: pdbFiles.includes(asset.RelativePath),
-  })).filter(
+  const staticFiles = source.Assets.filter(
+    //Either we require the file or it is not ignored -> then we keep it.
     (asset) =>
-      asset.IsDll || asset.IsPdb || !ignoredFiles.includes(asset.RelativePath)
+      forcedFiles.includes(asset.RelativePath) ||
+      !ignoredFiles.includes(asset.RelativePath)
   );
 
   //File copy

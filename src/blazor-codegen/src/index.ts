@@ -47,18 +47,17 @@ const appFrameworkDir = resolve(appdir, "app", "_framework");
 module.exports = async function () {
   const targetDir = this.options.outDir;
 
-  // Build
-  try {
-    if (isRelease || !existsSync(pafile) || !existsSync(swafile)) {
-      //always build when files not found or in release
+  //always build when files not found or in release
+  if (isRelease || !existsSync(pafile) || !existsSync(swafile)) {
+    try {
       await buildSolution(blazorprojectfolder);
+    } catch (err) {
+      throw new Error(
+        `Something went wrong with the Blazor build.\n` +
+          `Make sure there is at least one Blazor project in your solution.\n` +
+          `Seen error: ${err}`
+      );
     }
-  } catch (err) {
-    throw new Error(
-      `Something went wrong with the Blazor build.\n` +
-        `Make sure there is at least one Blazor project in your solution.\n` +
-        `Seen error: ${err}`
-    );
   }
 
   // Require modules
@@ -103,7 +102,7 @@ module.exports = async function () {
 
     checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
 
-    copyAll(dlls, pdbs, ignoredFromWwwroot, staticAssets, targetDir);
+    copyAll([...dlls, ...pdbs], ignoredFromWwwroot, staticAssets, targetDir);
   } else {
     console.log(
       "The app shell does not contain `piral-blazor`. Using standalone mode."
@@ -119,7 +118,12 @@ module.exports = async function () {
       originalManifest
     );
 
-    copyAll(dlls, pdbs, ignoredFromWwwrootStandalone, staticAssets, targetDir);
+    copyAll(
+      [...dlls, ...pdbs],
+      ignoredFromWwwrootStandalone,
+      staticAssets,
+      targetDir
+    );
   }
 
   const allImports: Array<string> = [];

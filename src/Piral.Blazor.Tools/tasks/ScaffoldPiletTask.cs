@@ -168,8 +168,11 @@ namespace Piral.Blazor.Tools.Tasks
                     var version = infos
                         .Where(m => m.StartsWith("Version="))
                         .Select(m => m.Substring(8)).FirstOrDefault();
+                    var piralInstance = infos
+                        .Where(m => m.StartsWith("PiralInstance="))
+                        .Select(m => m.Substring(8)).FirstOrDefault();
 
-                    if (version == ToolsVersion && date.CompareTo(DateTime.Now.AddDays(-2)) >= 0)
+                    if (version == ToolsVersion && date.CompareTo(DateTime.Now.AddDays(-2)) >= 0 && piralInstance == emulator)
                     {
                         Log.LogMessage($"Scaffolded infrastructure seems up to date.");
                         return true;
@@ -211,16 +214,15 @@ namespace Piral.Blazor.Tools.Tasks
                     var fn = GetRelativePath(ContentFolder, sourceFile);
                     var targetFile = Path.Combine(target, fn);
                     var content = File.ReadAllText(sourceFile)
-                        .Replace("**PiralInstance**", piralInstanceName)
-                        .Replace("**BlazorProjectName**", ProjectName)
+                        .Replace("**MSBUILD_PiralInstance**", piralInstanceName)
                         .Replace("**MSBUILD_TargetFramework**", Framework)
                         .Replace("**MSBUILD_TargetFrameworkMoniker**", FrameworkMoniker)
-                        .Replace("**ConfigFolder**", ConfigFolderName);
+                        .Replace("**MSBUILD_ConfigFolder**", ConfigFolderName);
 
                     File.WriteAllText(targetFile, content, Encoding.UTF8);
                 }
 
-                File.WriteAllText(infoFile, $"Date={DateTime.Now}\nVersion={ToolsVersion}");
+                File.WriteAllText(infoFile, $"Date={DateTime.Now}\nVersion={ToolsVersion}\nPiralInstance={emulator}");
             }
             catch (Exception error)
             {
