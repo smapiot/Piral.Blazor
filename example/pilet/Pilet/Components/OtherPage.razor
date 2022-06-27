@@ -1,0 +1,37 @@
+﻿@page "/other"
+@page "/other/single/{id}"
+
+@if (Id != null)
+{
+    <div>
+    ID: @Id
+</div>
+}
+else
+{
+    <div>
+    The Id was not read from the url.
+    <a href="/other/single/12345">Go to URL with parameter 12345</a>
+</div>
+}
+
+<MyButton />
+
+<p>Outputting the "try-order" extension components without ordering:</p>
+
+<Extension Name="try-order" />
+
+<p>Outputting the "try-order" extension components with ordering:</p>
+
+<Extension Name="try-order" Order=@OrderExtensions />
+
+@code {
+    [Parameter]
+    [PiralRouteParameter("id")]
+    public string Id { get; set; } = "";
+
+    public List<ExtensionRegistration> OrderExtensions(List<ExtensionRegistration> components)
+    {
+        return components.OrderBy(m => ((System.Text.Json.JsonElement)m.Defaults).GetProperty("order").GetInt32()).ToList();
+    }
+}

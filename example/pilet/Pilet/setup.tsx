@@ -1,5 +1,5 @@
-import { PiletApi } from "../piral~/Pilet/node_modules/app-shell";
 import * as React from "react";
+import type { PiletApi } from "../piral~/Pilet/node_modules/app-shell";
 
 export default (app: PiletApi) => {
   app.registerTile(
@@ -17,7 +17,7 @@ export default (app: PiletApi) => {
       }, []);
 
       return (
-        <div>
+        <div style={{ padding: '1em', background: '#efefef', flex: 1 }}>
           Welcome to <b>Piral</b>!{" "}
           <app.Extension
             name="sample-extension"
@@ -44,10 +44,18 @@ export default (app: PiletApi) => {
       );
     },
     {
-      initialColumns: 2,
-      initialRows: 2,
+      initialColumns: 4,
+      initialRows: 8,
     }
   );
+
+  app.registerExtension("try-order", () => <div>3</div>, { order: 3 });
+
+  app.registerExtension("try-order", () => <div>1</div>, { order: 1 });
+
+  app.registerExtension("try-order", () => <div>2</div>, { order: 2 });
+
+  app.registerExtension("try-order", () => <div>0</div>, { order: 0 });
 
   app.registerExtension("react-counter", ({ params }) => {
     const inc = params.diff || 1;
@@ -61,5 +69,5 @@ export default (app: PiletApi) => {
   });
 
   app.registerMenu(app.fromBlazor("counter-menu"));
-  app.registerPage("/counter", app.fromBlazor("counter-page"));
+  app.registerMenu(app.fromBlazor("other-menu"));
 };

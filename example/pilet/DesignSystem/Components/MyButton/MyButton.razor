@@ -1,0 +1,10 @@
+@inject IConsoleMessageService consoleMessageService
+
+<button @onclick="ShowPrompt">Click Me</button>
+
+@code{
+    public void ShowPrompt()
+    {
+        consoleMessageService.LogMessageToConsole("Message from DesignSystem Button");
+    }
+}

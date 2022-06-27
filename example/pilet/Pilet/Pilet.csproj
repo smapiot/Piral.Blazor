@@ -2,18 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <PiralInstance>../../app-shell/dist/emulator/app-shell-1.0.0.tgz</PiralInstance>
+    <PiralInstance>../../app-shell/dist/emulator/app-shell-1.0.1.tgz</PiralInstance>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.1" />
-    <PackageReference Include="Piral.Blazor.Utils" Version="6.0.3" />
-    <PackageReference Include="Piral.Blazor.Tools" Version="6.0.3" />
+    <PackageReference Include="Piral.Blazor.Utils" Version="6.0.3-pre.20220627.1" />
+    <PackageReference Include="Piral.Blazor.Tools" Version="6.0.3-pre.20220627.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+    <ProjectReference Include="../DesignSystem/DesignSystem.csproj" /> 
   </ItemGroup>
 
 </Project>

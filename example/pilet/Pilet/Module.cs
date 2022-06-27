@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using DesignSystem;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Blazor.LibA
 {
@@ -11,7 +12,13 @@ namespace Blazor.LibA
 
 		public static void ConfigureServices(IServiceCollection services)
 		{
-			// configure dependency injection here
+			// configure (local) dependency injection here
+		}
+    
+		public static void ConfigureShared(IServiceCollection services)
+		{
+			// configure (globally shared) dependency injection here
+			services.AddComponentLibServices();
 		}
 	}
 }
