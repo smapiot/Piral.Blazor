@@ -1,16 +1,11 @@
 import { copyFileSync, mkdirSync } from "fs";
-import { dirname, resolve } from "path";
+import { basename, dirname, resolve } from "path";
 import { StaticAsset, StaticAssets } from "./types";
 
 function copyFiles(assets: Array<StaticAsset>, target: string) {
   for (const asset of assets) {
     const fromPath = asset.Identity;
-    const toPath = resolve(
-      target,
-      asset.BasePath !== "/"
-        ? `${asset.BasePath}/${asset.RelativePath}`
-        : asset.RelativePath
-    );
+    const toPath = resolve(target, getAssetPath(asset));
     const toDir = dirname(toPath);
 
     mkdirSync(toDir, { recursive: true });
@@ -18,17 +13,33 @@ function copyFiles(assets: Array<StaticAsset>, target: string) {
   }
 }
 
+export function isAsset(asset: StaticAsset, name: string) {
+  return basename(asset.RelativePath) === name;
+}
+
+export function getAssetPath(asset: StaticAsset) {
+  return asset.BasePath !== "/"
+    ? `${asset.BasePath}/${asset.RelativePath}`
+    : asset.RelativePath;
+}
+
+export function getFilePath(source: StaticAssets, name: string) {
+  const item = source.Assets.find((m) => isAsset(m, name));
+
+  if (item) {
+    return getAssetPath(item);
+  }
+
+  return name;
+}
+
 export function copyAll(
-  forcedFiles: Array<string>,
-  ignoredFiles: Array<string>,
+  ignored: Array<string>,
   source: StaticAssets,
   targetDir: string
 ) {
   const staticFiles = source.Assets.filter(
-    //Either we require the file or it is not ignored -> then we keep it.
-    (asset) =>
-      forcedFiles.includes(asset.RelativePath) ||
-      !ignoredFiles.includes(asset.RelativePath)
+    (asset) => !ignored.includes(getAssetPath(asset))
   );
 
   //File copy

@@ -1,6 +1,6 @@
 import { join, resolve, basename } from "path";
-import { existsSync } from "fs";
-import { copyAll } from "./io";
+import { existsSync, readdirSync } from "fs";
+import { copyAll, getAssetPath, getFilePath } from "./io";
 import { findAppDir } from "./piral";
 import { diffBlazorBootFiles } from "./utils";
 import { createAllTargetRefs } from "./targets";
@@ -22,8 +22,7 @@ import {
   pajson,
   swajson,
   bbjson,
-  ignoredFromWwwroot,
-  ignoredFromWwwrootStandalone,
+  alwaysIgnored,
   configFolderName,
   teardownfile,
   variant,
@@ -93,6 +92,11 @@ module.exports = async function () {
 
     const appShellManifest: BlazorManifest = require(bbAppShellPath);
     const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
+    const existingFiles = readdirSync(appFrameworkDir).map(
+      (n) => `_framework/${n}`
+    );
+    const ignored = [...alwaysIgnored, ...existingFiles];
+
     [dlls, pdbs] = diffBlazorBootFiles(
       appdir,
       project.piral.name,
@@ -102,7 +106,7 @@ module.exports = async function () {
 
     checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
 
-    copyAll([...dlls, ...pdbs], ignoredFromWwwroot, staticAssets, targetDir);
+    copyAll(ignored, staticAssets, targetDir);
   } else {
     console.log(
       "The app shell does not contain `piral-blazor`. Using standalone mode."
@@ -111,6 +115,7 @@ module.exports = async function () {
     await checkInstallation(piletBlazorVersion, shellPackagePath);
 
     const originalManifest = require(bbStandalonePath);
+
     [dlls, pdbs] = diffBlazorBootFiles(
       appdir,
       project.piral.name,
@@ -118,12 +123,7 @@ module.exports = async function () {
       originalManifest
     );
 
-    copyAll(
-      [...dlls, ...pdbs],
-      ignoredFromWwwrootStandalone,
-      staticAssets,
-      targetDir
-    );
+    copyAll(alwaysIgnored, staticAssets, targetDir);
   }
 
   const allImports: Array<string> = [];
@@ -142,12 +142,19 @@ module.exports = async function () {
 
   // Refs
   const uniqueDependencies = dlls.map((f) => f.replace(".dll", ""));
+  const bundleFiles = staticAssets.Assets.filter(
+    (m) => m.AssetTraitValue === "ProjectBundle"
+  );
+  const cssLinks = bundleFiles
+    .filter((m) => m.AssetTraitName === "ScopedCss")
+    .map(getAssetPath);
   const refs = createAllTargetRefs(uniqueDependencies, projectAssets);
+  const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) =>
+    getFilePath(staticAssets, name)
+  );
+
   const registerDependenciesCode = `export function registerDependencies(app) { 
-    const references = [
-      ${refs.map((ref) => `path + "${ref}.dll"`).join(",")}, 
-      ${pdbs.map((pdb) => `path + "${pdb}"`).join(",")}
-    ]; 
+    const references = [${files.map((file) => `path + "${file}"`).join(",")}]; 
     app.defineBlazorReferences(references);
   }`;
 
@@ -164,8 +171,9 @@ module.exports = async function () {
     allImports.push(`import projectSetup from '${setupFilePath}';`);
   }
 
-  const setupPiletCode = `export const setupPilet = ${
-    setupFileExists ? "projectSetup" : "() => {}"
+  const setupPiletCode = `export function setupPilet(api) {
+    ${cssLinks.map(href => `withCss(${JSON.stringify(href)});`).join('\n')}
+    ${setupFileExists ? "projectSetup(api);" : ""}
   }`;
 
   // Teardown file
@@ -179,8 +187,9 @@ module.exports = async function () {
     allImports.push(`import projectTeardown from '${teardownFilePath}';`);
   }
 
-  const teardownPiletCode = `export const teardownPilet = ${
-    teardownFileExists ? "projectTeardown" : "() => {}"
+  const teardownPiletCode = `export function teardownPilet(api) {
+    ${cssLinks.map(href => `withoutCss(${JSON.stringify(href)});`).join('\n')}
+    ${teardownFileExists ? "projectTeardown(api);" : ""}
   }`;
 
   const headCode = makePiletHead(

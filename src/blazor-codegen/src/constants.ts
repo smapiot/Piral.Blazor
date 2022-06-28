@@ -17,12 +17,8 @@ export const setupfile = "setup.tsx";
 export const teardownfile = "teardown.tsx";
 export const swajson = `staticwebassets.${action}.json`;
 
-export const ignoredFromWwwrootStandalone = [
+export const alwaysIgnored = [
   "index.html",
   "favicon.ico",
   "icon-192.png",
-];
-export const ignoredFromWwwroot = [
-  ...ignoredFromWwwrootStandalone,
-  "_framework/",
 ];

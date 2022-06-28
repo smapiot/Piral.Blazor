@@ -24,14 +24,27 @@ var import_path = require("path");
 function copyFiles(assets, target) {
   for (const asset of assets) {
     const fromPath = asset.Identity;
-    const toPath2 = (0, import_path.resolve)(target, asset.BasePath !== "/" ? `${asset.BasePath}/${asset.RelativePath}` : asset.RelativePath);
+    const toPath2 = (0, import_path.resolve)(target, getAssetPath(asset));
     const toDir = (0, import_path.dirname)(toPath2);
     (0, import_fs.mkdirSync)(toDir, { recursive: true });
     (0, import_fs.copyFileSync)(fromPath, toPath2);
   }
 }
-function copyAll(forcedFiles, ignoredFiles, source, targetDir) {
-  const staticFiles = source.Assets.filter((asset) => forcedFiles.includes(asset.RelativePath) || !ignoredFiles.includes(asset.RelativePath));
+function isAsset(asset, name) {
+  return (0, import_path.basename)(asset.RelativePath) === name;
+}
+function getAssetPath(asset) {
+  return asset.BasePath !== "/" ? `${asset.BasePath}/${asset.RelativePath}` : asset.RelativePath;
+}
+function getFilePath(source, name) {
+  const item = source.Assets.find((m) => isAsset(m, name));
+  if (item) {
+    return getAssetPath(item);
+  }
+  return name;
+}
+function copyAll(ignored, source, targetDir) {
+  const staticFiles = source.Assets.filter((asset) => !ignored.includes(getAssetPath(asset)));
   copyFiles(staticFiles, targetDir);
 }
 
@@ -142,14 +155,10 @@ var analyzer = "Piral.Blazor.Analyzer";
 var setupfile = "setup.tsx";
 var teardownfile = "teardown.tsx";
 var swajson = `staticwebassets.${action}.json`;
-var ignoredFromWwwrootStandalone = [
+var alwaysIgnored = [
   "index.html",
   "favicon.ico",
   "icon-192.png"
-];
-var ignoredFromWwwroot = [
-  ...ignoredFromWwwrootStandalone,
-  "_framework/"
 ];
 
 // src/targets.ts
@@ -281,6 +290,17 @@ var definePathCode = `function computePath() {
 }
 const path = computePath();
 `;
+var handleCssCode = `function withCss(href) {
+  const link = document.createElement('link');
+  link.dataset.src = href;
+  link.rel = 'stylesheet';
+  link.href = path + href;
+  document.head.appendChild(link);
+}
+function withoutCss(href) {
+  const item = document.head.querySelector(\`link[data-src="\${href}"]\`);
+  item && item.remove();
+}`;
 var standaloneRemapCode = `
   app.defineBlazorReferences = defineBlazorReferences;
   app.defineBlazorOptions = () => {};
@@ -303,6 +323,7 @@ function makePiletHead(allImports, getPiralBlazorApiCode, setupPiletCode, teardo
     ${allImports.join("\n")}
 
     ${definePathCode}
+    ${handleCssCode}
     
     ${getPiralBlazorApiCode}
     ${setupPiletCode}
@@ -368,15 +389,17 @@ Seen error: ${err}`);
     console.log("The app shell already integrates `piral-blazor` with `blazor`.");
     const appShellManifest = require(bbAppShellPath);
     const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
+    const existingFiles = (0, import_fs4.readdirSync)(appFrameworkDir).map((n) => `_framework/${n}`);
+    const ignored = [...alwaysIgnored, ...existingFiles];
     [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, appShellManifest);
     checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
-    copyAll([...dlls, ...pdbs], ignoredFromWwwroot, staticAssets, targetDir);
+    copyAll(ignored, staticAssets, targetDir);
   } else {
     console.log("The app shell does not contain `piral-blazor`. Using standalone mode.");
     await checkInstallation(piletBlazorVersion, shellPackagePath);
     const originalManifest = require(bbStandalonePath);
     [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, originalManifest);
-    copyAll([...dlls, ...pdbs], ignoredFromWwwrootStandalone, staticAssets, targetDir);
+    copyAll(alwaysIgnored, staticAssets, targetDir);
   }
   const allImports = [];
   if (!blazorInAppshell) {
@@ -386,12 +409,12 @@ Seen error: ${err}`);
     ${blazorInAppshell ? "" : standaloneRemapCode}
   }`;
   const uniqueDependencies = dlls.map((f) => f.replace(".dll", ""));
+  const bundleFiles = staticAssets.Assets.filter((m) => m.AssetTraitValue === "ProjectBundle");
+  const cssLinks = bundleFiles.filter((m) => m.AssetTraitName === "ScopedCss").map(getAssetPath);
   const refs = createAllTargetRefs(uniqueDependencies, projectAssets);
+  const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) => getFilePath(staticAssets, name));
   const registerDependenciesCode = `export function registerDependencies(app) { 
-    const references = [
-      ${refs.map((ref) => `path + "${ref}.dll"`).join(",")}, 
-      ${pdbs.map((pdb) => `path + "${pdb}"`).join(",")}
-    ]; 
+    const references = [${files.map((file) => `path + "${file}"`).join(",")}]; 
     app.defineBlazorReferences(references);
   }`;
   const registerOptionsCode = `export function registerOptions(app) {
@@ -402,13 +425,19 @@ Seen error: ${err}`);
   if (setupFileExists) {
     allImports.push(`import projectSetup from '${setupFilePath}';`);
   }
-  const setupPiletCode = `export const setupPilet = ${setupFileExists ? "projectSetup" : "() => {}"}`;
+  const setupPiletCode = `export function setupPilet(api) {
+    ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
+    ${setupFileExists ? "projectSetup(api);" : ""}
+  }`;
   const teardownFilePath = (0, import_path5.join)(piralconfigfolder, teardownfile).replace(/\\/g, "/");
   const teardownFileExists = (0, import_fs4.existsSync)(teardownFilePath);
   if (teardownFileExists) {
     allImports.push(`import projectTeardown from '${teardownFilePath}';`);
   }
-  const teardownPiletCode = `export const teardownPilet = ${teardownFileExists ? "projectTeardown" : "() => {}"}`;
+  const teardownPiletCode = `export function teardownPilet(api) {
+    ${cssLinks.map((href) => `withoutCss(${JSON.stringify(href)});`).join("\n")}
+    ${teardownFileExists ? "projectTeardown(api);" : ""}
+  }`;
   const headCode = makePiletHead(allImports, getPiralBlazorApiCode, setupPiletCode, teardownPiletCode, registerDependenciesCode, registerOptionsCode);
   try {
     const { routes, extensions } = await analyzeProject(blazorprojectfolder);

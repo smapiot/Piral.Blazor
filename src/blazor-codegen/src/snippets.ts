@@ -18,6 +18,18 @@ export const definePathCode = `function computePath() {
 const path = computePath();
 `;
 
+export const handleCssCode = `function withCss(href) {
+  const link = document.createElement('link');
+  link.dataset.src = href;
+  link.rel = 'stylesheet';
+  link.href = path + href;
+  document.head.appendChild(link);
+}
+function withoutCss(href) {
+  const item = document.head.querySelector(\`link[data-src="\${href}"]\`);
+  item && item.remove();
+}`;
+
 export const standaloneRemapCode = `
   app.defineBlazorReferences = defineBlazorReferences;
   app.defineBlazorOptions = () => {};
@@ -49,6 +61,7 @@ export function makePiletHead(
     ${allImports.join("\n")}
 
     ${definePathCode}
+    ${handleCssCode}
     
     ${getPiralBlazorApiCode}
     ${setupPiletCode}
