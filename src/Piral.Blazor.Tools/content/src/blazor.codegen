@@ -295,9 +295,11 @@ async function prepare(targetDir, staticAssets) {
   const bbAppShellPath = (0, import_path5.resolve)(appFrameworkDir, bbjson);
   const blazorInAppshell = (0, import_fs4.existsSync)(bbAppShellPath);
   const shellPackagePath = (0, import_path5.resolve)(appdir, pjson);
-  const piletManifest = require(manifestSource.Identity);
+  const manifest = manifestSource.Identity;
+  const piletManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletBlazorVersion = extractBlazorVersion(piletManifest);
+  const standalone = !blazorInAppshell;
   if (blazorInAppshell) {
     console.log("The app shell already integrates `piral-blazor` with `blazor`.");
     const appShellManifest = require(bbAppShellPath);
@@ -307,7 +309,7 @@ async function prepare(targetDir, staticAssets) {
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, appShellManifest);
     checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
     copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, blazorInAppshell };
+    return { dlls, pdbs, standalone, manifest };
   } else {
     console.log("The app shell does not contain `piral-blazor`. Using standalone mode.");
     await checkInstallation(piletBlazorVersion, shellPackagePath);
@@ -321,7 +323,7 @@ async function prepare(targetDir, staticAssets) {
     const ignored = [...alwaysIgnored, ...frameworkFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, originalManifest);
     copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, blazorInAppshell };
+    return { dlls, pdbs, standalone, manifest };
   }
 }
 
@@ -418,8 +420,6 @@ module.exports = async function() {
   var _a, _b;
   const allImports = [];
   const targetDir = this.options.outDir;
-  this.addDependency(swafile);
-  this.addDependency(pafile);
   if (!process.env[bv] && (isRelease || rebuildNeeded(pafile, swafile))) {
     try {
       await buildSolution(blazorprojectfolder);
@@ -431,12 +431,15 @@ Seen error: ${err}`);
   }
   const projectAssets = require(pafile);
   const staticAssets = require(swafile);
-  const { blazorInAppshell, dlls, pdbs } = await prepare(targetDir, staticAssets);
-  if (!blazorInAppshell) {
+  const { standalone, manifest, dlls, pdbs } = await prepare(targetDir, staticAssets);
+  this.addDependency(swafile);
+  this.addDependency(pafile);
+  this.addDependency(manifest);
+  if (standalone) {
     allImports.push(`import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`);
   }
   const getPiralBlazorApiCode = `export function initPiralBlazorApi(app) {
-    ${blazorInAppshell ? "" : standaloneRemapCode}
+    ${standalone ? standaloneRemapCode : ""}
   }`;
   const uniqueDependencies = dlls.map((f) => f.replace(".dll", ""));
   const traitValue = (_b = (_a = staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")) == null ? void 0 : _a.AssetTraitValue) != null ? _b : "ProjectBundle";

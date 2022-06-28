@@ -34,9 +34,6 @@ module.exports = async function () {
   const allImports: Array<string> = [];
   const targetDir = this.options.outDir;
 
-  this.addDependency(swafile);
-  this.addDependency(pafile);
-
   // always build when files not found or in release
   // never re-build just when there is a change incoming
   if (!process.env[bv] && (isRelease || rebuildNeeded(pafile, swafile))) {
@@ -55,12 +52,16 @@ module.exports = async function () {
   const projectAssets: ProjectAssets = require(pafile);
   const staticAssets: StaticAssets = require(swafile);
 
-  const { blazorInAppshell, dlls, pdbs } = await prepare(
+  const { standalone, manifest, dlls, pdbs } = await prepare(
     targetDir,
     staticAssets
   );
 
-  if (!blazorInAppshell) {
+  this.addDependency(swafile);
+  this.addDependency(pafile);
+  this.addDependency(manifest);
+
+  if (standalone) {
     // Integrate API usually provided by piral-blazor
     allImports.push(
       `import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`
@@ -68,7 +69,7 @@ module.exports = async function () {
   }
 
   const getPiralBlazorApiCode = `export function initPiralBlazorApi(app) {
-    ${blazorInAppshell ? "" : standaloneRemapCode}
+    ${standalone ? standaloneRemapCode : ''}
   }`;
 
   // Refs

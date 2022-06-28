@@ -35,9 +35,11 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const bbAppShellPath = resolve(appFrameworkDir, bbjson);
   const blazorInAppshell = existsSync(bbAppShellPath);
   const shellPackagePath = resolve(appdir, pjson);
-  const piletManifest: BlazorManifest = require(manifestSource.Identity);
+  const manifest = manifestSource.Identity;
+  const piletManifest: BlazorManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletBlazorVersion = extractBlazorVersion(piletManifest);
+  const standalone = !blazorInAppshell;
 
   if (blazorInAppshell) {
     console.log(
@@ -60,7 +62,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, blazorInAppshell };
+    return { dlls, pdbs, standalone, manifest };
   } else {
     console.log(
       "The app shell does not contain `piral-blazor`. Using standalone mode."
@@ -86,6 +88,6 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, blazorInAppshell };
+    return { dlls, pdbs, standalone, manifest };
   }
 }

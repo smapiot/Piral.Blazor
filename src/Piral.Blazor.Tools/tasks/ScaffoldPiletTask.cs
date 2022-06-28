@@ -212,6 +212,7 @@ namespace Piral.Blazor.Tools.Tasks
                 var packageContent = File.ReadAllText(packageJsonFile);
                 var packageJson = JsonConvert.DeserializeObject<PackageJsonObject>(packageContent);
                 var piralInstanceName = packageJson.Piral.Name;
+                var timestamp = JsonConvert.SerializeObject(DateTime.Now).Replace("\"", "");
 
                 foreach (var sourceFile in files)
                 {
@@ -227,7 +228,7 @@ namespace Piral.Blazor.Tools.Tasks
                     File.WriteAllText(targetFile, content, Encoding.UTF8);
                 }
 
-                File.WriteAllText(infoFile, $"Date={JsonConvert.SerializeObject(DateTime.Now)}\nVersion={ToolsVersion}\nPiralInstance={emulator}\nSource={Source}");
+                File.WriteAllText(infoFile, $"Date={timestamp}\nVersion={ToolsVersion}\nPiralInstance={emulator}\nSource={Source}");
             }
             catch (Exception error)
             {
