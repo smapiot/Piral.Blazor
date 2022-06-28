@@ -62,7 +62,8 @@
 
     <Target Name="SetMonorepoAppShell" AfterTargets="RemoveNodeModulesAndLockFile" Condition="'$(Monorepo)'=='enable'">
         <SetMonorepoPiralInstanceTask
-            PiralInstancePath="$(PiralInstance)"
+            Source="$(MSBuildProjectDirectory)"
+            PiralInstance="$(PiralInstance)"
             PiletPath="$(_piletFolderPath)" />
     </Target>
 

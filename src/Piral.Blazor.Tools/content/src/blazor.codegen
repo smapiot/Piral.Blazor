@@ -15,8 +15,8 @@ var __copyProps = (to, from, except, desc) => {
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target, mod));
 
 // src/index.ts
-var import_path5 = require("path");
-var import_fs4 = require("fs");
+var import_path6 = require("path");
+var import_fs5 = require("fs");
 
 // src/io.ts
 var import_fs = require("fs");
@@ -48,35 +48,9 @@ function copyAll(ignored, source, targetDir) {
   copyFiles(staticFiles, targetDir);
 }
 
-// src/piral.ts
+// src/utils.ts
 var import_fs2 = require("fs");
 var import_path2 = require("path");
-function getPiralVersion(shellPackagePath2) {
-  try {
-    const { version } = require(shellPackagePath2).piralCLI;
-    if (typeof version !== "string") {
-      throw new Error();
-    }
-    return version;
-  } catch {
-    try {
-      return require("piral-cli/package.json").version;
-    } catch {
-      throw new Error("The version of the `piral-cli` could not be determined.");
-    }
-  }
-}
-function findAppDir(baseFolder, piralName) {
-  const appdir2 = (0, import_path2.resolve)(baseFolder, "node_modules", piralName);
-  if (!(0, import_fs2.existsSync)(`${appdir2}/app`) && (0, import_fs2.existsSync)(`${appdir2}/dist`)) {
-    return `${appdir2}/dist`;
-  }
-  return appdir2;
-}
-
-// src/utils.ts
-var import_fs3 = require("fs");
-var import_path3 = require("path");
 function getAllKeys(manifest, type) {
   return Object.keys(manifest.resources[type] || {});
 }
@@ -87,10 +61,19 @@ function getUniqueKeys(originalManifest, piletManifest, type) {
 }
 var projExtension = ".csproj";
 function getProjName(x) {
-  return (0, import_path3.basename)(x).slice(0, -projExtension.length);
+  return (0, import_path2.basename)(x).slice(0, -projExtension.length);
 }
-function diffBlazorBootFiles(appdir2, appname, piletManifest, originalManifest) {
-  if (!(0, import_fs3.existsSync)(appdir2)) {
+function rebuildNeeded(pafile2, swafile2) {
+  if ((0, import_fs2.existsSync)(pafile2) && (0, import_fs2.existsSync)(swafile2)) {
+    const staticAssets = require(swafile2);
+    if (staticAssets.Assets.every((m) => (0, import_fs2.existsSync)(m.Identity))) {
+      return false;
+    }
+  }
+  return true;
+}
+function diffBlazorBootFiles(appdir, appname, piletManifest, originalManifest) {
+  if (!(0, import_fs2.existsSync)(appdir)) {
     throw new Error(`Cannot find the directory of "${appname}". Please re-install the dependencies.`);
   }
   return [
@@ -144,6 +127,7 @@ function checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion) {
 var targetFramework = "**MSBUILD_TargetFramework**";
 var targetFrameworkAlt = "**MSBUILD_TargetFrameworkMoniker**";
 var configFolderName = "**MSBUILD_ConfigFolder**";
+var blazorprojectfolder = "**MSBUILD_ProjectFolder**";
 var isRelease = process.env.NODE_ENV === "production";
 var configuration = isRelease ? "Release" : "Debug";
 var action = isRelease ? "publish" : "build";
@@ -213,6 +197,36 @@ function createAllTargetRefs(uniqueDependencies, projectAssets) {
   return createAllRefs(...targets);
 }
 
+// src/prepare.ts
+var import_path5 = require("path");
+var import_fs4 = require("fs");
+
+// src/piral.ts
+var import_fs3 = require("fs");
+var import_path3 = require("path");
+function getPiralVersion(shellPackagePath) {
+  try {
+    const { version } = require(shellPackagePath).piralCLI;
+    if (typeof version !== "string") {
+      throw new Error();
+    }
+    return version;
+  } catch {
+    try {
+      return require("piral-cli/package.json").version;
+    } catch {
+      throw new Error("The version of the `piral-cli` could not be determined.");
+    }
+  }
+}
+function findAppDir(baseFolder, piralName) {
+  const appdir = (0, import_path3.resolve)(baseFolder, "node_modules", piralName);
+  if (!(0, import_fs3.existsSync)(`${appdir}/app`) && (0, import_fs3.existsSync)(`${appdir}/dist`)) {
+    return `${appdir}/dist`;
+  }
+  return appdir;
+}
+
 // src/project.ts
 var import_glob = __toESM(require("glob"));
 var import_path4 = require("path");
@@ -221,13 +235,13 @@ var import_child_process = require("child_process");
 var execAsync = (0, import_util.promisify)(import_child_process.exec);
 var matchVersion = /\d+\.\d+\.\d+/;
 function getProjectName(projectFolder) {
-  return new Promise((resolve4, reject) => {
+  return new Promise((resolve5, reject) => {
     (0, import_glob.default)(`${projectFolder}/*.csproj`, (err, matches) => {
       if (!!err || !matches || matches.length == 0)
         return reject(new Error(`Project file not found. Details: ${err}`));
       if (matches.length > 1)
         return reject(new Error(`Only one project file is allowed. You have: ${JSON.stringify(matches, null, 2)}`));
-      return resolve4((0, import_path4.basename)(matches[0]).replace(".csproj", ""));
+      return resolve5((0, import_path4.basename)(matches[0]).replace(".csproj", ""));
     });
   });
 }
@@ -237,13 +251,13 @@ async function buildSolution(cwd) {
     cwd
   });
 }
-async function checkInstallation(piletBlazorVersion, shellPackagePath2) {
+async function checkInstallation(piletBlazorVersion, shellPackagePath) {
   try {
     require.resolve("piral-blazor/package.json");
     require.resolve("blazor/package.json");
   } catch {
     console.warn("The npm packages `blazor` and `piral-blazor` have not been not found. Installing them now...");
-    const piralVersion = getPiralVersion(shellPackagePath2);
+    const piralVersion = getPiralVersion(shellPackagePath);
     const result = matchVersion.exec(piletBlazorVersion);
     if (!result) {
       throw new Error("Could not detect version of Blazor. Something does not seem right.");
@@ -263,6 +277,42 @@ async function analyzeProject(blazorprojectfolder2) {
   }
   const { routes, extensions } = JSON.parse(stdout.trim());
   return { routes, extensions };
+}
+
+// src/prepare.ts
+async function prepare(targetDir, staticAssets) {
+  const piralPiletFolder = (0, import_path5.resolve)(__dirname, "..");
+  const project = require((0, import_path5.resolve)(piralPiletFolder, pjson));
+  const appdir = findAppDir(piralPiletFolder, project.piral.name);
+  const manifestSource = staticAssets.Assets.find((m) => m.AssetTraitName === "BlazorWebAssemblyResource" && m.AssetTraitValue === "manifest" && m.RelativePath.endsWith(bbjson));
+  if (!manifestSource) {
+    throw new Error(`Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`);
+  }
+  const appFrameworkDir = (0, import_path5.resolve)(appdir, "app", "_framework");
+  const bbAppShellPath = (0, import_path5.resolve)(appFrameworkDir, bbjson);
+  const blazorInAppshell = (0, import_fs4.existsSync)(bbAppShellPath);
+  const shellPackagePath = (0, import_path5.resolve)(appdir, pjson);
+  const piletManifest = require(manifestSource.Identity);
+  const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
+  const piletBlazorVersion = extractBlazorVersion(piletManifest);
+  if (blazorInAppshell) {
+    console.log("The app shell already integrates `piral-blazor` with `blazor`.");
+    const appShellManifest = require(bbAppShellPath);
+    const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
+    const existingFiles = (0, import_fs4.readdirSync)(appFrameworkDir).map((n) => `_framework/${n}`);
+    const ignored = [...alwaysIgnored, ...existingFiles];
+    const [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, appShellManifest);
+    checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
+    copyAll(ignored, staticAssets, targetDir);
+    return { dlls, pdbs, blazorInAppshell };
+  } else {
+    console.log("The app shell does not contain `piral-blazor`. Using standalone mode.");
+    await checkInstallation(piletBlazorVersion, shellPackagePath);
+    const originalManifest = require(bbStandalonePath);
+    const [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, originalManifest);
+    copyAll(alwaysIgnored, staticAssets, targetDir);
+    return { dlls, pdbs, blazorInAppshell };
+  }
 }
 
 // src/components.ts
@@ -349,21 +399,15 @@ function makePiletCode(routes, extensions) {
 }
 
 // src/index.ts
-var piralPiletFolder = (0, import_path5.resolve)(__dirname, "..");
-var rootFolder = (0, import_path5.resolve)(piralPiletFolder, "..", "..");
-var blazorfolderName = (0, import_path5.basename)(piralPiletFolder);
-var blazorprojectfolder = (0, import_path5.resolve)(rootFolder, blazorfolderName);
-var piralconfigfolder = (0, import_path5.resolve)(blazorprojectfolder, configFolderName);
-var objectsDir = (0, import_path5.resolve)(blazorprojectfolder, "obj");
-var pafile = (0, import_path5.resolve)(objectsDir, pajson);
-var swafile = (0, import_path5.resolve)(objectsDir, configuration, targetFramework, swajson);
-var project = require((0, import_path5.resolve)(piralPiletFolder, pjson));
-var appdir = findAppDir(piralPiletFolder, project.piral.name);
-var shellPackagePath = (0, import_path5.resolve)(appdir, pjson);
-var appFrameworkDir = (0, import_path5.resolve)(appdir, "app", "_framework");
+var piralconfigfolder = (0, import_path6.resolve)(blazorprojectfolder, configFolderName);
+var objectsDir = (0, import_path6.resolve)(blazorprojectfolder, "obj");
+var pafile = (0, import_path6.resolve)(objectsDir, pajson);
+var swafile = (0, import_path6.resolve)(objectsDir, configuration, targetFramework, swajson);
 module.exports = async function() {
+  var _a, _b;
   const targetDir = this.options.outDir;
-  if (isRelease || !(0, import_fs4.existsSync)(pafile) || !(0, import_fs4.existsSync)(swafile)) {
+  const bv = "PIRAL_BLAZOR_LAST_BUILD";
+  if (!process.env[bv] && (isRelease || rebuildNeeded(pafile, swafile))) {
     try {
       await buildSolution(blazorprojectfolder);
     } catch (err) {
@@ -374,33 +418,7 @@ Seen error: ${err}`);
   }
   const projectAssets = require(pafile);
   const staticAssets = require(swafile);
-  const manifestSource = staticAssets.Assets.find((m) => m.AssetRole === "Primary" && m.RelativePath === "_framework/blazor.boot.json");
-  if (!manifestSource) {
-    throw new Error(`Could not find the "blazor.boot.json" in ${swafile}. Something seems to be wrong.`);
-  }
-  const piletManifest = require(manifestSource.Identity);
-  const bbAppShellPath = (0, import_path5.resolve)(appFrameworkDir, bbjson);
-  const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const blazorInAppshell = (0, import_fs4.existsSync)(bbAppShellPath);
-  const piletBlazorVersion = extractBlazorVersion(piletManifest);
-  let dlls = [];
-  let pdbs = [];
-  if (blazorInAppshell) {
-    console.log("The app shell already integrates `piral-blazor` with `blazor`.");
-    const appShellManifest = require(bbAppShellPath);
-    const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
-    const existingFiles = (0, import_fs4.readdirSync)(appFrameworkDir).map((n) => `_framework/${n}`);
-    const ignored = [...alwaysIgnored, ...existingFiles];
-    [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, appShellManifest);
-    checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
-    copyAll(ignored, staticAssets, targetDir);
-  } else {
-    console.log("The app shell does not contain `piral-blazor`. Using standalone mode.");
-    await checkInstallation(piletBlazorVersion, shellPackagePath);
-    const originalManifest = require(bbStandalonePath);
-    [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, originalManifest);
-    copyAll(alwaysIgnored, staticAssets, targetDir);
-  }
+  const { blazorInAppshell, dlls, pdbs } = await prepare(targetDir, staticAssets);
   const allImports = [];
   if (!blazorInAppshell) {
     allImports.push(`import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`);
@@ -409,19 +427,20 @@ Seen error: ${err}`);
     ${blazorInAppshell ? "" : standaloneRemapCode}
   }`;
   const uniqueDependencies = dlls.map((f) => f.replace(".dll", ""));
-  const bundleFiles = staticAssets.Assets.filter((m) => m.AssetTraitValue === "ProjectBundle");
+  const traitValue = (_b = (_a = staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")) == null ? void 0 : _a.AssetTraitValue) != null ? _b : "ProjectBundle";
+  const bundleFiles = staticAssets.Assets.filter((m) => m.AssetTraitValue === traitValue);
   const cssLinks = bundleFiles.filter((m) => m.AssetTraitName === "ScopedCss").map(getAssetPath);
   const refs = createAllTargetRefs(uniqueDependencies, projectAssets);
   const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) => getFilePath(staticAssets, name));
-  const registerDependenciesCode = `export function registerDependencies(app) { 
-    const references = [${files.map((file) => `path + "${file}"`).join(",")}]; 
+  const registerDependenciesCode = `export function registerDependencies(app) {
+    const references = ${JSON.stringify(files)}.map((file) => path + file);
     app.defineBlazorReferences(references);
   }`;
   const registerOptionsCode = `export function registerOptions(app) {
     app.defineBlazorOptions({ resourcePathRoot: path });
   }`;
-  const setupFilePath = (0, import_path5.join)(piralconfigfolder, setupfile).replace(/\\/g, "/");
-  const setupFileExists = (0, import_fs4.existsSync)(setupFilePath);
+  const setupFilePath = (0, import_path6.join)(piralconfigfolder, setupfile).replace(/\\/g, "/");
+  const setupFileExists = (0, import_fs5.existsSync)(setupFilePath);
   if (setupFileExists) {
     allImports.push(`import projectSetup from '${setupFilePath}';`);
   }
@@ -429,8 +448,8 @@ Seen error: ${err}`);
     ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
     ${setupFileExists ? "projectSetup(api);" : ""}
   }`;
-  const teardownFilePath = (0, import_path5.join)(piralconfigfolder, teardownfile).replace(/\\/g, "/");
-  const teardownFileExists = (0, import_fs4.existsSync)(teardownFilePath);
+  const teardownFilePath = (0, import_path6.join)(piralconfigfolder, teardownfile).replace(/\\/g, "/");
+  const teardownFileExists = (0, import_fs5.existsSync)(teardownFilePath);
   if (teardownFileExists) {
     allImports.push(`import projectTeardown from '${teardownFilePath}';`);
   }
@@ -442,6 +461,7 @@ Seen error: ${err}`);
   try {
     const { routes, extensions } = await analyzeProject(blazorprojectfolder);
     const standardPiletCode = makePiletCode(routes, extensions);
+    process.env[bv] = `time:${Date.now()}`;
     return `
       ${headCode}
 

@@ -1,6 +1,6 @@
 import { existsSync } from "fs";
 import { basename } from "path";
-import { BlazorManifest, BlazorResourceType } from "./types";
+import { BlazorManifest, BlazorResourceType, StaticAssets } from "./types";
 
 function getAllKeys(manifest: BlazorManifest, type: BlazorResourceType) {
   return Object.keys(manifest.resources[type] || {});
@@ -20,6 +20,18 @@ const projExtension = ".csproj";
 
 export function getProjName(x: string) {
   return basename(x).slice(0, -projExtension.length);
+}
+
+export function rebuildNeeded(pafile: string, swafile: string) {
+  if (existsSync(pafile) && existsSync(swafile)) {
+    const staticAssets: StaticAssets = require(swafile);
+
+    if (staticAssets.Assets.every(m => existsSync(m.Identity))) {
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 export function diffBlazorBootFiles(

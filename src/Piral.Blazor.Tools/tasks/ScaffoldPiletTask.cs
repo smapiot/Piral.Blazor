@@ -1,6 +1,7 @@
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Piral.Blazor.Tools.Models;
 using System;
 using System.Diagnostics;
@@ -157,7 +158,9 @@ namespace Piral.Blazor.Tools.Tasks
                 var infoFile = Path.Combine(target, ".blazorrc");
 
                 // local file paths have to start with .., such as "./foo.tgz" or "../app-shell/foo.tgz"
-                var emulator = PiralInstance.StartsWith(".") ? PiralInstanceFile : PiralInstance;
+                var isFile = PiralInstance.StartsWith(".");
+                var emulator = isFile ? PiralInstanceFile : PiralInstance;
+                var packageJsonFile = Path.Combine(target, "package.json");
 
                 if (File.Exists(infoFile))
                 {
@@ -180,8 +183,10 @@ namespace Piral.Blazor.Tools.Tasks
 
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
 
+                    var tag = isFile ? PiralInstanceFile : String.Empty;
+
                     Process
-                        .Start(cmd, $"{prefix}--package=piral-cli@{CliVersion} -y -- pilet upgrade {emulator} --base {target}")
+                        .Start(cmd, $"{prefix}--package=piral-cli@{CliVersion} -y -- pilet upgrade {tag} --base {target}")
                         .WaitForExit();
                 }
                 else
@@ -205,9 +210,9 @@ namespace Piral.Blazor.Tools.Tasks
                 Log.LogMessage($"Updating source files from '{ContentFolder}/**/*'...");
 
                 var files = Directory.GetFiles(ContentFolder, "*", SearchOption.AllDirectories);
-                var packageJsonFile = Path.Combine(target, "package.json");
-                var packageJsonContent = File.ReadAllText(packageJsonFile);
-                var piralInstanceName = JsonConvert.DeserializeObject<PackageJsonObject>(packageJsonContent).Piral.Name;
+                var packageContent = File.ReadAllText(packageJsonFile);
+                var packageJson = JsonConvert.DeserializeObject<PackageJsonObject>(packageContent);
+                var piralInstanceName = packageJson.Piral.Name;
 
                 foreach (var sourceFile in files)
                 {
@@ -215,6 +220,7 @@ namespace Piral.Blazor.Tools.Tasks
                     var targetFile = Path.Combine(target, fn);
                     var content = File.ReadAllText(sourceFile)
                         .Replace("**MSBUILD_PiralInstance**", piralInstanceName)
+                        .Replace("**MSBUILD_ProjectFolder**", Source.Replace('\\', '/'))
                         .Replace("**MSBUILD_TargetFramework**", Framework)
                         .Replace("**MSBUILD_TargetFrameworkMoniker**", FrameworkMoniker)
                         .Replace("**MSBUILD_ConfigFolder**", ConfigFolderName);
@@ -222,7 +228,7 @@ namespace Piral.Blazor.Tools.Tasks
                     File.WriteAllText(targetFile, content, Encoding.UTF8);
                 }
 
-                File.WriteAllText(infoFile, $"Date={DateTime.Now}\nVersion={ToolsVersion}\nPiralInstance={emulator}");
+                File.WriteAllText(infoFile, $"Date={DateTime.Now}\nVersion={ToolsVersion}\nPiralInstance={emulator}\nSource={Source}");
             }
             catch (Exception error)
             {

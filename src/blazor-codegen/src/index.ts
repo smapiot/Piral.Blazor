@@ -1,12 +1,11 @@
-import { join, resolve, basename } from "path";
-import { existsSync, readdirSync } from "fs";
-import { copyAll, getAssetPath, getFilePath } from "./io";
-import { findAppDir } from "./piral";
-import { diffBlazorBootFiles } from "./utils";
+import { join, resolve } from "path";
+import { existsSync } from "fs";
+import { getAssetPath, getFilePath } from "./io";
+import { rebuildNeeded } from "./utils";
 import { createAllTargetRefs } from "./targets";
-import { checkBlazorVersion, extractBlazorVersion } from "./version";
-import { analyzeProject, buildSolution, checkInstallation } from "./project";
-import { BlazorManifest, ProjectAssets, StaticAssets } from "./types";
+import { prepare } from "./prepare";
+import { analyzeProject, buildSolution } from "./project";
+import { ProjectAssets, StaticAssets } from "./types";
 import {
   fallbackPiletCode,
   makePiletCode,
@@ -14,40 +13,29 @@ import {
   standaloneRemapCode,
 } from "./snippets";
 import {
-  pjson,
   configuration,
   targetFramework,
   setupfile,
+  blazorprojectfolder,
   isRelease,
   pajson,
   swajson,
-  bbjson,
-  alwaysIgnored,
   configFolderName,
   teardownfile,
-  variant,
 } from "./constants";
 
-const piralPiletFolder = resolve(__dirname, "..");
-const rootFolder = resolve(piralPiletFolder, "..", "..");
-const blazorfolderName = basename(piralPiletFolder);
-const blazorprojectfolder = resolve(rootFolder, blazorfolderName);
 const piralconfigfolder = resolve(blazorprojectfolder, configFolderName);
 const objectsDir = resolve(blazorprojectfolder, "obj");
 const pafile = resolve(objectsDir, pajson);
 const swafile = resolve(objectsDir, configuration, targetFramework, swajson);
 
-const project = require(resolve(piralPiletFolder, pjson));
-const appdir = findAppDir(piralPiletFolder, project.piral.name);
-
-const shellPackagePath = resolve(appdir, pjson);
-const appFrameworkDir = resolve(appdir, "app", "_framework");
-
 module.exports = async function () {
   const targetDir = this.options.outDir;
+  const bv = "PIRAL_BLAZOR_LAST_BUILD";
 
-  //always build when files not found or in release
-  if (isRelease || !existsSync(pafile) || !existsSync(swafile)) {
+  // always build when files not found or in release
+  // never re-build just when there is a change incoming
+  if (!process.env[bv] && (isRelease || rebuildNeeded(pafile, swafile))) {
     try {
       await buildSolution(blazorprojectfolder);
     } catch (err) {
@@ -62,75 +50,16 @@ module.exports = async function () {
   // Require modules
   const projectAssets: ProjectAssets = require(pafile);
   const staticAssets: StaticAssets = require(swafile);
-  const manifestSource = staticAssets.Assets.find(
-    (m) =>
-      m.AssetRole === "Primary" &&
-      m.RelativePath === "_framework/blazor.boot.json"
+
+  const { blazorInAppshell, dlls, pdbs } = await prepare(
+    targetDir,
+    staticAssets
   );
-
-  if (!manifestSource) {
-    throw new Error(
-      `Could not find the "blazor.boot.json" in ${swafile}. Something seems to be wrong.`
-    );
-  }
-
-  const piletManifest: BlazorManifest = require(manifestSource.Identity);
-
-  // Piral Blazor checks
-  const bbAppShellPath = resolve(appFrameworkDir, bbjson);
-  const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const blazorInAppshell = existsSync(bbAppShellPath);
-  const piletBlazorVersion = extractBlazorVersion(piletManifest);
-
-  let dlls: Array<string> = [];
-  let pdbs: Array<string> = [];
-
-  if (blazorInAppshell) {
-    console.log(
-      "The app shell already integrates `piral-blazor` with `blazor`."
-    );
-
-    const appShellManifest: BlazorManifest = require(bbAppShellPath);
-    const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
-    const existingFiles = readdirSync(appFrameworkDir).map(
-      (n) => `_framework/${n}`
-    );
-    const ignored = [...alwaysIgnored, ...existingFiles];
-
-    [dlls, pdbs] = diffBlazorBootFiles(
-      appdir,
-      project.piral.name,
-      piletManifest,
-      appShellManifest
-    );
-
-    checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
-
-    copyAll(ignored, staticAssets, targetDir);
-  } else {
-    console.log(
-      "The app shell does not contain `piral-blazor`. Using standalone mode."
-    );
-
-    await checkInstallation(piletBlazorVersion, shellPackagePath);
-
-    const originalManifest = require(bbStandalonePath);
-
-    [dlls, pdbs] = diffBlazorBootFiles(
-      appdir,
-      project.piral.name,
-      piletManifest,
-      originalManifest
-    );
-
-    copyAll(alwaysIgnored, staticAssets, targetDir);
-  }
 
   const allImports: Array<string> = [];
 
-  // Piral Blazor API
-
   if (!blazorInAppshell) {
+    // Integrate API usually provided by piral-blazor
     allImports.push(
       `import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`
     );
@@ -142,19 +71,28 @@ module.exports = async function () {
 
   // Refs
   const uniqueDependencies = dlls.map((f) => f.replace(".dll", ""));
+
+  // Find out if there are ApplicationBundle files, otherwise take ProjectBundle files
+  const traitValue =
+    staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")
+      ?.AssetTraitValue ?? "ProjectBundle";
   const bundleFiles = staticAssets.Assets.filter(
-    (m) => m.AssetTraitValue === "ProjectBundle"
+    (m) => m.AssetTraitValue === traitValue
   );
+
+  // Get the CSS files for the project
   const cssLinks = bundleFiles
     .filter((m) => m.AssetTraitName === "ScopedCss")
     .map(getAssetPath);
+
+  // Dervice files
   const refs = createAllTargetRefs(uniqueDependencies, projectAssets);
   const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) =>
     getFilePath(staticAssets, name)
   );
 
-  const registerDependenciesCode = `export function registerDependencies(app) { 
-    const references = [${files.map((file) => `path + "${file}"`).join(",")}]; 
+  const registerDependenciesCode = `export function registerDependencies(app) {
+    const references = ${JSON.stringify(files)}.map((file) => path + file);
     app.defineBlazorReferences(references);
   }`;
 
@@ -172,7 +110,7 @@ module.exports = async function () {
   }
 
   const setupPiletCode = `export function setupPilet(api) {
-    ${cssLinks.map(href => `withCss(${JSON.stringify(href)});`).join('\n')}
+    ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
     ${setupFileExists ? "projectSetup(api);" : ""}
   }`;
 
@@ -188,7 +126,7 @@ module.exports = async function () {
   }
 
   const teardownPiletCode = `export function teardownPilet(api) {
-    ${cssLinks.map(href => `withoutCss(${JSON.stringify(href)});`).join('\n')}
+    ${cssLinks.map((href) => `withoutCss(${JSON.stringify(href)});`).join("\n")}
     ${teardownFileExists ? "projectTeardown(api);" : ""}
   }`;
 
@@ -204,6 +142,8 @@ module.exports = async function () {
   try {
     const { routes, extensions } = await analyzeProject(blazorprojectfolder);
     const standardPiletCode = makePiletCode(routes, extensions);
+
+    process.env[bv] = `time:${Date.now()}`;
 
     return `
       ${headCode}

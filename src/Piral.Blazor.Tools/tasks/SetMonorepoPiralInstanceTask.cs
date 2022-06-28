@@ -10,14 +10,22 @@ namespace Piral.Blazor.Tools.Tasks
     public class SetMonorepoPiralInstanceTask : Task
     {
         [Required]
-        public string PiralInstancePath { get; set; }
+        public string PiralInstance { get; set; }
 
         [Required]
         public string PiletPath { get; set; }
 
+        [Required]
+        public string Source { get; set; }
+
+        private string RelativePiralInstanceFile => PiralInstance.Replace('\\', '/');
+
         public override bool Execute()
         {
-            if (!PiralInstancePath.StartsWith("."))
+            // local file paths have to start with .., such as "./foo.tgz" or "../app-shell/foo.tgz"
+            var isFile = PiralInstance.StartsWith(".");
+
+            if (!isFile)
             {
                 Log.LogMessage("Nothing to do here - the given Piral instance already refers to a package.");
                 return true;
@@ -36,7 +44,7 @@ namespace Piral.Blazor.Tools.Tasks
                 }
 
                 var piralInstanceVersion = GetPiralInstanceVersion();
-                var escapedPath = PiralInstancePath.Replace('\\', '/');
+                var escapedPath = RelativePiralInstanceFile;
                 var piralInstancePathInPackageJson = $"file:../{escapedPath}";
                 var piletPackageJsonText = File.ReadAllText(piletPackageJsonFile)
                     .Replace(piralInstancePathInPackageJson, piralInstanceVersion);
@@ -54,7 +62,7 @@ namespace Piral.Blazor.Tools.Tasks
 
         private dynamic GetPiralInstanceVersion()
         {
-            var piralInstanceDirectory = Path.GetDirectoryName(PiralInstancePath)
+            var piralInstanceDirectory = Path.GetDirectoryName(PiralInstance)
                 .Replace($"{Path.DirectorySeparatorChar}dist{Path.DirectorySeparatorChar}emulator", "");
             var piralInstancePackageJsonFile = Path.Combine(piralInstanceDirectory, "package.json");
             
