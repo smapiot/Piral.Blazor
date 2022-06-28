@@ -8,6 +8,10 @@ import { checkBlazorVersion, extractBlazorVersion } from "./version";
 import { alwaysIgnored, bbjson, swajson, pjson, variant } from "./constants";
 import { BlazorManifest, StaticAssets } from "./types";
 
+function toFramework(files: Array<string>) {
+  return files.map((n) => `_framework/${n}`);
+}
+
 export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const piralPiletFolder = resolve(__dirname, "..");
   const project = require(resolve(piralPiletFolder, pjson));
@@ -42,9 +46,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     const appShellManifest: BlazorManifest = require(bbAppShellPath);
     const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
-    const existingFiles = readdirSync(appFrameworkDir).map(
-      (n) => `_framework/${n}`
-    );
+    const existingFiles = toFramework(readdirSync(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
 
     const [dlls, pdbs] = diffBlazorBootFiles(
@@ -66,7 +68,14 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     await checkInstallation(piletBlazorVersion, shellPackagePath);
 
-    const originalManifest = require(bbStandalonePath);
+    const originalManifest: BlazorManifest = require(bbStandalonePath);
+    const frameworkFiles = toFramework([
+      bbjson,
+      ...Object.keys(originalManifest.resources.assembly),
+      ...Object.keys(originalManifest.resources.pdb),
+      ...Object.keys(originalManifest.resources.runtime),
+    ]);
+    const ignored = [...alwaysIgnored, ...frameworkFiles];
 
     const [dlls, pdbs] = diffBlazorBootFiles(
       appdir,
@@ -75,7 +84,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
       originalManifest
     );
 
-    copyAll(alwaysIgnored, staticAssets, targetDir);
+    copyAll(ignored, staticAssets, targetDir);
 
     return { dlls, pdbs, blazorInAppshell };
   }

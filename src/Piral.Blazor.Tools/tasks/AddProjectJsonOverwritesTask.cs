@@ -17,7 +17,7 @@ namespace Piral.Blazor.Tools.Tasks
 
         public override bool Execute()
         {
-            Log.LogMessage("Add overwrites to package.json file...");
+            Log.LogMessage("Adding overwrites to 'package.json' file...");
             
             try
             { 
@@ -28,7 +28,7 @@ namespace Piral.Blazor.Tools.Tasks
 
                 if (!File.Exists(OverwritesPath)) 
                 {
-                    Log.LogMessage("No 'overwrite.package.json' file found to merge into package.json.");
+                    Log.LogMessage("No 'overwrite.package.json' file found to merge into 'package.json'.");
                     return true;
                 }
 

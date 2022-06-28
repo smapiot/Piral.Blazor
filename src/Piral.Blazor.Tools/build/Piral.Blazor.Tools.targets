@@ -99,9 +99,4 @@
             Encoding="UTF-8"
         />
     </Target>
-
-    <Target Name="HotReload" AfterTargets="Build">
-        <Touch Files="$(_piletFolderPath)\src\blazor.codegen" Condition="Exists('$(_piletFolderPath)\src\blazor.codegen')" />
-    </Target>
-
 </Project>

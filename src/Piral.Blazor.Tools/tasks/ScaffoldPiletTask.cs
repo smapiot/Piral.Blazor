@@ -1,7 +1,6 @@
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Piral.Blazor.Tools.Models;
 using System;
 using System.Diagnostics;
@@ -49,7 +48,7 @@ namespace Piral.Blazor.Tools.Tasks
 
         public string ConfigFolderName { get; set; } = "";
 
-        private string PiralInstanceFile => Path.Combine(Source, PiralInstance.Replace('\\', '/'));
+        private string PiralInstanceFile => Path.Combine(Source, PiralInstance).Replace('\\', '/');
 
         private static string GetRelativePath(string relativeTo, string path)
         {
@@ -173,7 +172,7 @@ namespace Piral.Blazor.Tools.Tasks
                         .Select(m => m.Substring(8)).FirstOrDefault();
                     var piralInstance = infos
                         .Where(m => m.StartsWith("PiralInstance="))
-                        .Select(m => m.Substring(8)).FirstOrDefault();
+                        .Select(m => m.Substring(14)).FirstOrDefault();
 
                     if (version == ToolsVersion && date.CompareTo(DateTime.Now.AddDays(-2)) >= 0 && piralInstance == emulator)
                     {
@@ -228,7 +227,7 @@ namespace Piral.Blazor.Tools.Tasks
                     File.WriteAllText(targetFile, content, Encoding.UTF8);
                 }
 
-                File.WriteAllText(infoFile, $"Date={DateTime.Now}\nVersion={ToolsVersion}\nPiralInstance={emulator}\nSource={Source}");
+                File.WriteAllText(infoFile, $"Date={JsonConvert.SerializeObject(DateTime.Now)}\nVersion={ToolsVersion}\nPiralInstance={emulator}\nSource={Source}");
             }
             catch (Exception error)
             {

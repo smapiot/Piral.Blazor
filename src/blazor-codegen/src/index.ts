@@ -24,14 +24,18 @@ import {
   teardownfile,
 } from "./constants";
 
+const bv = "PIRAL_BLAZOR_LAST_BUILD";
 const piralconfigfolder = resolve(blazorprojectfolder, configFolderName);
 const objectsDir = resolve(blazorprojectfolder, "obj");
 const pafile = resolve(objectsDir, pajson);
 const swafile = resolve(objectsDir, configuration, targetFramework, swajson);
 
 module.exports = async function () {
+  const allImports: Array<string> = [];
   const targetDir = this.options.outDir;
-  const bv = "PIRAL_BLAZOR_LAST_BUILD";
+
+  this.addDependency(swafile);
+  this.addDependency(pafile);
 
   // always build when files not found or in release
   // never re-build just when there is a change incoming
@@ -55,8 +59,6 @@ module.exports = async function () {
     targetDir,
     staticAssets
   );
-
-  const allImports: Array<string> = [];
 
   if (!blazorInAppshell) {
     // Integrate API usually provided by piral-blazor

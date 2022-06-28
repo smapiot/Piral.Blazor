@@ -1,0 +1,5 @@
+.menu-item {
+  display: block;
+  border-left: 5px solid #abcdef;
+  padding: 1em;
+}
