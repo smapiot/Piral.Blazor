@@ -34,7 +34,7 @@
             ToolsVersion="$(_installedToolsVersion)"
             ContentFolder="$(MSBuildThisFileDirectory)..\content"
             PiralInstance="$(PiralInstance)"
-			IsMonorepo="'$(Monorepo)'=='enable'"
+			Monorepo="$(Monorepo)"
             ProjectName="$(MSBuildProjectName)"
             Bundler="$(Bundler)"
             NpmRegistry="$(NpmRegistry)"

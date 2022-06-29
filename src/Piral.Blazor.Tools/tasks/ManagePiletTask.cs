@@ -64,7 +64,7 @@ namespace Piral.Blazor.Tools.Tasks
         public string Version { get; set; }
 
         [Required]
-        public bool IsMonorepo { get; set; }
+        public string Monorepo { get; set; }
 
         public string ConfigFolderName { get; set; } = "";
 
@@ -83,6 +83,8 @@ namespace Piral.Blazor.Tools.Tasks
         private string ConfigDir => Path.Combine(Source, ConfigFolderName);
 
         private bool IsPiralInstanceFile => PiralInstance.StartsWith(".");
+
+        private bool IsMonorepo => Monorepo == "enable";
 
         private string Emulator => IsPiralInstanceFile ? PiralInstanceFile : PiralInstance;
 
