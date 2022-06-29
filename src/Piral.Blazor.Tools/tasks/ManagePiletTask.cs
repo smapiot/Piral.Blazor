@@ -394,12 +394,9 @@ namespace Piral.Blazor.Tools.Tasks
                     {
                         CopyContentFiles();
                     }
-                }
 
-                UpdatePackageVersion();
-
-                if (canScaffold)
-                {
+                    UpdatePackageVersion();
+                    
                     if (IsMonorepo)
                     {
                         CleanMonorepo();
@@ -410,6 +407,10 @@ namespace Piral.Blazor.Tools.Tasks
                     }
 
                     EnableAnalyzer();
+                }
+                else
+                {
+                    UpdatePackageVersion();
                 }
 
                 return true;
