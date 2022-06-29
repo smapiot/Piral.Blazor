@@ -6,7 +6,6 @@ import { getPiralVersion } from "./piral";
 import { action, analyzer, configuration, targetFramework } from "./constants";
 
 const execAsync = promisify(exec);
-const spawnAsync = promisify(spawn);
 
 const matchVersion = /\d+\.\d+\.\d+/;
 
@@ -34,12 +33,18 @@ export function getProjectName(projectFolder: string) {
 export async function buildSolution(cwd: string) {
   console.log(`Running "${action}" on solution in ${configuration} mode...`);
 
-  process.env.PIRAL_BLAZOR_RUNNING = 'yes';
+  process.env.PIRAL_BLAZOR_RUNNING = "yes";
 
-  await spawnAsync(`dotnet`, [action, '--configuration', configuration], {
-    cwd,
-    env: process.env,
-    stdio: 'inherit',
+  return new Promise<void>((resolve, reject) => {
+    const ps = spawn(`dotnet`, [action, "--configuration", configuration], {
+      cwd,
+      env: process.env,
+      detached: false,
+      stdio: "inherit",
+    });
+
+    ps.on("error", reject);
+    ps.on("exit", resolve);
   });
 }
 
