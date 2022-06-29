@@ -34,8 +34,11 @@ export function getProjectName(projectFolder: string) {
 export async function buildSolution(cwd: string) {
   console.log(`Running "${action}" on solution in ${configuration} mode...`);
 
+  process.env.PIRAL_BLAZOR_RUNNING = 'yes';
+
   await spawnAsync(`dotnet`, [action, '--configuration', configuration], {
     cwd,
+    env: process.env,
     stdio: 'inherit',
   });
 }

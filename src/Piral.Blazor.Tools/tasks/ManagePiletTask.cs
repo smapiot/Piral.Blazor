@@ -63,7 +63,6 @@ namespace Piral.Blazor.Tools.Tasks
         [Required]
         public string Version { get; set; }
 
-        [Required]
         public string Monorepo { get; set; }
 
         public string ConfigFolderName { get; set; } = "";
@@ -379,31 +378,40 @@ namespace Piral.Blazor.Tools.Tasks
         {
             Log.LogMessage($"Checking the pilet infrastructure (Version={ToolsVersion}, Framework={Framework})...");
 
+            var canScaffold = System.Environment.GetEnvironmentVariable("PIRAL_BLAZOR_RUNNING") != "yes";
+
             try
             {
                 CheckNpmVersion();
 
-                var requireInstall = PreparePilet();
-
-                CopyConfigurationFiles();
-
-                if (requireInstall)
+                if (canScaffold)
                 {
-                    CopyContentFiles();
+                    var requireInstall = PreparePilet();
+
+                    CopyConfigurationFiles();
+
+                    if (requireInstall)
+                    {
+                        CopyContentFiles();
+                    }
                 }
 
                 UpdatePackageVersion();
 
-                if (IsMonorepo)
+                if (canScaffold)
                 {
-                    CleanMonorepo();
-                }
-                else if (requireInstall)
-                {
-                    InstallDependencies();
+                    if (IsMonorepo)
+                    {
+                        CleanMonorepo();
+                    }
+                    else if (requireInstall)
+                    {
+                        InstallDependencies();
+                    }
+
+                    EnableAnalyzer();
                 }
 
-                EnableAnalyzer();
                 return true;
             }
             catch (Exception e)
