@@ -33,6 +33,9 @@ steps:
 - script: dotnet build ./src/Piral.Blazor.Tools --configuration $(buildConfiguration)
   displayName: 'Build Tools'
 
+- script: dotnet build ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration)
+  displayName: 'Build DevServer'
+
 - script: |
     dotnet build tests
     dotnet test tests
@@ -109,6 +112,14 @@ steps:
 
 - script: dotnet pack ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --output ./dist
   displayName: 'Pack Tools'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+
+- script: dotnet pack ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack DevServer (Pre)'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
+
+- script: dotnet pack ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration) --output ./dist
+  displayName: 'Pack DevServer'
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - task: NuGetCommand@2
