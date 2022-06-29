@@ -1,11 +1,12 @@
 import glob from "glob";
 import { basename } from "path";
 import { promisify } from "util";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { getPiralVersion } from "./piral";
 import { action, analyzer, configuration, targetFramework } from "./constants";
 
 const execAsync = promisify(exec);
+const spawnAsync = promisify(spawn);
 
 const matchVersion = /\d+\.\d+\.\d+/;
 
@@ -33,8 +34,9 @@ export function getProjectName(projectFolder: string) {
 export async function buildSolution(cwd: string) {
   console.log(`Running "${action}" on solution in ${configuration} mode...`);
 
-  await execAsync(`dotnet ${action} --configuration ${configuration}`, {
+  await spawnAsync(`dotnet`, [action, '--configuration', configuration], {
     cwd,
+    stdio: 'inherit',
   });
 }
 

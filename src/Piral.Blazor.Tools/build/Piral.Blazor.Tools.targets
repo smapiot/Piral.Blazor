@@ -1,12 +1,12 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
-    <UsingTask TaskName="SetProjectJsonVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
-    <UsingTask TaskName="AddProjectJsonOverwritesTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
-    <UsingTask TaskName="SetMonorepoPiralInstanceTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
-    <UsingTask TaskName="ScaffoldPiletTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
+    <UsingTask
+		TaskName="ManagePiletTask"
+		AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
 
     <ItemGroup>
-        <Content Update="wwwroot\**" CopyToOutputDirectory="Always" />
+        <Content
+			Update="wwwroot\**"
+			CopyToOutputDirectory="Always" />
     </ItemGroup>
 
     <PropertyGroup>
@@ -16,14 +16,16 @@
     </PropertyGroup>
 
     <Target Name="SetupPiral" DependsOnTargets="ResolveStaticWebAssetsInputs" AfterTargets="Build">
-        <CallTarget Targets="Scaffold" />
+        <CallTarget
+			Targets="Scaffold" />
     </Target>
 
     <Target Name="Scaffold" DependsOnTargets="RunResolvePackageDependencies">
         <PropertyGroup>
             <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
         </PropertyGroup>
-        <ScaffoldPiletTask
+		
+        <ManagePiletTask
             Source="$(MSBuildProjectDirectory)"
             Target="$(_piletFolderBase)"
             Framework="$(TargetFramework)"
@@ -32,60 +34,12 @@
             ToolsVersion="$(_installedToolsVersion)"
             ContentFolder="$(MSBuildThisFileDirectory)..\content"
             PiralInstance="$(PiralInstance)"
+			IsMonorepo="'$(Monorepo)'=='enable'"
             ProjectName="$(MSBuildProjectName)"
             Bundler="$(Bundler)"
             NpmRegistry="$(NpmRegistry)"
-            ConfigFolderName="$(ConfigFolder)" />
-    </Target>
-
-    <Target Name="SetPackageJsonVersion" AfterTargets="Scaffold">
-        <SetProjectJsonVersionTask
-            PackageJsonPath="$(_piletFolderPath)\package.json"
-            Version="$(Version)" />
-    </Target>
-
-    <Target Name="AddPackageJsonOverwrites" AfterTargets="SetPackageJsonVersion">
-        <AddProjectJsonOverwritesTask
-            PackageJsonPath="$(_piletFolderPath)\package.json"
-            OverwritesPath="$(MSBuildProjectDirectory)\$(ConfigFolder)\package-overwrites.json" />
-    </Target>
-
-    <Target Name="InstallDependencies" AfterTargets="AddPackageJsonOverwrites" Condition="'$(Monorepo)'!='enable'">
-        <Exec Command="echo 'Installing dependencies...'" />
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="npm install --silent" />
-    </Target>
-
-	<Target Name="RemoveNodeModulesAndLockFile" AfterTargets="InstallDependencies" Condition="'$(Monorepo)'=='enable'"> 
-		<RemoveDir Directories="$(_piletFolderPath)\node_modules" />
-		<Delete Files="$(_piletFolderPath)\package-lock.json" />
-	</Target>
-
-    <Target Name="SetMonorepoAppShell" AfterTargets="RemoveNodeModulesAndLockFile" Condition="'$(Monorepo)'=='enable'">
-        <SetMonorepoPiralInstanceTask
-            Source="$(MSBuildProjectDirectory)"
-            PiralInstance="$(PiralInstance)"
-            PiletPath="$(_piletFolderPath)" />
-    </Target>
-
-	<Target Name="UpdateAnalyzer" AfterTargets="Scaffold" Condition="Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
-		<PropertyGroup>
-			<_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
-		</PropertyGroup>
-		<!-- Update analyzer with version that matches the Tools version -->
-		<Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool update Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
-	</Target>
-
-    <Target Name="InstallAnalyzer" AfterTargets="UpdateAnalyzer" Condition="!Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
-        <PropertyGroup>
-            <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
-        </PropertyGroup>
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet new tool-manifest --output .." />
-        <!-- Install analyzer with version that matches the Tools version -->
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool install Piral.Blazor.Analyzer --version $(_installedToolsVersion) --local" />
-    </Target>
-
-    <Target Name="RestoreTools" BeforeTargets="Build" Condition="Exists('$(_piletFolderPath)') AND Exists('$(_piletFolderPath)\..\.config\dotnet-tools.json')">
-        <Exec WorkingDirectory="$(_piletFolderPath)" Command="dotnet tool restore" />
+            ConfigFolderName="$(ConfigFolder)"
+			Version="$(Version)" />
     </Target>
 
     <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
@@ -96,7 +50,6 @@
             File="$(MSBuildProjectDirectory)\wwwroot\index.html"
             Lines="$(_indexHtml)"
             Overwrite="true"
-            Encoding="UTF-8"
-        />
+            Encoding="UTF-8" />
     </Target>
 </Project>

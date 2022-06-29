@@ -233,6 +233,7 @@ var import_path4 = require("path");
 var import_util = require("util");
 var import_child_process = require("child_process");
 var execAsync = (0, import_util.promisify)(import_child_process.exec);
+var spawnAsync = (0, import_util.promisify)(import_child_process.spawn);
 var matchVersion = /\d+\.\d+\.\d+/;
 function getProjectName(projectFolder) {
   return new Promise((resolve5, reject) => {
@@ -247,8 +248,9 @@ function getProjectName(projectFolder) {
 }
 async function buildSolution(cwd) {
   console.log(`Running "${action}" on solution in ${configuration} mode...`);
-  await execAsync(`dotnet ${action} --configuration ${configuration}`, {
-    cwd
+  await spawnAsync(`dotnet`, [action, "--configuration", configuration], {
+    cwd,
+    stdio: "inherit"
   });
 }
 async function checkInstallation(piletBlazorVersion, shellPackagePath) {
