@@ -1,6 +1,7 @@
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Piral.Blazor.Tools.Models;
 using System;
 using System.Diagnostics;
@@ -366,6 +367,39 @@ namespace Piral.Blazor.Tools.Tasks
             }
         }
 
+        private void OverwritePackageJson()
+        {
+            var packageJsonFile = Path.Combine(ProjectDir, "package.json");
+            if (!File.Exists(packageJsonFile))
+            {
+                throw new Exception($"The file '{packageJsonFile}' does not exist.");
+            }
+
+            var overwritePackageJsonFile = Path.Combine(ContentFolder, "package-overwrites.json");
+            if (!File.Exists(overwritePackageJsonFile)) 
+            {
+                Log.LogMessage("No 'package-overwrites.json' file found to merge into package.json.");
+                return;
+            }
+
+            var result = new JObject();
+            var packageJson = JObject.Parse(File.ReadAllText(packageJsonFile)); 
+            var overwritesJson = JObject.Parse(File.ReadAllText(overwritePackageJsonFile)); 
+
+            result.Merge(packageJson); 
+            result.Merge(overwritesJson);
+
+            if (JToken.DeepEquals(result, packageJson))
+            {
+                Log.LogMessage("The file 'package-overwrites.json' had nothing to merge into 'package.json'");
+            }
+            else
+            {
+                File.WriteAllText(packageJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
+                Log.LogMessage("Successfully merged 'package-overwrites.json' width 'package.json'");
+            }
+        }
+
         private void InstallDependencies()
         {
             Log.LogMessage("Installing dependencies...");
@@ -396,6 +430,7 @@ namespace Piral.Blazor.Tools.Tasks
                     }
 
                     UpdatePackageVersion();
+                    OverwritePackageJson();
                     
                     if (IsMonorepo)
                     {
