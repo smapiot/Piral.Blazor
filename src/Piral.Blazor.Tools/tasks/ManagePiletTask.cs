@@ -387,10 +387,17 @@ namespace Piral.Blazor.Tools.Tasks
             var overwritesJson = JObject.Parse(File.ReadAllText(overwritePackageJsonFile)); 
 
             result.Merge(packageJson); 
-            result.Merge(overwritesJson); 
+            result.Merge(overwritesJson);
 
-            File.WriteAllText(packageJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
-            Log.LogMessage("Successfully merged 'package-overwrites.json' width 'package.json'");
+            if (JToken.DeepEquals(result, packageJson))
+            {
+                Log.LogMessage("The file 'package-overwrites.json' had nothing to merge into 'package.json'");
+            }
+            else
+            {
+                File.WriteAllText(packageJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
+                Log.LogMessage("Successfully merged 'package-overwrites.json' width 'package.json'");
+            }
         }
 
         private void InstallDependencies()
