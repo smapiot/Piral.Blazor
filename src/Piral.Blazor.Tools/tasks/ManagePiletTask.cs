@@ -1,6 +1,7 @@
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Piral.Blazor.Tools.Models;
 using System;
 using System.Diagnostics;
@@ -368,7 +369,7 @@ namespace Piral.Blazor.Tools.Tasks
 
         private void OverwritePackageJson()
         {
-            var packageJsonFile = Path.Combine(target, "package.json");
+            var packageJsonFile = Path.Combine(ProjectDir, "package.json");
             if (!File.Exists(packageJsonFile))
             {
                 throw new Exception($"The file '{packageJsonFile}' does not exist.");
@@ -382,13 +383,13 @@ namespace Piral.Blazor.Tools.Tasks
             }
 
             var result = new JObject();
-            var packageJson = JObject.Parse(File.ReadAllText(PackageJsonPath)); 
+            var packageJson = JObject.Parse(File.ReadAllText(packageJsonFile)); 
             var overwritesJson = JObject.Parse(File.ReadAllText(overwritePackageJsonFile)); 
 
             result.Merge(packageJson); 
             result.Merge(overwritesJson); 
 
-            File.WriteAllText(PackageJsonPath, JsonConvert.SerializeObject(result, Formatting.Indented));
+            File.WriteAllText(packageJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
             Log.LogMessage("Successfully merged 'package-overwrites.json' width 'package.json'");
         }
 
