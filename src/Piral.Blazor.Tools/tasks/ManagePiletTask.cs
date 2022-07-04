@@ -375,7 +375,7 @@ namespace Piral.Blazor.Tools.Tasks
                 throw new Exception($"The file '{packageJsonFile}' does not exist.");
             }
 
-            var overwritePackageJsonFile = Path.Combine(ContentFolder, "package-overwrites.json");
+            var overwritePackageJsonFile = Path.Combine(ConfigDir, "package-overwrites.json");
             if (!File.Exists(overwritePackageJsonFile)) 
             {
                 Log.LogMessage("No 'package-overwrites.json' file found to merge into package.json.");
