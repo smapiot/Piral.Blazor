@@ -195,11 +195,26 @@ namespace Piral.Blazor.Tools.Tasks
             var target = ProjectDir;
             var infoFile = Path.Combine(target, ".blazorrc");
             var packageJsonFile = Path.Combine(target, "package.json");
+            var piletJsonFile = Path.Combine(target, "pilet.json");
             var files = Directory.GetFiles(ContentFolder, "*", SearchOption.AllDirectories);
-            var packageContent = File.ReadAllText(packageJsonFile);
-            var packageJson = JsonConvert.DeserializeObject<PackageJsonObject>(packageContent);
-            var piralInstanceName = packageJson.Piral.Name;
+            var packageJsonContent = File.ReadAllText(packageJsonFile);
             var timestamp = JsonConvert.SerializeObject(DateTime.Now).Replace("\"", "");
+            var packageJson = JsonConvert.DeserializeObject<PackageJsonObject>(packageJsonContent);
+
+            string piralInstanceName;
+            if(File.Exists(piletJsonFile)){
+                var piletJsonContent = File.ReadAllText(piletJsonFile);
+                var piletJson = JsonConvert.DeserializeObject<PiletJsonObject>(piletJsonContent);
+                if(piletJson.PiralInstances.Any(x => x.Value.Selected)){
+                    piralInstanceName = piletJson.PiralInstances.FirstOrDefault(x => x.Value.Selected).Key;
+                }
+                else
+                {
+                    piralInstanceName = piletJson.PiralInstances.Keys.First();
+                }
+            } else{
+                piralInstanceName = packageJson.Piral.Name;
+            }
 
             foreach (var sourceFile in files)
             {

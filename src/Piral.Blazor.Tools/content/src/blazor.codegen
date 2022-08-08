@@ -134,7 +134,8 @@ var action = isRelease ? "publish" : "build";
 var variant = isRelease ? "release" : "debug";
 var bbjson = "blazor.boot.json";
 var pajson = "project.assets.json";
-var pjson = "package.json";
+var packageJsonFilename = "package.json";
+var piletJsonFilename = "pilet.json";
 var analyzer = "Piral.Blazor.Analyzer";
 var setupfile = "setup.tsx";
 var teardownfile = "teardown.tsx";
@@ -293,8 +294,25 @@ function toFramework(files) {
 }
 async function prepare(targetDir, staticAssets) {
   const piralPiletFolder = (0, import_path5.resolve)(__dirname, "..");
-  const project = require((0, import_path5.resolve)(piralPiletFolder, pjson));
-  const appdir = findAppDir(piralPiletFolder, project.piral.name);
+  const packageJson = require((0, import_path5.resolve)(piralPiletFolder, packageJsonFilename));
+
+  const piletJsonFilePath = (0, import_path5.join)(piralPiletFolder, piletJsonFilename).replace(/\\/g, "/");
+  const piletJsonFileExists = (0, import_fs5.existsSync)(piletJsonFilePath);
+  let instanceName;
+  if(piletJsonFileExists){
+    const piletJson = require((0, import_path5.resolve)(piralPiletFolder, piletJsonFilename));
+    const selectedInstance = Object.keys(piletJson.piralInstances).find(key => piletJson.piralInstances[key].selected);
+    if(selectedInstance !== undefined){
+      instanceName = selectedInstance;
+    } else{
+      instanceName = Object.keys(piletJson.piralInstances)[0];
+    }
+  } else{
+    instanceName = packageJson.piral.name;
+  }
+  
+
+  const appdir = findAppDir(piralPiletFolder, instanceName);
   const manifestSource = staticAssets.Assets.find((m) => m.AssetTraitName === "BlazorWebAssemblyResource" && m.AssetTraitValue === "manifest" && m.RelativePath.endsWith(bbjson));
   if (!manifestSource) {
     throw new Error(`Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`);
@@ -302,7 +320,7 @@ async function prepare(targetDir, staticAssets) {
   const appFrameworkDir = (0, import_path5.resolve)(appdir, "app", "_framework");
   const bbAppShellPath = (0, import_path5.resolve)(appFrameworkDir, bbjson);
   const blazorInAppshell = (0, import_fs4.existsSync)(bbAppShellPath);
-  const shellPackagePath = (0, import_path5.resolve)(appdir, pjson);
+  const shellPackagePath = (0, import_path5.resolve)(appdir, packageJsonFilename);
   const manifest = manifestSource.Identity;
   const piletManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
@@ -314,7 +332,7 @@ async function prepare(targetDir, staticAssets) {
     const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
     const existingFiles = toFramework((0, import_fs4.readdirSync)(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
-    const [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, appShellManifest);
+    const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, appShellManifest);
     checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
     copyAll(ignored, staticAssets, targetDir);
     return { dlls, pdbs, standalone, manifest };
@@ -329,7 +347,7 @@ async function prepare(targetDir, staticAssets) {
       ...Object.keys(originalManifest.resources.runtime)
     ]);
     const ignored = [...alwaysIgnored, ...frameworkFiles];
-    const [dlls, pdbs] = diffBlazorBootFiles(appdir, project.piral.name, piletManifest, originalManifest);
+    const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, originalManifest);
     copyAll(ignored, staticAssets, targetDir);
     return { dlls, pdbs, standalone, manifest };
   }
