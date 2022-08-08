@@ -12,7 +12,8 @@ export const variant = isRelease ? "release" : "debug";
 
 export const bbjson = "blazor.boot.json";
 export const pajson = "project.assets.json";
-export const pjson = "package.json";
+export const packageJsonFilename = "package.json";
+export const piletJsonFilename = "pilet.json";
 export const analyzer = "Piral.Blazor.Analyzer";
 export const setupfile = "setup.tsx";
 export const teardownfile = "teardown.tsx";
