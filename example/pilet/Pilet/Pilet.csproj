@@ -8,12 +8,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.1" />
-    <PackageReference Include="Piral.Blazor.Utils" Version="6.0.3-pre.20220629.5" />
-    <PackageReference Include="Piral.Blazor.Tools" Version="6.0.3-pre.20220629.5" />
+    <PackageReference Include="Piral.Blazor.Utils" Version="6.0.3-pre.20220629.6" />
+    <PackageReference Include="Piral.Blazor.Tools" Version="6.0.3-pre.20220629.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DesignSystem/DesignSystem.csproj" /> 
+    <ProjectReference Include="../DesignSystem/DesignSystem.csproj" />
   </ItemGroup>
 
 </Project>
