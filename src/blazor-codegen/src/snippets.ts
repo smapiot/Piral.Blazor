@@ -31,10 +31,10 @@ function withoutCss(href) {
 }`;
 
 export const standaloneRemapCode = `
-  app.defineBlazorReferences = defineBlazorReferences;
-  app.defineBlazorOptions = () => {};
-  app.fromBlazor = fromBlazor;
-  app.releaseBlazorReferences = releaseBlazorReferences;
+  app.defineBlazorReferences = pbc.defineBlazorReferences;
+  app.defineBlazorOptions = pbc.defineBlazorOptions || (() => {});
+  app.fromBlazor = pbc.fromBlazor;
+  app.releaseBlazorReferences = pbc.releaseBlazorReferences;
 `;
 
 export const fallbackPiletCode = `export function registerPages(...args) {

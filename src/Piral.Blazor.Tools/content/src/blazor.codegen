@@ -295,23 +295,20 @@ function toFramework(files) {
 async function prepare(targetDir, staticAssets) {
   const piralPiletFolder = (0, import_path5.resolve)(__dirname, "..");
   const packageJson = require((0, import_path5.resolve)(piralPiletFolder, packageJsonFilename));
-
   const piletJsonFilePath = (0, import_path5.join)(piralPiletFolder, piletJsonFilename).replace(/\\/g, "/");
-  const piletJsonFileExists = (0, import_fs5.existsSync)(piletJsonFilePath);
+  const piletJsonFileExists = (0, import_fs4.existsSync)(piletJsonFilePath);
   let instanceName;
-  if(piletJsonFileExists){
+  if (piletJsonFileExists) {
     const piletJson = require((0, import_path5.resolve)(piralPiletFolder, piletJsonFilename));
-    const selectedInstance = Object.keys(piletJson.piralInstances).find(key => piletJson.piralInstances[key].selected);
-    if(selectedInstance !== undefined){
+    const selectedInstance = Object.keys(piletJson.piralInstances).find((key) => piletJson.piralInstances[key].selected);
+    if (selectedInstance !== void 0) {
       instanceName = selectedInstance;
-    } else{
+    } else {
       instanceName = Object.keys(piletJson.piralInstances)[0];
     }
-  } else{
+  } else {
     instanceName = packageJson.piral.name;
   }
-  
-
   const appdir = findAppDir(piralPiletFolder, instanceName);
   const manifestSource = staticAssets.Assets.find((m) => m.AssetTraitName === "BlazorWebAssemblyResource" && m.AssetTraitValue === "manifest" && m.RelativePath.endsWith(bbjson));
   if (!manifestSource) {
@@ -390,10 +387,10 @@ function withoutCss(href) {
   item && item.remove();
 }`;
 var standaloneRemapCode = `
-  app.defineBlazorReferences = defineBlazorReferences;
-  app.defineBlazorOptions = () => {};
-  app.fromBlazor = fromBlazor;
-  app.releaseBlazorReferences = releaseBlazorReferences;
+  app.defineBlazorReferences = pbc.defineBlazorReferences;
+  app.defineBlazorOptions = pbc.defineBlazorOptions || (() => {});
+  app.fromBlazor = pbc.fromBlazor;
+  app.releaseBlazorReferences = pbc.releaseBlazorReferences;
 `;
 var fallbackPiletCode = `export function registerPages(...args) {
   console.warn('${__filename}: \`registerPages\` was called, but no Blazor routes were found.');
@@ -462,7 +459,7 @@ Seen error: ${err}`);
   this.addDependency(pafile);
   this.addDependency(manifest);
   if (standalone) {
-    allImports.push(`import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`);
+    allImports.push(`import * as pbc from 'piral-blazor/convert';`);
   }
   const getPiralBlazorApiCode = `export function initPiralBlazorApi(app) {
     ${standalone ? standaloneRemapCode : ""}
@@ -497,6 +494,10 @@ Seen error: ${err}`);
   const teardownPiletCode = `export function teardownPilet(api) {
     ${cssLinks.map((href) => `withoutCss(${JSON.stringify(href)});`).join("\n")}
     ${teardownFileExists ? "projectTeardown(api);" : ""}
+
+    if (typeof api.releaseBlazorReferences === 'function') {
+      api.releaseBlazorReferences();
+    }
   }`;
   const headCode = makePiletHead(allImports, getPiralBlazorApiCode, setupPiletCode, teardownPiletCode, registerDependenciesCode, registerOptionsCode);
   try {

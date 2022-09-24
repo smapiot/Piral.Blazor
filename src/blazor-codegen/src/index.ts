@@ -64,7 +64,7 @@ module.exports = async function () {
   if (standalone) {
     // Integrate API usually provided by piral-blazor
     allImports.push(
-      `import { defineBlazorReferences, fromBlazor, releaseBlazorReferences } from 'piral-blazor/convert';`
+      `import * as pbc from 'piral-blazor/convert';`
     );
   }
 
@@ -131,6 +131,10 @@ module.exports = async function () {
   const teardownPiletCode = `export function teardownPilet(api) {
     ${cssLinks.map((href) => `withoutCss(${JSON.stringify(href)});`).join("\n")}
     ${teardownFileExists ? "projectTeardown(api);" : ""}
+
+    if (typeof api.releaseBlazorReferences === 'function') {
+      api.releaseBlazorReferences();
+    }
   }`;
 
   const headCode = makePiletHead(
