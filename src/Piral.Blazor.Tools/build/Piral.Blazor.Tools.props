@@ -3,7 +3,7 @@
     <PropertyGroup>
         <PiralInstance></PiralInstance>
         <NpmRegistry>https://registry.npmjs.org/</NpmRegistry>
-        <Bundler>webpack5</Bundler>
+        <Bundler>esbuild</Bundler>
         <ProjectsWithStaticFiles></ProjectsWithStaticFiles>
         <Monorepo></Monorepo>
         <ConfigFolder></ConfigFolder>
