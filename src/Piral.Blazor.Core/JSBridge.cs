@@ -55,7 +55,8 @@ namespace Piral.Blazor.Core
             var client = Host.Services.GetRequiredService<HttpClient>();
             var dll = await client.GetStreamAsync(url);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
-            ActivationService?.LoadComponentsFromAssembly(assembly);
+            var pilet = new PiletService(url);
+            ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
             _assemblies[url] = assembly;
         }
 
@@ -66,7 +67,8 @@ namespace Piral.Blazor.Core
             var dll = await client.GetStreamAsync(dllUrl);
             var pdb = await client.GetStreamAsync(pdbUrl);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-            ActivationService?.LoadComponentsFromAssembly(assembly);
+            var pilet = new PiletService(dllUrl);
+            ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
             _assemblies[dllUrl] = assembly;
         }
 

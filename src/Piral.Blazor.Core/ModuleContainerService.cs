@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Piral.Blazor.Utils;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -31,11 +32,11 @@ namespace Piral.Blazor.Core
 
         public void ForgetComponent(Type type) => _manipulator.RemoveComponentInitializer(type);
 
-        public IServiceProvider ConfigureModule(Assembly assembly)
+        public IServiceProvider ConfigureModule(Assembly assembly, IPiletService pilet)
         {
             var globalServices = ConfigureGlobalServices(assembly);
-            var piletServices = ConfigurePiletServices(assembly);
-
+            var piletServices = ConfigurePiletServices(assembly)
+                .AddSingleton(pilet);
             _provider.AddGlobalServices(globalServices);
             return _provider.CreatePiletServiceProvider(piletServices);
         }

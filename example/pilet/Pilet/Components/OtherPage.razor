@@ -25,9 +25,23 @@ else
 
 <Extension Name="try-order" Order=@OrderExtensions />
 
-<p>This page works best on <img src="images/firefox.png" alt="Firefox" />.</p>
+<p>This page works best on @browsers[bid].</p>
+
+<button class="btn btn-primary" @onclick="ChangeBrowser">Other browsers?</button>
 
 @code {
+    private static RenderFragment firefoxBrowser = @<img src="images/firefox.png" alt="Firefox" />;
+    private static RenderFragment chromeBrowser = @<img src="images/chrome.png" alt="Chrome" />;
+    private static RenderFragment operaBrowser = @<img src="images/opera.png" alt="Opera" />;
+
+    private RenderFragment[] browsers = new []
+    {
+        firefoxBrowser,
+        chromeBrowser,
+        operaBrowser,
+    };
+    private int bid = 0;
+
     [Parameter]
     [PiralRouteParameter("id")]
     public string Id { get; set; } = "";
@@ -35,5 +49,10 @@ else
     public List<ExtensionRegistration> OrderExtensions(List<ExtensionRegistration> components)
     {
         return components.OrderBy(m => ((System.Text.Json.JsonElement)m.Defaults).GetProperty("order").GetInt32()).ToList();
+    }
+
+    void ChangeBrowser()
+    {
+        bid = (bid + 1) % browsers.Length;
     }
 }

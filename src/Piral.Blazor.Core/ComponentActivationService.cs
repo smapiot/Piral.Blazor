@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
 using System;
@@ -117,9 +116,9 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public void LoadComponentsFromAssembly(Assembly assembly)
+        public void LoadComponentsFromAssembly(Assembly assembly, IPiletService pilet)
         {
-            var serviceProvider = _container.ConfigureModule(assembly);
+            var serviceProvider = _container.ConfigureModule(assembly, pilet);
             var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
 
             foreach (var componentType in componentTypes)
