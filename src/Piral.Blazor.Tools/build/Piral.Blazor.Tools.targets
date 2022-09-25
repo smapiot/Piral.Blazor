@@ -10,8 +10,7 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <_piletFolderBase>..\piral~</_piletFolderBase>
-        <_piletFolderPath>$(MSBuildProjectDirectory)\$(_piletFolderBase)\$(MSBuildProjectName)</_piletFolderPath>
+        <_piletFolderPath>$(MSBuildProjectDirectory)\$(OutputFolder)\$(MSBuildProjectName)</_piletFolderPath>
         <_piletUrl>http://localhost:1234</_piletUrl>
     </PropertyGroup>
 
@@ -27,7 +26,7 @@
 		
         <ManagePiletTask
             Source="$(MSBuildProjectDirectory)"
-            Target="$(_piletFolderBase)"
+            Target="$(OutputFolder)"
             Framework="$(TargetFramework)"
             FrameworkMoniker="$(TargetFrameworkMoniker)"
             CliVersion="$(PiralCliVersion)"

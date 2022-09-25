@@ -6,6 +6,7 @@
         <Bundler>esbuild</Bundler>
         <ProjectsWithStaticFiles></ProjectsWithStaticFiles>
         <Monorepo></Monorepo>
+        <OutputFolder>..\piral~</OutputFolder>
         <ConfigFolder></ConfigFolder>
         <PiralCliVersion>latest</PiralCliVersion>
     </PropertyGroup>

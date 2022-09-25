@@ -102,6 +102,8 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `Monorepo`: Sets the behavior of the scaffolding to a monorepo mode. The value must be `enable` to switch this on.
 - `PiralCliVersion`: Determines the version of the `piral-cli` tooling to use. By default this is `latest`.
 - `Version`: Sets the version of the pilet. This is a/the standard project property.
+- `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
+- `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
 
 A more extensive example:
 
