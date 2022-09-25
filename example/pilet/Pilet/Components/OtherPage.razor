@@ -1,5 +1,6 @@
 ﻿@page "/other"
 @page "/other/single/{id}"
+@inject IPiletService Pilet
 
 @if (Id != null)
 {
@@ -25,21 +26,11 @@ else
 
 <Extension Name="try-order" Order=@OrderExtensions />
 
-<p>This page works best on @browsers[bid].</p>
+<p>This page works best on @GetBrowser().</p>
 
 <button class="btn btn-primary" @onclick="ChangeBrowser">Other browsers?</button>
 
 @code {
-    private static RenderFragment firefoxBrowser = @<img src="images/firefox.png" alt="Firefox" />;
-    private static RenderFragment chromeBrowser = @<img src="images/chrome.png" alt="Chrome" />;
-    private static RenderFragment operaBrowser = @<img src="images/opera.png" alt="Opera" />;
-
-    private RenderFragment[] browsers = new []
-    {
-        firefoxBrowser,
-        chromeBrowser,
-        operaBrowser,
-    };
     private int bid = 0;
 
     [Parameter]
@@ -51,8 +42,23 @@ else
         return components.OrderBy(m => ((System.Text.Json.JsonElement)m.Defaults).GetProperty("order").GetInt32()).ToList();
     }
 
+    RenderFragment GetBrowser()
+    {
+        switch (bid)
+        {
+            case 1:
+                return @<img src=@Pilet.GetUrl("images/chrome.png") alt="Chrome" />;
+            case 2:
+                return @<img src=@Pilet.GetUrl("images/opera.png") alt="Opera" />;
+            case 3:
+                return @<img src=@Pilet.GetUrl("images/safari.png") alt="Safari" />;
+            default:
+                return @<img src=@Pilet.GetUrl("images/firefox.png") alt="Firefox" />;
+        }
+    }
+
     void ChangeBrowser()
     {
-        bid = (bid + 1) % browsers.Length;
+        bid = (bid + 1) % 4;
     }
 }

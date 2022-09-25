@@ -9,7 +9,8 @@ namespace Piral.Blazor.Core
 
         public PiletService(string baseUrl)
         {
-            _baseUrl = new Uri(baseUrl);
+            // Move base URL up in case of a `_framework` containment
+            _baseUrl = new Uri(baseUrl.Replace("/_framework/", "/"));
         }
 
         public string GetUrl(string localPath)
