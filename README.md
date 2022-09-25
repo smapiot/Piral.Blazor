@@ -314,6 +314,25 @@ public class Module
 
 The `ConfigureServices` and `ConfigureShared` methods are optional. If you want to configure dependency injection in your pilet then use this. Our recommendation is to use `ConfigureServices` is much as possible, however, for using third-party libraries you should use `ConfigureShared`. Third-party libraries require globally shared dependencies, as the third-party libraries are also globally shared (i.e., if two pilets depend on the same assembly it would only be loaded once, making it implicitly shared).
 
+### Standard Pilet Service
+
+Every pilet gets automatically a service called `IPiletService` injected. This can be used to compute the URL of a resource.
+
+```razor
+@inject IPiletService Pilet
+```
+
+The only helper there is `GetUrl`. You can use it like:
+
+```razor
+@page "/example"
+@inject IPiletService Pilet
+
+<img src=@Pilet.GetUrl("images/something.png") alt="Some image" />
+```
+
+In the example above the resource `images/something.png` would be placed in the `wwwroot` folder (i.e., `wwwroot/images/something`). As the content of the `wwwroot` folder is copied, the image will also be copied. However, the old local URL is not valid in a pilet, which needs to prefix its resources with its base URL. The function above does that. In that case, the URL would maybe be something like `http://localhost:1234/$pilet-api/0/images/something.png` while debugging, and another fully qualified URL later in production.
+
 ## Running and Debugging the Pilet :rocket:
 
 From your Blazor project folder, run your pilet via the Piral CLI:
