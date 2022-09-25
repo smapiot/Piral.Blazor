@@ -3,7 +3,7 @@ using System;
 
 namespace Piral.Blazor.Core
 {
-    sealed class PiletService : IPiletService
+    public sealed class PiletService : IPiletService
     {
         private readonly Uri _baseUrl;
 

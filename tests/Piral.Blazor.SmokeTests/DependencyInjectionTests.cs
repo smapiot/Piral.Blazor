@@ -19,10 +19,11 @@ namespace Piral.Blazor.SmokeTests
             var sp = new PiralServiceProvider(services);
 
             var moduleContainerService = sp.GetRequiredService<IModuleContainerService>();
+            var piletService = new PiletService("http://localhost:1234/$pilet-api/0/pilet.dll");
 
             // Act
-            var spA = moduleContainerService.ConfigureModule(typeof(PiletA.Module).Assembly);
-            var spB = moduleContainerService.ConfigureModule(typeof(PiletB.Module).Assembly);
+            var spA = moduleContainerService.ConfigureModule(typeof(PiletA.Module).Assembly, piletService);
+            var spB = moduleContainerService.ConfigureModule(typeof(PiletB.Module).Assembly, piletService);
 
             // Assert
             var dependencyA = spA.GetRequiredService<PiletA.DependencyA>();
