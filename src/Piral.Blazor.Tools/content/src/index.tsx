@@ -1,17 +1,15 @@
-import { PiletApi } from '**PiralInstance**';
 import * as Blazor from './blazor.codegen';
-import './**BlazorProjectName**.styles.css';
+import type { PiletApi } from '**MSBUILD_PiralInstance**';
 
 export function setup(app: PiletApi) {
-    Blazor.initPiralBlazorApi(app);
-    Blazor.registerDependencies(app);
-    Blazor.registerOptions(app);
-    Blazor.registerPages(app);
-    Blazor.registerExtensions(app);
-    Blazor.setupPilet(app);
+  Blazor.initPiralBlazorApi(app);
+  Blazor.registerDependencies(app);
+  Blazor.registerOptions(app);
+  Blazor.registerPages(app);
+  Blazor.registerExtensions(app);
+  Blazor.setupPilet(app);
 }
 
 export function teardown(app: PiletApi) {
-    app.releaseBlazorReferences?.();
-    Blazor.teardownPilet(app);
+  Blazor.teardownPilet(app);
 }

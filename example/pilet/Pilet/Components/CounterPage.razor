@@ -1,16 +1,44 @@
 ﻿@attribute [PiralComponent("counter-page")]
 
+@inject IPiletService Pilet
+
 <h1>Counter from Pilet</h1>
 
 <p>Current count: @currentCount</p>
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
+<p>This page works best on @GetBrowser().</p>
+
+<button class="btn btn-secondary" @onclick="ChangeBrowser">Other browsers?</button>
+
 @code {
-    int currentCount = 0;
+    private int bid = 0;
+
+    private int currentCount = 0;
 
     void IncrementCount()
     {
         currentCount++;
+    }
+
+    RenderFragment GetBrowser()
+    {
+        switch (bid)
+        {
+            case 1:
+                return @<img src=@Pilet.GetUrl("images/chrome.png") alt="Chrome" />;
+            case 2:
+                return @<img src=@Pilet.GetUrl("images/opera.png") alt="Opera" />;
+            case 3:
+                return @<img src=@Pilet.GetUrl("images/safari.png") alt="Safari" />;
+            default:
+                return @<img src=@Pilet.GetUrl("images/firefox.png") alt="Firefox" />;
+        }
+    }
+
+    void ChangeBrowser()
+    {
+        bid = (bid + 1) % 4;
     }
 }
