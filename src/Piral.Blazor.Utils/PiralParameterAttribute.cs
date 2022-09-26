@@ -3,7 +3,7 @@ using System;
 namespace Piral.Blazor.Utils
 {
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public sealed class PiralParameterAttribute : Attribute
+    public class PiralParameterAttribute : Attribute
     {
         /// <summary>
         /// Determines the original name of the parameter in JS code.

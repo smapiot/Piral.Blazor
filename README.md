@@ -11,6 +11,8 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 
 > This is the branch for Blazor 5.0 with .NET 5.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2) or [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch.
 
+**:warning: Caution: The 5.0 releases will no longer receive feature updates. We will only provide maintenance / hotfix updates, if any.**
+
 ## Getting Started
 
 > You'll also find some information in the [piral-blazor](https://www.npmjs.com/package/piral-blazor) package.
@@ -102,6 +104,8 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `Monorepo`: Sets the behavior of the scaffolding to a monorepo mode. The value must be `enable` to switch this on.
 - `PiralCliVersion`: Determines the version of the `piral-cli` tooling to use. By default this is `latest`.
 - `Version`: Sets the version of the pilet. This is a/the standard project property.
+- `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
+- `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
 
 A more extensive example:
 
@@ -186,6 +190,8 @@ export default (app: PiletApi) => {
 
 Parameters (or "props") are properly forwarded. Usually, it should be sufficient to declare `[Parameter]` properties in the Blazor components. Besides, there are more advanced ways.
 
+#### Generic Approach
+
 For instance, to access the `params` prop of an extension you can use the `PiralParameter` attribute. This way, you can "forward" props from JS to the .NET name of your choice (in this case "params" is renamed to "Parameters").
 
 ```razor
@@ -236,6 +242,44 @@ That way, we only have a property `Message` which reflects the `params.Test`. So
 
 It would just work.
 
+#### Routes
+
+If you want to match the route parameter you can use the generic approach, too:
+
+```razor
+@page "/foo/{id}"
+<div>@Id</div>
+@code {
+    [Parameter]
+    [PiralParameter("match.params.id")]
+    public string Id { get; set; }
+}
+```
+
+However, since using `match.params` is quite verbose and easy to get wrong you can also use the special `PiralRouteParameter` attribute.
+
+```razor
+@page "/foo/{id}"
+<div>@Id</div>
+@code {
+    [Parameter]
+    [PiralRouteParameter("id")]
+    public string Id { get; set; }
+}
+```
+
+Note that there is another convenience deriving from the use of `PiralRouteParameter`. If your route parameter name matches the name of the property then you can also omit the argument:
+
+```razor
+@page "/foo/{Id}"
+<div>@Id</div>
+@code {
+    [Parameter]
+    [PiralRouteParameter]
+    public string Id { get; set; }
+}
+```
+
 ### Dependency Injection
 
 You can define services for dependency injection in a `Module` class. The name of the class is arbitrary, but it shows the difference to the standard `Program` class, which should not be available, as mentioned before.
@@ -268,6 +312,24 @@ public class Module
 
 The `ConfigureServices` and `ConfigureShared` methods are optional. If you want to configure dependency injection in your pilet then use this. Our recommendation is to use `ConfigureServices` is much as possible, however, for using third-party libraries you should use `ConfigureShared`. Third-party libraries require globally shared dependencies, as the third-party libraries are also globally shared (i.e., if two pilets depend on the same assembly it would only be loaded once, making it implicitly shared).
 
+### Standard Pilet Service
+
+Every pilet gets automatically a service called `IPiletService` injected. This can be used to compute the URL of a resource.
+
+```razor
+@inject IPiletService Pilet
+```
+
+The only helper there is `GetUrl`. You can use it like:
+
+```razor
+@page "/example"
+@inject IPiletService Pilet
+<img src=@Pilet.GetUrl("images/something.png") alt="Some image" />
+```
+
+In the example above the resource `images/something.png` would be placed in the `wwwroot` folder (i.e., `wwwroot/images/something`). As the content of the `wwwroot` folder is copied, the image will also be copied. However, the old local URL is not valid in a pilet, which needs to prefix its resources with its base URL. The function above does that. In that case, the URL would maybe be something like `http://localhost:1234/$pilet-api/0/images/something.png` while debugging, and another fully qualified URL later in production.
+
 ## Running and Debugging the Pilet :rocket:
 
 From your Blazor project folder, run your pilet via the Piral CLI:
@@ -288,9 +350,10 @@ In addition to this, if you want to debug your Blazor pilet using for example Vi
 
 There are some special files that you can add in your project (adjacent to the *.csproj* file):
 
-- *setup.tsx*
-- *package-overwrites.json*
-- *js-imports.json*
+- *.piralconfig/setup.tsx*
+- *.piralconfig/teardown.tsx*
+- *.piralconfig/package-overwrites.json*
+- *.piralconfig/js-imports.json*
 
 Let's see what they do and how they can be used.
 
@@ -338,6 +401,10 @@ This would add a development dependency to the `axios` package. Likewise, other 
 ```
 
 The rules for the merge follow the [Json.NET](https://www.newtonsoft.com/json/help/html/MergeJson.htm) approach.
+
+### Extending the Pilet's Teardown
+
+The *teardown.tsx* file can be used to define more things that should be done in a pilet's `teardown` function. By default, the content of the `teardown` function is auto generated. Things such as `pages` and `extensions` would be automatically unregistered. However, in some cases you will need to unregister things manually. You can do this here.
 
 ### Defining Additional JavaScript Imports
 

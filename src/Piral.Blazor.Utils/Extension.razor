@@ -3,7 +3,7 @@
 <slot @ref=SlotRef></slot>
 
 @code {
-    ElementReference SlotRef;
+    private ElementReference SlotRef;
 
     /// <summary>
     /// The name of the extension slot to use.
@@ -17,12 +17,39 @@
     /// </summary>
     [Parameter]
     public object Params { get; set; }
+    
+    /// <summary>
+    /// The callback to invoke when the items should be ordered.
+    /// </summary>
+    [Parameter]
+    public Func<List<ExtensionRegistration>, List<ExtensionRegistration>> Order { get; set; } = null;
+
+    /// <summary>
+    /// The component to be rendered when no extension component for this slot is
+    /// available.
+    /// Returns the name of a Blazor component to render. The component must have
+    /// been registered via the PiralComponentAttribute. It will be called internally
+    /// via `fromBlazor`.
+    /// </summary>
+    [Parameter]
+    public string FallbackComponent { get; set; } = null;
+
+    /// <summary>
+    /// This function is called optionally from newer versions of piral-blazor.
+    /// Called in case of the order prop.
+    /// </summary>
+    [JSInvokable("Order")]
+    public List<ExtensionRegistration> FromJsOnOrder(List<ExtensionRegistration> items)
+    {
+        return Order?.Invoke(items) ?? items;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await JSRuntime.InvokeVoidAsync("Blazor.emitRenderEvent", SlotRef, Name, Params);
+            var objRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("Blazor.emitRenderEvent", SlotRef, Name, Params, objRef, FallbackComponent);
         }
     }
 }
