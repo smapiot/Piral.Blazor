@@ -7,7 +7,7 @@
         <TargetFramework>net6.0</TargetFramework>
 		<IsTool>true</IsTool>
         <StartupObject>Microsoft.AspNetCore.Components.WebAssembly.DevServer.Program</StartupObject>
-        <VersionPrefix>6.0.3</VersionPrefix>
+        <VersionPrefix>6.0.4</VersionPrefix>
         <Description>Blazor Dev Server for Blazor pilets.</Description>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>

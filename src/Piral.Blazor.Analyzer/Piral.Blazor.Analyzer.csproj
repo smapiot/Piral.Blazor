@@ -4,7 +4,7 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
         <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-        <VersionPrefix>6.0.3</VersionPrefix>
+        <VersionPrefix>6.0.4</VersionPrefix>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
         <PackageIcon>icon.png</PackageIcon>
