@@ -45,9 +45,15 @@ const binariesdir = resolve(
 );
 const objectsDir = resolve(blazorprojectfolder, "obj");
 const wwwRootDir = resolve(binariesdir, wwwroot);
+const scopedCssDir = resolve(
+  objectsDir,
+  configuration,
+  targetFramework,
+  "scopedcss",
+  "bundle"
+);
 const sourceDir = resolve(wwwRootDir, "_framework");
 const projectAssets = require(resolve(objectsDir, pajson));
-
 const project = require(resolve(piralPiletFolder, pjson));
 let appdir = resolve(piralPiletFolder, "node_modules", project.piral.name);
 
@@ -373,13 +379,17 @@ async function checkBlazorInstallation(piletBlazorVersion) {
 
 function copyAll([dllFiles, pdbFiles], ignoredFiles, targetDir, cssLinks) {
   const wwwRootFiles = readdirSync(wwwRootDir);
+  const scopedCss = existsSync(scopedCssDir) ? readdirSync(scopedCssDir) : [];
   const staticFiles = wwwRootFiles.filter((x) => !ignoredFiles.includes(x));
 
   //File copy
   copySync(pdbFiles, sourceDir, targetDir);
   copySync(dllFiles, sourceDir, targetDir);
   copySync(staticFiles, wwwRootDir, targetDir, (file) =>
-    cssLinks.push(relative(file, wwwRootDir))
+    cssLinks.push(relative(wwwRootDir, file))
+  );
+  copySync(scopedCss, scopedCssDir, targetDir, (file) =>
+    cssLinks.push(relative(scopedCssDir, file))
   );
 }
 
@@ -493,8 +503,9 @@ module.exports = async function () {
     allImports.push(`import projectSetup from '${setupFilePath}';`);
   }
 
-  const setupPiletCode = `export const setupPilet = ${
-    setupFileExists ? "projectSetup" : "() => {}"
+  const setupPiletCode = `export function setupPilet(api) {
+    ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
+    ${setupFileExists ? "projectSetup(api);" : ""}
   }`;
 
   // Teardown file
