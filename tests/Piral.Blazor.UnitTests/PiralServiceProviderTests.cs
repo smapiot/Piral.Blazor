@@ -38,20 +38,20 @@ namespace Piral.Blazor.Tests
         {
             // global registrations
             var globalServices = new ServiceCollection();
-            var prialServiceProvider = new PiralServiceProvider(globalServices);
+            var piralServiceProvider = new PiralServiceProvider(globalServices);
 
             // moduleA registrations
             var moduleAGlobalServices = new ServiceCollection();
             moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
-            prialServiceProvider.AddGlobalServices(moduleAGlobalServices);
+            piralServiceProvider.AddGlobalServices(moduleAGlobalServices);
 
             var moduleAServices = new ServiceCollection();
-            var moduleAServiceProvider = prialServiceProvider.CreatePiletServiceProvider(moduleAServices);
+            var moduleAServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleAServices);
 
             // moduleC registrations
             var moduleCServices = new ServiceCollection();
             moduleCServices.AddTransient<ModuleCDependency>();
-            var moduleCServiceProvider = prialServiceProvider.CreatePiletServiceProvider(moduleCServices);
+            var moduleCServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleCServices);
 
             // resolve dependencies
             var moduleAGlobalDependency = moduleAServiceProvider.GetRequiredService<ModuleAGlobalDependency>();
@@ -59,6 +59,40 @@ namespace Piral.Blazor.Tests
 
             // assert
             moduleAGlobalDependency.Should().Be(moduleCDependency.Dependency);
+        }
+
+        [Fact]
+        public void Declaring_Global_Dependencies_In_Two_Pilets_Should_Work()
+        {
+            // global registrations from pilet 1
+            var globalServices = new ServiceCollection();
+            globalServices.AddSingleton<GlobalDependency>();
+            var piralServiceProvider = new PiralServiceProvider(globalServices);
+
+            // moduleA registrations
+            var moduleAGlobalServices = new ServiceCollection();
+            moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
+            piralServiceProvider.AddGlobalServices(moduleAGlobalServices);
+
+            var moduleAServices = new ServiceCollection();
+            var moduleAServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleAServices);
+
+            // resolve dependencies
+            var globDep = moduleAServiceProvider.GetRequiredService<GlobalDependency>();
+
+            // moduleB registrations
+            var moduleBGlobalServices = new ServiceCollection();
+            moduleBGlobalServices.AddTransient<ModuleBDependency>();
+            piralServiceProvider.AddGlobalServices(moduleBGlobalServices);
+
+            var moduleBServices = new ServiceCollection();
+            var moduleBServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleBServices);
+
+            // resolve dependencies
+            var moduleDependency = moduleBServiceProvider.GetRequiredService<ModuleBDependency>();
+
+            // assert
+            globDep.Should().Be(moduleDependency.Dependency);
         }
 
         [Fact]

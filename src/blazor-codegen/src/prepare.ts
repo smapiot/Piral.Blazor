@@ -4,7 +4,7 @@ import { copyAll } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { diffBlazorBootFiles } from "./utils";
-import { checkBlazorVersion, extractBlazorVersion } from "./version";
+import { checkDotnetVersion, extractDotnetVersion } from "./version";
 import { alwaysIgnored, bbjson, swajson, packageJsonFilename, piletJsonFilename, variant } from "./constants";
 import { BlazorManifest, StaticAssets } from "./types";
 
@@ -55,7 +55,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const manifest = manifestSource.Identity;
   const piletManifest: BlazorManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const piletBlazorVersion = extractBlazorVersion(piletManifest);
+  const piletDotnetVersion = extractDotnetVersion(piletManifest);
   const standalone = !blazorInAppshell;
 
   if (blazorInAppshell) {
@@ -64,7 +64,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
     );
 
     const appShellManifest: BlazorManifest = require(bbAppShellPath);
-    const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
+    const appshellDotnetVersion = extractDotnetVersion(appShellManifest);
     const existingFiles = toFramework(readdirSync(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
 
@@ -75,7 +75,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
       appShellManifest
     );
 
-    checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
+    checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
 
     copyAll(ignored, staticAssets, targetDir);
 
@@ -85,7 +85,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
       "The app shell does not contain `piral-blazor`. Using standalone mode."
     );
 
-    await checkInstallation(piletBlazorVersion, shellPackagePath);
+    await checkInstallation(piletDotnetVersion, shellPackagePath);
 
     const originalManifest: BlazorManifest = require(bbStandalonePath);
     const frameworkFiles = toFramework([

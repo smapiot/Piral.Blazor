@@ -57,7 +57,9 @@ namespace Piral.Blazor.Core
                 globalServiceProvider.CreateChildServiceProvider(globalServices, childServices =>
                 {
                     foreach (var service in piletServices)
-                    { childServices.Add(service); }
+                    { 
+                        childServices.Add(service);
+                    }
                 }, sp => sp.BuildServiceProvider(), ParentSingletonOpenGenericRegistrationsBehaviour.Delegate);
 
         public object GetService(Type serviceType) => _globalServiceProvider.GetService(serviceType);

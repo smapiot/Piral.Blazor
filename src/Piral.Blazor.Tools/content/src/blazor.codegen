@@ -83,21 +83,21 @@ function diffBlazorBootFiles(appdir, appname, piletManifest, originalManifest) {
 }
 
 // src/version.ts
-function isVersionSame(oldVer, newVer) {
-  const oldParts = oldVer.split(".");
-  const newParts = newVer.split(".");
-  const len = Math.min(4, Math.max(oldParts.length, newParts.length));
+function isVersionSame(parentVersion, childVersion) {
+  const pp = parentVersion.split(".");
+  const cp = childVersion.split(".");
+  const len = Math.min(4, Math.max(pp.length, cp.length));
   for (let i = 0; i < Math.min(2, len); i++) {
-    const a = newParts[i];
-    const b = oldParts[i];
-    if (a !== b) {
+    const child = cp[i];
+    const parent = pp[i];
+    if (child !== parent) {
       return "incompatible";
     }
   }
-  for (let i = 2; i < Math.min(4, len); i++) {
-    const a = newParts[i];
-    const b = oldParts[i];
-    if (a !== b) {
+  for (let i = 2; i < Math.min(3, len); i++) {
+    const child = cp[i];
+    const parent = pp[i];
+    if (child < parent) {
       return "compatible";
     }
   }
@@ -106,20 +106,20 @@ function isVersionSame(oldVer, newVer) {
 function stripVersion(x) {
   return x.split("/")[0];
 }
-function extractBlazorVersion(manifest) {
+function extractDotnetVersion(manifest) {
   var _a;
   return ((_a = Object.keys(manifest.resources.runtime).map((x) => x.match(/^dotnet\.(.*?)\.js/)).find(Boolean)) == null ? void 0 : _a[1]) || "0.0.0";
 }
-function checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion) {
-  const versionMatch = isVersionSame(appshellBlazorVersion, piletBlazorVersion);
+function checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion) {
+  const versionMatch = isVersionSame(appshellDotnetVersion, piletDotnetVersion);
   if (versionMatch === "incompatible") {
-    throw new Error(`The Blazor versions of your pilet and Piral Instance are incompatible:
-     - Piral Instance Blazor version = ${appshellBlazorVersion}
-     - Pilet Blazor version = ${piletBlazorVersion}`);
+    throw new Error(`The dotnet versions of your pilet and Piral Instance are incompatible:
+     - Piral Instance dotnet version = ${appshellDotnetVersion}
+     - Pilet dotnet version = ${piletDotnetVersion}`);
   } else if (versionMatch === "compatible") {
-    console.warn(`The Blazor versions of your pilet and Piral Instance do not match, but seem to be compatible:
-      - Piral Instance Blazor version = ${appshellBlazorVersion}
-      - Pilet Blazor version = ${piletBlazorVersion}`);
+    console.warn(`The dotnet versions of your pilet and Piral Instance do not match, but seem to be compatible:
+      - Piral Instance dotnet version = ${appshellDotnetVersion}
+      - Pilet dotnet version = ${piletDotnetVersion}`);
   }
 }
 
@@ -321,21 +321,21 @@ async function prepare(targetDir, staticAssets) {
   const manifest = manifestSource.Identity;
   const piletManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const piletBlazorVersion = extractBlazorVersion(piletManifest);
+  const piletDotnetVersion = extractDotnetVersion(piletManifest);
   const standalone = !blazorInAppshell;
   if (blazorInAppshell) {
     console.log("The app shell already integrates `piral-blazor` with `blazor`.");
     const appShellManifest = require(bbAppShellPath);
-    const appshellBlazorVersion = extractBlazorVersion(appShellManifest);
+    const appshellDotnetVersion = extractDotnetVersion(appShellManifest);
     const existingFiles = toFramework((0, import_fs4.readdirSync)(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, appShellManifest);
-    checkBlazorVersion(piletBlazorVersion, appshellBlazorVersion);
+    checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
     copyAll(ignored, staticAssets, targetDir);
     return { dlls, pdbs, standalone, manifest };
   } else {
     console.log("The app shell does not contain `piral-blazor`. Using standalone mode.");
-    await checkInstallation(piletBlazorVersion, shellPackagePath);
+    await checkInstallation(piletDotnetVersion, shellPackagePath);
     const originalManifest = require(bbStandalonePath);
     const frameworkFiles = toFramework([
       bbjson,

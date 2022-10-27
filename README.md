@@ -310,11 +310,35 @@ public class Module
         // configure dependency injection for the whole application here
         // -> use this for third-party libraries or if you want to share deps with other pilets
         // -> the method is optional; you can remove it if not needed
+        //
+        // IMPORTANT: The Blazor library (dll) is only loaded when a component from the library
+        //            is used => the shared dependencies are only available when the library is
+        //            loaded. Therefore, only use this to share dependencies when you are sure
+        //            that the library is loaded first / before another one.
+        //            Recommendation is to use ConfigureServices as much as possible, or bring
+        //            the shared dependency definition to all pilets relying on it.
     }
 }
 ```
 
-The `ConfigureServices` and `ConfigureShared` methods are optional. If you want to configure dependency injection in your pilet then use this. Our recommendation is to use `ConfigureServices` is much as possible, however, for using third-party libraries you should use `ConfigureShared`. Third-party libraries require globally shared dependencies, as the third-party libraries are also globally shared (i.e., if two pilets depend on the same assembly it would only be loaded once, making it implicitly shared).
+The `ConfigureServices` and `ConfigureShared` methods are optional. If you want to configure dependency injection in your pilet then use this. Our recommendation is to use `ConfigureServices` is much as possible, however, for using third-party libraries you might want to use `ConfigureShared`.
+
+Third-party libraries require globally shared dependencies, as the third-party libraries are also globally shared (i.e., if two pilets depend on the same assembly it would only be loaded once, making it implicitly shared, however, this one only works if the pilet defining the shared dependency is loaded before the other one).
+
+One way to mitigate the sharing issue with `ConfigureShared` is to use the same initialization on all pilets relying on the shared dependency. This way, independent which pilets are available and loaded first, the dependency sharing always works.
+
+**Note**: While `ConfigureShared` applies to *all* components, `ConfigureServices` only works for components defined *in the scope* of a pilet. This has to be the case, as components from shared libraries might be loaded from any pilet first - making it unclear where the component should be assigned to (usually it's either no or all pilets, but at the time of rendering this is completely unclear). To bring a component into the scope of a pilet (even if its in the same library) you need to have it declare as `@attribute [PiralComponent]`, e.g.,
+
+```razor
+// bring it in scope of the current pilet
+@attribute [PiralComponent]
+// now you can inject services defined in ConfigureServices
+@inject IMyLocalService myLocalService
+
+<div>
+  @myLocalService.Title
+</div>
+```
 
 ### Standard Pilet Service
 
