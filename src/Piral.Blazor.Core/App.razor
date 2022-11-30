@@ -4,22 +4,8 @@
 @foreach (var active in Activation.Components)
 {
     <div id="@active.ReferenceId">
-        <div>
-            @{
-                RenderFragment renderFragment = (builder) =>
-                {
-                    var seq = 0;
-                    builder.OpenComponent(seq++, active.Component);
-
-                    foreach (var arg in active.Args)
-                    {
-                        builder.AddAttribute(seq++, arg.Key, arg.Value);
-                    }
-
-                    builder.CloseComponent();
-                };
-                @renderFragment
-            }
+        <div style="display: contents">
+            <DynamicComponent Type="@active.Component" Parameters="@active.Args" />
         </div>
     </div>
 }
