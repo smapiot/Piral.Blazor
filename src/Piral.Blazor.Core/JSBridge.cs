@@ -54,6 +54,7 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static Task<string[]> GetCapabilities()
         {
+            // "load" --> enables using "LoadPilet" / "UnloadPilet" instead of "LoadComponentsFromLibrary" etc.
             return Task.FromResult(new[] { "load" });
         }
 
