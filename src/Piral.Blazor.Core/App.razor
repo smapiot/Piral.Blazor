@@ -1,14 +1,16 @@
 @inject IComponentActivationService Activation
 @inject ILogger<App> Logger
 
-@foreach (var active in Activation.Components)
-{
-    <div id="@active.ReferenceId">
-        <div style="display: contents">
-            <DynamicComponent Type="@active.Component" Parameters="@active.Args" />
+<DynamicComponent Type="@Activation.Root">
+    @foreach (var active in Activation.Components)
+    {
+        <div id="@active.ReferenceId">
+            <div style="display: contents">
+                <DynamicComponent Type="@active.Component" Parameters="@active.Args" />
+            </div>
         </div>
-    </div>
-}
+    }
+</DynamicComponent>
 
 @code {
     protected override Task OnAfterRenderAsync(bool firstRender)

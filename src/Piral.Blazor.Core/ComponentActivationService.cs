@@ -16,15 +16,18 @@ namespace Piral.Blazor.Core
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
 
         private readonly ILogger<ComponentActivationService> _logger;
-        
+
         private readonly IModuleContainerService _container;
 
         public event EventHandler Changed;
 
         public IEnumerable<ActiveComponent> Components => _active;
 
+        public Type Root => GetComponent("approot") ?? typeof(DefaultRoot);
+
         private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
         {
+            typeof(PiralAppRootAttribute),
             typeof(PiralComponentAttribute),
             typeof(PiralExtensionAttribute),
             typeof(ExposePiletAttribute),
@@ -140,7 +143,7 @@ namespace Piral.Blazor.Core
             foreach (var componentType in componentTypes)
             {
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
-                
+
                 foreach (var componentName in componentNames)
                 {
                     Unregister(componentName);
@@ -150,7 +153,7 @@ namespace Piral.Blazor.Core
         }
 
         private int RemoveActivations(Predicate<ActiveComponent> isActivation)
-        {            
+        {
             var removed = 0;
             var last = _active.Count - 1;
 
@@ -174,7 +177,7 @@ namespace Piral.Blazor.Core
                     {
                         _active[i] = new ActiveComponent(m.ComponentName, m.ReferenceId);
                     }
-                    
+
                     removed++;
                 }
                 // or we find elements that have been marked, but can now be removed.
@@ -207,10 +210,11 @@ namespace Piral.Blazor.Core
             // get only the first occurence of the attribute for all but pages.
             // This is mostly relevant for extensions, which can have multiple attributes,
             // but the name to register (FQN) will be the same for every occurence anyway.
-            if(attributeType != typeof(RouteAttribute) && attributes.Count() > 1){
+            if (attributeType != typeof(RouteAttribute) && attributes.Count() > 1)
+            {
                 attributes = attributes.ToList().Take(1).ToArray();
             }
-            
+
             if (attributes is null)
             {
                 return null;
@@ -223,18 +227,20 @@ namespace Piral.Blazor.Core
                 result.Add(attributeType switch
                 {
                     Type _ when attributeType == typeof(RouteAttribute) =>
-                        $"page-{((RouteAttribute) attribute).Template}",
+                        $"page-{((RouteAttribute)attribute).Template}",
                     Type _ when attributeType == typeof(PiralExtensionAttribute) =>
                         $"extension-{member.FullName}",
                     Type _ when attributeType == typeof(PiralComponentAttribute) =>
-                        $"{((PiralComponentAttribute) attribute).Name ?? member.FullName}",
+                        $"{((PiralComponentAttribute)attribute).Name ?? member.FullName}",
                     Type _ when attributeType == typeof(ExposePiletAttribute) =>
-                        $"{((ExposePiletAttribute) attribute).Name ?? member.FullName}",
+                        $"{((ExposePiletAttribute)attribute).Name ?? member.FullName}",
+                    Type _ when attributeType == typeof(PiralAppRootAttribute) =>
+                        $"approot",
                     _ => null
                 });
             }
-            
-            return result; 
+
+            return result;
         }
     }
 }

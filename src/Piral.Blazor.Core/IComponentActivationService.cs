@@ -11,8 +11,13 @@ namespace Piral.Blazor.Core
         event EventHandler Changed;
 
         /// <summary>
-        /// The currently active components.
+        /// Gets the currently active components.
         /// </summary>
         IEnumerable<ActiveComponent> Components { get; }
+
+        /// <summary>
+        /// Gets the configured root component.
+        /// </summary>
+        Type Root { get; }
     }
 }
