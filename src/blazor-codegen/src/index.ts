@@ -113,8 +113,19 @@ module.exports = async function () {
   }
 
   const setupPiletCode = `export function setupPilet(api) {
+    const promises = [];
+    const addScript = (href) => {
+      promises.push(new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = path + href;
+        script.onerror = () => reject(new Error('Loading the script failed:' + href));
+        script.onload = () => resolve();
+        document.body.appendChild(script);
+      }));
+    };
     ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
-    ${setupFileExists ? "projectSetup(api);" : ""}
+    ${setupFileExists ? "projectSetup(api, addScript);" : ""}
+    return Promise.all(promises);
   }`;
 
   // Teardown file

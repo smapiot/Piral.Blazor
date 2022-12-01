@@ -7,7 +7,7 @@ export function setup(app: PiletApi) {
   Blazor.registerOptions(app);
   Blazor.registerPages(app);
   Blazor.registerExtensions(app);
-  Blazor.setupPilet(app);
+  return Blazor.setupPilet(app);
 }
 
 export function teardown(app: PiletApi) {

@@ -483,8 +483,19 @@ Seen error: ${err}`);
     allImports.push(`import projectSetup from '${setupFilePath}';`);
   }
   const setupPiletCode = `export function setupPilet(api) {
+    const promises = [];
+    const addScript = (href) => {
+      promises.push(new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = path + href;
+        script.onerror = () => reject(new Error('Loading the script failed:' + href));
+        script.onload = () => resolve();
+        document.body.appendChild(script);
+      }));
+    };
     ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
-    ${setupFileExists ? "projectSetup(api);" : ""}
+    ${setupFileExists ? "projectSetup(api, addScript);" : ""}
+    return Promise.all(promises);
   }`;
   const teardownFilePath = (0, import_path6.join)(piralconfigfolder, teardownfile).replace(/\\/g, "/");
   const teardownFileExists = (0, import_fs5.existsSync)(teardownFilePath);
