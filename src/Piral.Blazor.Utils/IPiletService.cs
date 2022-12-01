@@ -1,4 +1,6 @@
-﻿namespace Piral.Blazor.Utils
+﻿using Microsoft.Extensions.Configuration;
+
+namespace Piral.Blazor.Utils
 {
     /// <summary>
     /// Represents a set of helper functions to be used in Piral Blazor components.
@@ -11,5 +13,20 @@
         /// https://current.cdn.com/pilets/my-pilet/1.0.0/images/foo.png).
         /// </summary>
         string GetUrl(string localPath);
+
+        /// <summary>
+        /// Gets the configuration object for the current pilet.
+        /// </summary>
+        IConfiguration Config { get; }
+
+        /// <summary>
+        /// Gets the name of the current pilet.
+        /// </summary>
+        string Name { get; }
+
+        /// <summary>
+        /// Gets the version of the current pilet.
+        /// </summary>
+        string Version { get; }
     }
 }

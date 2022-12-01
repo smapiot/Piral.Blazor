@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
@@ -34,35 +35,45 @@ namespace Piral.Blazor.Core
 
         public IServiceProvider ConfigureModule(Assembly assembly, IPiletService pilet)
         {
-            var globalServices = ConfigureGlobalServices(assembly);
-            var piletServices = ConfigurePiletServices(assembly)
+            var globalServices = ConfigureGlobalServices(assembly, pilet.Config);
+            var piletServices = ConfigurePiletServices(assembly, pilet.Config)
                 .AddSingleton(pilet);
             _provider.AddGlobalServices(globalServices);
             return _provider.CreatePiletServiceProvider(piletServices);
         }
 
-        private static IServiceCollection ConfigureGlobalServices(Assembly assembly)
+        private static IServiceCollection ConfigureGlobalServices(Assembly assembly, IConfiguration cfg)
         {
             var sc = new ServiceCollection();
-            var configure = assembly
-                .GetTypes()
-                .FirstOrDefault(x => string.Equals(x.Name, "Module", StringComparison.Ordinal))
-                ?.GetMethod("ConfigureShared", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(IServiceCollection) }, null);
 
-            configure?.Invoke(null, new[] { sc });
+            FindMethod(assembly, "ConfigureShared", typeof(IServiceCollection))
+                ?.Invoke(null, new Object[] { sc });
+            
+            FindMethod(assembly, "ConfigureShared", typeof(IServiceCollection), typeof(IConfiguration))
+                ?.Invoke(null, new Object[] { sc, cfg });
+            
             return sc;
         }
 
-        private static IServiceCollection ConfigurePiletServices(Assembly assembly)
+        private static IServiceCollection ConfigurePiletServices(Assembly assembly, IConfiguration cfg)
         {
             var sc = new ServiceCollection();
-            var configure = assembly
+
+            FindMethod(assembly, "ConfigureServices", typeof(IServiceCollection))
+                ?.Invoke(null, new Object[] { sc });
+
+            FindMethod(assembly, "ConfigureServices", typeof(IServiceCollection), typeof(IConfiguration))
+                ?.Invoke(null, new Object[] { sc, cfg });
+
+            return sc;
+        }
+
+        private static MethodInfo FindMethod(Assembly assembly, string name, params Type[] parameters)
+        {
+            return assembly
                 .GetTypes()
                 .FirstOrDefault(x => string.Equals(x.Name, "Module", StringComparison.Ordinal))
-                ?.GetMethod("ConfigureServices", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(IServiceCollection) }, null);
-
-            configure?.Invoke(null, new[] { sc });
-            return sc;
+                ?.GetMethod(name, BindingFlags.Public | BindingFlags.Static, null, parameters, null);
         }
     }
 }
