@@ -114,9 +114,10 @@ module.exports = async function () {
 
   const setupPiletCode = `export function setupPilet(api) {
     const promises = [];
-    const addScript = (href) => {
+    const addScript = (href, attrs = {}) => {
       promises.push(new Promise((resolve, reject) => {
         const script = document.createElement('script');
+        Object.entries(attrs).forEach(([name, value]) => script.setAttribute(name, value));
         script.src = path + href;
         script.onerror = () => reject(new Error('Loading the script failed:' + href));
         script.onload = () => resolve();
