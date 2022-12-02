@@ -178,11 +178,23 @@ This file may then, for example to register a tile, look like this:
 ```tsx
 import { PiletApi } from '../piral~/<project_name>/node_modules/<piral_instance>';
 
-export default (app: PiletApi) => {
+type AddScript = (path: string, attrs?: Record<string, string>) => void;
+
+export default (app: PiletApi, addScript: AddScript) => {
 	//for a component marked with[PiralComponent("my-tile")]
 	app.registerTile(app.fromBlazor('my-tile'));
 };
 ```
+
+The `addScript` function can be used to actually add more scripts, e.g.:
+
+```tsx
+export default (app: PiletApi, addScript: AddScript) => {
+	addScript("_content/Microsoft.Authentication.WebAssembly.Msal/AuthenticationService.js");
+};
+```
+
+The first argument is the (relative) path to the RCL script, while the optional second argument provides additional attributes for the script to be added to the DOM.
 
 ### Using Parameters
 
@@ -340,6 +352,28 @@ One way to mitigate the sharing issue with `ConfigureShared` is to use the same 
 </div>
 ```
 
+Additionally, the two methods support another argument providing the configuration of the pilet, i.e., the `IConfiguration` object. So, the example above could be rewritten to be:
+
+```cs
+public class Module
+{
+    public static void Main()
+    {
+        // this entrypoint should remain empty
+    }
+
+    public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
+    }
+
+    public static void ConfigureShared(IServiceCollection services, IConfiguration configuration)
+    {
+    }
+}
+```
+
+The configuration uses the `meta.config` of the Pilet API provided by the pilet.
+
 ### Standard Pilet Service
 
 Every pilet gets automatically a service called `IPiletService` injected. This can be used to compute the URL of a resource.
@@ -358,6 +392,44 @@ The only helper there is `GetUrl`. You can use it like:
 ```
 
 In the example above the resource `images/something.png` would be placed in the `wwwroot` folder (i.e., `wwwroot/images/something`). As the content of the `wwwroot` folder is copied, the image will also be copied. However, the old local URL is not valid in a pilet, which needs to prefix its resources with its base URL. The function above does that. In that case, the URL would maybe be something like `http://localhost:1234/$pilet-api/0/images/something.png` while debugging, and another fully qualified URL later in production.
+
+### Root Component
+
+By default, the Blazor pilets run in a dedicated Blazor application with no root component. If you need a root component, e.g., to provide some common values from a `CascadingValue` component such as `CascadingAuthenticationState` from the `Microsoft.AspNetCore.Components.Authorization` package, you can actually override the default root component:
+
+```razor
+@attribute [PiralAppRoot]
+
+<CascadingAuthenticationState>
+    @ChildContent
+</CascadingAuthenticationState>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}
+```
+
+You can also provide your own providers here (or nest them as you want):
+
+```razor
+@attribute [PiralAppRoot]
+
+<CascadingValue Value="@theme">
+    <div>
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    
+    private string theme = "dark";
+}
+```
+
+Note, that there is always just one `PiralAppRoot` component. If you did not supply one then the default `PiralAppRoot` will be used. If you already provided one, no other `PiralAppRoot` can be used.
 
 ## Running and Debugging the Pilet :rocket:
 
