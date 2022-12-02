@@ -1,23 +1,19 @@
 @inject IComponentActivationService Activation
-@inject ILogger<App> Logger
 
-<DynamicComponent Type="@Activation.Root">
-    @foreach (var active in Activation.Components)
-    {
-        <div id="@active.ReferenceId">
-            <div style="display: contents">
-                <DynamicComponent Type="@active.Component" Parameters="@active.Args" />
-            </div>
-        </div>
-    }
-</DynamicComponent>
+<DynamicComponent Type="@Activation.Root" Parameters="@parameters" />
 
 @code {
+    private static readonly RenderFragment componentView = @<ComponentView />;
+
+    private readonly Dictionary<string, object> parameters = new Dictionary<string, object>{
+        { "ChildContent", componentView }
+    };
+
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            Activation.Changed += (s, e) =>
+            Activation.RootChanged += (s, e) =>
             {
                 this.StateHasChanged();
             };

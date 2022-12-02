@@ -1,0 +1,25 @@
+@inject IComponentActivationService Activation
+
+@foreach (var active in Activation.Components)
+{
+    <div id="@active.ReferenceId">
+        <div style="display: contents">
+            <DynamicComponent Type="@active.Component" Parameters="@active.Args" />
+        </div>
+    </div>
+}
+
+@code {
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Activation.ComponentsChanged += (s, e) =>
+            {
+                this.StateHasChanged();
+            };
+        }
+
+        return base.OnAfterRenderAsync(firstRender);
+    }
+}

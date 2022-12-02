@@ -11,6 +11,8 @@ namespace Piral.Blazor.Core
 {
     public class ComponentActivationService : IComponentActivationService
     {
+        private static readonly string appRoot = "approot";
+
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
 
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
@@ -19,11 +21,13 @@ namespace Piral.Blazor.Core
 
         private readonly IModuleContainerService _container;
 
-        public event EventHandler Changed;
+        public event EventHandler ComponentsChanged;
+
+        public event EventHandler RootChanged;
 
         public IEnumerable<ActiveComponent> Components => _active;
 
-        public Type Root => GetComponent("approot") ?? typeof(DefaultRoot);
+        public Type Root => GetComponent(appRoot) ?? typeof(DefaultRoot);
 
         private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
         {
@@ -52,6 +56,11 @@ namespace Piral.Blazor.Core
             {
                 _services.Add(componentName, componentType);
                 _container.ConfigureComponent(componentType, provider);
+
+                if (componentName == appRoot)
+                {
+                    RootChanged?.Invoke(this, EventArgs.Empty);
+                }
             }
         }
 
@@ -62,6 +71,11 @@ namespace Piral.Blazor.Core
                 DeactivateComponent(componentName);
                 _services.Remove(componentName);
                 _container.ForgetComponent(componentType);
+
+                if (componentName == appRoot)
+                {
+                    RootChanged?.Invoke(this, EventArgs.Empty);
+                }
             }
             else
             {
@@ -76,7 +90,7 @@ namespace Piral.Blazor.Core
             try
             {
                 _active.Add(new ActiveComponent(componentName, referenceId, component, args));
-                Changed?.Invoke(this, EventArgs.Empty);
+                ComponentsChanged?.Invoke(this, EventArgs.Empty);
             }
             catch (ArgumentException ae)
             {
@@ -90,7 +104,7 @@ namespace Piral.Blazor.Core
 
             if (removed > 0)
             {
-                Changed?.Invoke(this, EventArgs.Empty);
+                ComponentsChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -103,7 +117,7 @@ namespace Piral.Blazor.Core
                 if (component.ComponentName == componentName && component.ReferenceId == referenceId)
                 {
                     _active[i] = new ActiveComponent(componentName, referenceId, component.Component, args);
-                    Changed?.Invoke(this, EventArgs.Empty);
+                    ComponentsChanged?.Invoke(this, EventArgs.Empty);
                     break;
                 }
             }
@@ -115,7 +129,7 @@ namespace Piral.Blazor.Core
 
             if (removed > 0)
             {
-                Changed?.Invoke(this, EventArgs.Empty);
+                ComponentsChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -235,7 +249,7 @@ namespace Piral.Blazor.Core
                     Type _ when attributeType == typeof(ExposePiletAttribute) =>
                         $"{((ExposePiletAttribute)attribute).Name ?? member.FullName}",
                     Type _ when attributeType == typeof(PiralAppRootAttribute) =>
-                        $"approot",
+                        appRoot,
                     _ => null
                 });
             }

@@ -8,7 +8,12 @@ namespace Piral.Blazor.Core
         /// <summary>
         /// The handler to monitor when the active components changed.
         /// </summary>
-        event EventHandler Changed;
+        event EventHandler ComponentsChanged;
+        
+        /// <summary>
+        /// The handler to monitor when the root component changed.
+        /// </summary>
+        event EventHandler RootChanged;
 
         /// <summary>
         /// Gets the currently active components.
