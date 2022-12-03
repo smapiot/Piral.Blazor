@@ -15,6 +15,8 @@ namespace Piral.Blazor.Core
 
         private readonly Dictionary<string, Type> _services = new Dictionary<string, Type>();
 
+        private readonly Dictionary<string, PiralElement> _elements = new Dictionary<string, PiralElement>();
+
         private readonly List<ActiveComponent> _active = new List<ActiveComponent>();
 
         private readonly ILogger<ComponentActivationService> _logger;
@@ -80,6 +82,47 @@ namespace Piral.Blazor.Core
             else
             {
                 _logger.LogWarning("The provided component name has not been registered.");
+            }
+        }
+
+        public PiralElement GetElement(string referenceId)
+        {
+            if (_elements.TryGetValue(referenceId, out var element))
+            {
+                return element;
+            }
+
+            return null;
+        }
+
+        public void MountComponent(string componentName, string referenceId, IDictionary<string, JsonElement> args)
+        {
+            var component = GetComponent(componentName);
+
+            try
+            {
+                var element = new PiralElement(component, args);
+                _elements.TryAdd(referenceId, element);
+            }
+            catch (ArgumentException ae)
+            {
+                _logger.LogError($"One of the arguments is invalid: {ae.Message}");
+            }
+        }
+
+        public void UnmountComponent(string referenceId)
+        {
+            if (_elements.Remove(referenceId, out var element))
+            {
+                element.HasChanged();
+            }
+        }
+
+        public void UpdateComponent(string referenceId, IDictionary<string, JsonElement> args)
+        {
+            if (_elements.TryGetValue(referenceId, out var element))
+            {
+                element.UpdateArgs(args);
             }
         }
 

@@ -28,6 +28,34 @@ namespace Piral.Blazor.Core
             Host = host;
         }
 
+        #region Custom Element API
+
+        [JSInvokable]
+        public static Task<string> CreateElement(string componentName, IDictionary<string, JsonElement> args)
+        {
+            var referenceId = Guid.NewGuid().ToString();
+            ActivationService?.MountComponent(componentName, referenceId, args);
+            return Task.FromResult(referenceId);
+        }
+
+        [JSInvokable]
+        public static Task UpdateElement(string referenceId, IDictionary<string, JsonElement> args)
+        {
+            ActivationService?.UpdateComponent(referenceId, args);
+            return Task.CompletedTask;
+        }
+
+        [JSInvokable]
+        public static Task DestroyElement(string referenceId)
+        {
+            ActivationService?.UnmountComponent(referenceId);
+            return Task.CompletedTask;
+        }
+
+        #endregion
+        
+        #region Legacy Rendering (w. projection) API
+
         [JSInvokable]
         public static Task<string> Activate(string componentName, IDictionary<string, JsonElement> args)
         {
@@ -50,6 +78,10 @@ namespace Piral.Blazor.Core
             ActivationService?.ReactivateComponent(componentName, referenceId, args);
             return Task.CompletedTask;
         }
+
+        #endregion
+
+        #region Modern Loading / Initialization API
 
         [JSInvokable]
         public static Task<string[]> GetCapabilities()
@@ -92,6 +124,10 @@ namespace Piral.Blazor.Core
             return Task.CompletedTask;
         }
 
+        #endregion
+
+        #region Legacy Loading API
+
         [JSInvokable]
         public static async Task LoadComponentsFromLibrary(string url)
         {
@@ -126,6 +162,10 @@ namespace Piral.Blazor.Core
             return Task.CompletedTask;
         }
 
+        #endregion
+
+        #region Helpers
+
         /// <summary>
         /// Every series of characters that is not alphanumeric gets consolidated into a dash
         /// </summary>
@@ -137,5 +177,7 @@ namespace Piral.Blazor.Core
 
             public IPiletService Service { get; set; }
         }
+
+        #endregion
     }
 }

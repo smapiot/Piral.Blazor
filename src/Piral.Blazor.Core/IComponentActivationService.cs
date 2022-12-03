@@ -21,6 +21,11 @@ namespace Piral.Blazor.Core
         IEnumerable<ActiveComponent> Components { get; }
 
         /// <summary>
+        /// Gets a mounted element using its reference ID.
+        /// </summary>
+        PiralElement GetElement(string referenceId);
+
+        /// <summary>
         /// Gets the configured root component.
         /// </summary>
         Type Root { get; }
