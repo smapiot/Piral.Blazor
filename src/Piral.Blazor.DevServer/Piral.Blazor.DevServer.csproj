@@ -20,6 +20,7 @@
         <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
         <PackageOutputPath>..\_dist\</PackageOutputPath>
+	    <NuspecFile>Piral.Blazor.DevServer.nuspec</NuspecFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,5 +32,10 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.10" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <NuspecProperty Include="publishDir=$(PublishDir)" />
+        <NuspecProperty Include="binDir=$(OutputPath)" />
     </ItemGroup>
 </Project>
