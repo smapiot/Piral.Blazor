@@ -1,37 +1,182 @@
-using Microsoft.AspNetCore.Components.Web.DevServer.Commands;
-using Microsoft.Extensions.CommandLineUtils;
+using Microsoft.Extensions.FileProviders;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Net.WebSockets;
+using System.Text;
 
-namespace Microsoft.AspNetCore.Components.WebAssembly.DevServer
+var wwwRoot = "wwwroot";
+var environment = "Development";
+var piletApiSegment = "/$pilet-api";
+var cliPort = FreeTcpPort();
+var feedHost = $"localhost:{cliPort}";
+var feedUrl = $"http://{feedHost}";
+var piralInstanceField = "PiralInstance=";
+var applicationPath = args.SkipWhile(a => a != "--applicationpath").Skip(1).First();
+var outPath = args.SkipWhile(a => a != "--outdir").Skip(1).First();
+var applicationDirectory = Path.GetDirectoryName(applicationPath)!;
+var swaPath = Path.ChangeExtension(applicationPath, ".staticwebassets.runtime.json");
+var appId = Path.GetFileNameWithoutExtension(applicationPath);
+var staticAssets = !File.Exists(swaPath) ? Path.ChangeExtension(applicationPath, ".StaticWebAssets.xml") : swaPath;
+var piletDir = Path.Combine(Environment.CurrentDirectory, outPath, appId);
+var blazorRc = File.ReadAllLines(Path.Combine(piletDir, ".blazorrc"));
+var piralInstance = blazorRc.FirstOrDefault(m => m.StartsWith(piralInstanceField))!.Substring(piralInstanceField.Length);
+var distDir = Path.Combine(piletDir, "dist");
+var www = Path.Combine(piletDir, "node_modules", piralInstance, "app");
+var wwwProvider = new PhysicalFileProvider(www);
+var cliProcess = StartCli(piletDir, cliPort);
+
+Console.WriteLine("Starting Piral.Blazor.DevServer ...");
+Console.WriteLine("");
+Console.WriteLine("  applicationPath = {0}", applicationPath);
+Console.WriteLine("  piralInstance = {0}", piralInstance);
+Console.WriteLine("  piletDir = {0}", piletDir);
+Console.WriteLine("  outPath = {0}", outPath);
+Console.WriteLine("  appId = {0}", appId);
+Console.WriteLine("  feed = {0}", feedUrl);
+Console.WriteLine("");
+
+static int FreeTcpPort()
 {
-    internal class Program
-    {
-        static int Main(string[] args)
-        {
-            var app = new CommandLineApplication(throwOnUnexpectedArg: false)
-            {
-                Name = "blazor-devserver"
-            };
-            app.HelpOption("-?|-h|--help");
-
-            app.Commands.Add(new ServeCommand(app));
-
-            // A command is always required
-            app.OnExecute(() =>
-            {
-                app.ShowHelp();
-                return 0;
-            });
-
-            try
-            {
-                return app.Execute(args);
-            }
-            catch (CommandParsingException cex)
-            {
-                app.Error.WriteLine(cex.Message);
-                app.ShowHelp();
-                return 1;
-            }
-        }
-    }
+    var l = new TcpListener(IPAddress.Loopback, 0);
+    l.Start();
+    var port = ((IPEndPoint)l.LocalEndpoint).Port;
+    l.Stop();
+    return port;
 }
+
+static Process StartCli(string piletDir, int cliPort)
+{
+    var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+    var npx = isWindows ? "cmd.exe" : "npx";
+    var npxPrefix = isWindows ? "/c npx.cmd " : "";
+
+    var process = Process.Start(new ProcessStartInfo
+    {
+        FileName = npx,
+        WorkingDirectory = piletDir,
+        UseShellExecute = false,
+        CreateNoWindow = true,
+        Arguments = $"{npxPrefix}pilet debug --port {cliPort}",
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+    })!;
+
+    process.ErrorDataReceived += (sender, e) => Console.WriteLine("[piral-cli] {0}", e.Data);
+    process.OutputDataReceived += (sender, e) => Console.WriteLine("[piral-cli] {0}", e.Data);
+    AppDomain.CurrentDomain.DomainUnload += (sender, e) => process.Kill();
+    AppDomain.CurrentDomain.ProcessExit += (sender, e) => process.Kill();
+
+    process.Start();
+    process.BeginErrorReadLine();
+    process.BeginOutputReadLine();
+    return process;
+}
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = applicationDirectory,
+    WebRootPath = wwwRoot,
+});
+
+var inMemoryConfiguration = new Dictionary<string, string>
+{
+    [WebHostDefaults.EnvironmentKey] = environment,
+    ["Logging:LogLevel:Microsoft"] = "Warning",
+    ["Logging:LogLevel:Microsoft.Hosting.Lifetime"] = "Information",
+    [WebHostDefaults.StaticWebAssetsKey] = staticAssets,
+};
+
+builder.Configuration.AddInMemoryCollection(inMemoryConfiguration);
+builder.Configuration.AddJsonFile(Path.Combine(applicationDirectory, "blazor-devserversettings.json"), optional: true, reloadOnChange: true);
+builder.Services.AddHttpClient();
+
+var app = builder.Build();
+
+app.UseDeveloperExceptionPage();
+app.UseWebSockets();
+app.UseWebAssemblyDebugging();
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = wwwProvider,
+    ServeUnknownFileTypes = true,
+});
+app.Use(async (context, next) =>
+{
+    var reqPath = context.Request.Path.Value!;
+    var host = context.Request.Host;
+    var scheme = context.Request.IsHttps ? "https" : "http";
+
+    if (context.Request.Path.StartsWithSegments($"{piletApiSegment}/0"))
+    {
+        var path = reqPath.Replace($"{piletApiSegment}/0/", "");
+        var filePath = Path.Combine(distDir, path);
+        context.Response.Headers.Add("DOTNET-MODIFIABLE-ASSEMBLIES", "debug");
+        context.Response.Headers.Add("ASPNETCORE-BROWSER-TOOLS", "true");
+        context.Response.Headers.Add("Blazor-Environment", environment);
+        await context.Response.SendFileAsync(filePath);
+    }
+    else if (context.Request.Path.StartsWithSegments(piletApiSegment) && context.WebSockets.IsWebSocketRequest)
+    {
+        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        using var client = new ClientWebSocket();
+        var target = new Uri($"ws://{feedHost}{piletApiSegment}");
+        await client.ConnectAsync(target, CancellationToken.None);
+
+        while (true)
+        {
+            var result = new WebSocketReceiveResult(0, WebSocketMessageType.Text, false);
+            var buffer = new ArraySegment<byte>(new byte[2048]);
+            using var ms = new MemoryStream();
+
+            while (!result.EndOfMessage)
+            {
+                result = await client.ReceiveAsync(buffer, CancellationToken.None);
+                ms.Write(buffer.Array!, buffer.Offset, result.Count);
+            }
+
+            if (result.MessageType == WebSocketMessageType.Close)
+            {
+                break;
+            }
+
+            ms.Seek(0, SeekOrigin.Begin);
+
+            using var reader = new StreamReader(ms, Encoding.UTF8);
+            var json = await reader.ReadToEndAsync();
+            var newJson = json.Replace(feedUrl, $"{scheme}://{host}");
+
+            if (webSocket.State != WebSocketState.Open)
+            {
+                break;
+            }
+
+            await webSocket.SendAsync(Encoding.UTF8.GetBytes(newJson), WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+    }
+    else if (context.Request.Path.StartsWithSegments(piletApiSegment) && context.Request.Method == "GET")
+    {
+        var httpFactory = context.RequestServices.GetService<IHttpClientFactory>();
+        var client = httpFactory.CreateClient();
+        var url = $"{feedUrl}{reqPath}";
+        var json = await client.GetStringAsync(url);
+        var newJson = json.Replace(feedUrl, $"{scheme}://{host}");
+        context.Response.Headers.Add("Content-Type", "application/json");
+        await context.Response.WriteAsync(newJson);
+    }
+    else
+    {
+        await next(context);
+    }
+});
+app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapFallbackToFile("index.html", new StaticFileOptions { FileProvider = wwwProvider });
+});
+
+app.Run();

@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
     <PropertyGroup>
         <PackageId>Piral.Blazor.DevServer</PackageId>
         <AssemblyName>piral-blazor-devserver</AssemblyName>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
-		<IsTool>true</IsTool>
-        <StartupObject>Microsoft.AspNetCore.Components.WebAssembly.DevServer.Program</StartupObject>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+	    <IsProjectReferenceProvider>false</IsProjectReferenceProvider>
+	    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+	    <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
+	    <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
         <VersionPrefix>6.0.4</VersionPrefix>
         <Description>Blazor Dev Server for Blazor pilets.</Description>
         <Authors>Florian Rappl</Authors>
@@ -18,21 +20,16 @@
         <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
         <PackageOutputPath>..\_dist\</PackageOutputPath>
-
-        <!-- Set this to false because assemblies should not reference this assembly directly, (except for tests, of course). -->
-        <IsProjectReferenceProvider>false</IsProjectReferenceProvider>
-
-        <!-- This is so that we add the FrameworkReference to Microsoft.AspNetCore.App -->
-        <UseLatestAspNetCoreReference>true</UseLatestAspNetCoreReference>
-        <MicrosoftAspNetCoreAppVersion>6.0.0</MicrosoftAspNetCoreAppVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="..\icon.png" Pack="true" PackagePath="" />
+        <None Include=".\icon.png" Pack="true" PackagePath="" />
+        <None Include="piral-blazor-devserver.runtimeconfig.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.1" />
-        <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.10" />
     </ItemGroup>
 </Project>

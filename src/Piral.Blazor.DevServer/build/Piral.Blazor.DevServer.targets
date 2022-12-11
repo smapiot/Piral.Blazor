@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
-    <_BlazorDevServerDll>$(MSBuildThisFileDirectory)../tools/piral-blazor-devserver.dll</_BlazorDevServerDll>
+    <_BlazorAppServerDll>$(MSBuildThisFileDirectory)../tools/piral-blazor-devserver.dll</_BlazorAppServerDll>
     <RunCommand>dotnet</RunCommand>
-    <RunArguments>&quot;$(_BlazorDevServerDll)&quot; serve --applicationpath &quot;$(TargetPath)&quot;</RunArguments>
+    <RunArguments>&quot;$(_BlazorAppServerDll)&quot; --applicationpath &quot;$(TargetPath)&quot; --outdir &quot;$(OutputFolder)&quot;</RunArguments>
   </PropertyGroup>
 </Project>

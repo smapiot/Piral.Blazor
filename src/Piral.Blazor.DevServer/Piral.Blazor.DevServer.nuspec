@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    $CommonMetadataElements$
+  </metadata>
+  <files>
+    $CommonFileElements$
+    <file src="build\**" target="build" />
+    <file src="$publishDir$**\*" target="tools" />
+    <file src="$binDir$piral-blazor-devserver.runtimeconfig.json" target="tools\piral-blazor-devserver.runtimeconfig.json" />
+  </files>
+</package>
