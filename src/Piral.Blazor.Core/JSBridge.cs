@@ -17,6 +17,7 @@ namespace Piral.Blazor.Core
     public static class JSBridge
     {
         private static Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
+        private static HashSet<string> _dependencies = new HashSet<string>();
         private static Dictionary<string, PiletData> _pilets = new Dictionary<string, PiletData>();
 
         public static ComponentActivationService ActivationService { get; set; }
@@ -105,8 +106,13 @@ namespace Piral.Blazor.Core
 
                 foreach (var url in pilet.Dependencies)
                 {
-                    var dep = await client.GetStreamAsync(url);
-                    AssemblyLoadContext.Default.LoadFromStream(dep);
+                    var name = url.Split('/').Last();
+
+                    if (_dependencies.Add(name))
+                    {
+                        var dep = await client.GetStreamAsync(url);
+                        AssemblyLoadContext.Default.LoadFromStream(dep);
+                    }
                 }
 
                 ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service);
