@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.Json;
 
 var wwwRoot = "wwwroot";
-var environment = "Development";
 var piletApiSegment = "/$pilet-api";
 var cliPort = FreeTcpPort();
 var feedHost = $"localhost:{cliPort}";
@@ -105,6 +104,25 @@ static Process StartCli(string piletDir, int cliPort)
     return process;
 }
 
+static void AppendHeaders(WebApplication app, HttpContext context)
+{
+    var headers = context.Response.Headers;
+    headers.Append("Blazor-Environment", app.Environment.EnvironmentName);
+
+    if (app.Environment.IsDevelopment())
+    {
+        if (Environment.GetEnvironmentVariable("DOTNET_MODIFIABLE_ASSEMBLIES") is string dotnetModifiableAssemblies)
+        {
+            headers.Append("DOTNET-MODIFIABLE-ASSEMBLIES", dotnetModifiableAssemblies);
+        }
+
+        if (Environment.GetEnvironmentVariable("__ASPNETCORE_BROWSER_TOOLS") is string blazorWasmHotReload)
+        {
+            headers.Append("ASPNETCORE-BROWSER-TOOLS", "true");
+        }
+    }
+}
+
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,
@@ -114,7 +132,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 
 var inMemoryConfiguration = new Dictionary<string, string>
 {
-    [WebHostDefaults.EnvironmentKey] = environment,
+    [WebHostDefaults.EnvironmentKey] = "Development",
     ["Logging:LogLevel:Microsoft"] = "Warning",
     ["Logging:LogLevel:Microsoft.Hosting.Lifetime"] = "Information",
     [WebHostDefaults.StaticWebAssetsKey] = staticAssets,
@@ -129,9 +147,9 @@ var app = builder.Build();
 app.UseDeveloperExceptionPage();
 app.UseWebSockets();
 app.UseWebAssemblyDebugging();
-app.UseBlazorFrameworkFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
+    OnPrepareResponse = (res) => AppendHeaders(app, res.Context),
     FileProvider = wwwProvider,
     ServeUnknownFileTypes = true,
 });
@@ -141,16 +159,14 @@ app.Use(async (context, next) =>
     var host = context.Request.Host;
     var scheme = context.Request.IsHttps ? "https" : "http";
 
-    if (context.Request.Path.StartsWithSegments($"{piletApiSegment}/0"))
+    if (reqPath.StartsWith($"{piletApiSegment}/0"))
     {
         var path = reqPath.Replace($"{piletApiSegment}/0/", "");
         var filePath = Path.Combine(distDir, path);
-        context.Response.Headers.Add("DOTNET-MODIFIABLE-ASSEMBLIES", "debug");
-        context.Response.Headers.Add("ASPNETCORE-BROWSER-TOOLS", "true");
-        context.Response.Headers.Add("Blazor-Environment", environment);
+        AppendHeaders(app, context);
         await context.Response.SendFileAsync(filePath);
     }
-    else if (context.Request.Path.StartsWithSegments(piletApiSegment) && context.WebSockets.IsWebSocketRequest)
+    else if (reqPath.StartsWith(piletApiSegment) && context.WebSockets.IsWebSocketRequest)
     {
         using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
         using var client = new ClientWebSocket();
@@ -190,7 +206,7 @@ app.Use(async (context, next) =>
 
         await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
     }
-    else if (context.Request.Path.StartsWithSegments(piletApiSegment) && context.Request.Method == "GET")
+    else if (reqPath.StartsWith(piletApiSegment) && context.Request.Method == "GET")
     {
         var httpFactory = context.RequestServices.GetService<IHttpClientFactory>();
         var client = httpFactory.CreateClient();

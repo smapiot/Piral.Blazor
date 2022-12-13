@@ -8,6 +8,7 @@
         <Monorepo></Monorepo>
         <OutputFolder>..\piral~</OutputFolder>
         <ConfigFolder></ConfigFolder>
-        <PiralCliVersion>latest</PiralCliVersion>
+		<PiralCliVersion>latest</PiralCliVersion>
+		<PiralBundlerVersion></PiralBundlerVersion>
     </PropertyGroup>
 </Project>

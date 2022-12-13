@@ -30,6 +30,7 @@
             Framework="$(TargetFramework)"
             FrameworkMoniker="$(TargetFrameworkMoniker)"
             CliVersion="$(PiralCliVersion)"
+            BundlerVersion="$(PiralBundlerVersion)"
             ToolsVersion="$(_installedToolsVersion)"
             ContentFolder="$(MSBuildThisFileDirectory)..\content"
             PiralInstance="$(PiralInstance)"

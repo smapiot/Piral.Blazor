@@ -204,17 +204,23 @@ namespace Piral.Blazor.Tools.Tasks
             var packageJson = JsonConvert.DeserializeObject<PackageJsonObject>(packageJsonContent);
 
             string piralInstanceName;
-            if(File.Exists(piletJsonFile)){
+
+            if (File.Exists(piletJsonFile))
+            {
                 var piletJsonContent = File.ReadAllText(piletJsonFile);
                 var piletJson = JsonConvert.DeserializeObject<PiletJsonObject>(piletJsonContent);
-                if(piletJson.PiralInstances.Any(x => x.Value.Selected)){
+
+                if (piletJson.PiralInstances.Any(x => x.Value.Selected))
+                {
                     piralInstanceName = piletJson.PiralInstances.FirstOrDefault(x => x.Value.Selected).Key;
                 }
                 else
                 {
                     piralInstanceName = piletJson.PiralInstances.Keys.First();
                 }
-            } else{
+            }
+            else
+            {
                 piralInstanceName = packageJson.Piral.Name;
             }
 
@@ -304,7 +310,7 @@ namespace Piral.Blazor.Tools.Tasks
         {
             var target = ProjectDir;
             var infoFile = Path.Combine(target, ".blazorrc");
-            var bundlerVersion = BundlerVersion ?? string.Join(".", CliVersion.Split('.').Take(2));
+            var bundlerVersion = BundlerVersion ?? (CliVersion.Contains(".") ? string.Join(".", CliVersion.Split('.').Take(2)) : CliVersion);
 
             if (File.Exists(infoFile))
             {
@@ -327,30 +333,28 @@ namespace Piral.Blazor.Tools.Tasks
                     Log.LogMessage($"Scaffolded infrastructure seems up to date.");
                     return false;
                 }
-                else
+                else if (piralInstance == Emulator)
                 {
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
-                    var tag = IsPiralInstanceFile ? PiralInstanceFile : String.Empty;
                     Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
-                    Run(npm, target, $"{npmPrefix}install piral-cli-${Bundler}@{bundlerVersion} --save-dev");
-                    Run(npx, target, $"{npxPrefix}pilet upgrade {tag}");
+                    Run(npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
+                    Run(npx, target, $"{npxPrefix}pilet upgrade");
+                    return true;
                 }
             }
-            else
+
+            Log.LogMessage($"Scaffolding the pilet infrastructure using piral-cli@{CliVersion}...");
+
+            if (Directory.Exists(target))
             {
-                Log.LogMessage($"Scaffolding the pilet infrastructure using piral-cli@{CliVersion}...");
-
-                if (Directory.Exists(target))
-                {
-                    Directory.Delete(target, true);
-                }
-
-                Directory.CreateDirectory(target);
-                Run(npm, target, $"{npmPrefix}init -y");
-                Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
-                Run(npx, target, $"{npxPrefix}pilet new {Emulator} --registry {NpmRegistry} --bundler none --no-install");
-                Run(npm, target, $"{npmPrefix}install piral-cli-${Bundler}@{bundlerVersion} --save-dev");
+                Directory.Delete(target, true);
             }
+
+            Directory.CreateDirectory(target);
+            Run(npm, target, $"{npmPrefix}init -y");
+            Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
+            Run(npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
+            Run(npx, target, $"{npxPrefix}pilet new {Emulator} --registry {NpmRegistry} --bundler none --no-install");
 
             return true;
         }
