@@ -7,7 +7,7 @@ For getting started easily, a Blazor template is available. This will set up a B
 ### Installation
 
 - Make sure that [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0) is installed.
-- Run `dotnet new --install Piral.Blazor.Template::6.0.4` to install the project template globally.
+- Run `dotnet new install Piral.Blazor.Template::6.0.4` to install the project template globally.
 
 ### Usage
 
