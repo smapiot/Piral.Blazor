@@ -66,6 +66,8 @@ namespace Piral.Blazor.Tools.Tasks
 
         public string Monorepo { get; set; }
 
+        public string BundlerVersion { get; set; }
+
         public string ConfigFolderName { get; set; } = "";
 
         #endregion
@@ -302,6 +304,7 @@ namespace Piral.Blazor.Tools.Tasks
         {
             var target = ProjectDir;
             var infoFile = Path.Combine(target, ".blazorrc");
+            var bundlerVersion = BundlerVersion ?? string.Join(".", CliVersion.Split('.').Take(2));
 
             if (File.Exists(infoFile))
             {
@@ -328,7 +331,9 @@ namespace Piral.Blazor.Tools.Tasks
                 {
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
                     var tag = IsPiralInstanceFile ? PiralInstanceFile : String.Empty;
-                    Run(npx, target, $"{npxPrefix}--package=piral-cli@{CliVersion} -y -- pilet upgrade {tag}");
+                    Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
+                    Run(npm, target, $"{npmPrefix}install piral-cli-${Bundler}@{bundlerVersion} --save-dev");
+                    Run(npx, target, $"{npxPrefix}pilet upgrade {tag}");
                 }
             }
             else
@@ -341,7 +346,10 @@ namespace Piral.Blazor.Tools.Tasks
                 }
 
                 Directory.CreateDirectory(target);
-                Run(npx, target, $"{npxPrefix}--package=piral-cli@{CliVersion} -y -- pilet new {Emulator} --registry {NpmRegistry} --bundler {Bundler} --no-install");
+                Run(npm, target, $"{npmPrefix}init -y");
+                Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
+                Run(npx, target, $"{npxPrefix}pilet new {Emulator} --registry {NpmRegistry} --bundler none --no-install");
+                Run(npm, target, $"{npmPrefix}install piral-cli-${Bundler}@{bundlerVersion} --save-dev");
             }
 
             return true;
@@ -355,7 +363,7 @@ namespace Piral.Blazor.Tools.Tasks
             {
                 throw new Exception("At least npm version 6 is required to use Piral.Blazor.");
             }
-            else if (npmVersion > 8)
+            else if (npmVersion > 9)
             {
                 Log.LogWarning("This version of npm has not been tested yet.");
             }
@@ -427,7 +435,7 @@ namespace Piral.Blazor.Tools.Tasks
         {
             Log.LogMessage($"Checking the pilet infrastructure (Version={ToolsVersion}, Framework={Framework})...");
 
-            var canScaffold = System.Environment.GetEnvironmentVariable("PIRAL_BLAZOR_RUNNING") != "yes";
+            var canScaffold = Environment.GetEnvironmentVariable("PIRAL_BLAZOR_RUNNING") != "yes";
 
             try
             {
