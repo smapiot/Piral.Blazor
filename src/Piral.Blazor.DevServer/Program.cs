@@ -1,9 +1,11 @@
 using Microsoft.Extensions.FileProviders;
+using Piral.Blazor.DevServer;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 
 var wwwRoot = "wwwroot";
 var environment = "Development";
@@ -11,7 +13,6 @@ var piletApiSegment = "/$pilet-api";
 var cliPort = FreeTcpPort();
 var feedHost = $"localhost:{cliPort}";
 var feedUrl = $"http://{feedHost}";
-var piralInstanceField = "PiralInstance=";
 var applicationPath = args.SkipWhile(a => a != "--applicationpath").Skip(1).First();
 var outPath = args.SkipWhile(a => a != "--outdir").Skip(1).First();
 var applicationDirectory = Path.GetDirectoryName(applicationPath)!;
@@ -19,8 +20,9 @@ var swaPath = Path.ChangeExtension(applicationPath, ".staticwebassets.runtime.js
 var appId = Path.GetFileNameWithoutExtension(applicationPath);
 var staticAssets = !File.Exists(swaPath) ? Path.ChangeExtension(applicationPath, ".StaticWebAssets.xml") : swaPath;
 var piletDir = Path.Combine(Environment.CurrentDirectory, outPath, appId);
-var blazorRc = File.ReadAllLines(Path.Combine(piletDir, ".blazorrc"));
-var piralInstance = blazorRc.FirstOrDefault(m => m.StartsWith(piralInstanceField))!.Substring(piralInstanceField.Length);
+var piletJsonPath = Path.Combine(piletDir, "pilet.json");
+var packageJsonPath = Path.Combine(piletDir, "package.json");
+var piralInstance = FindPiralInstance(piletJsonPath, packageJsonPath);
 var distDir = Path.Combine(piletDir, "dist");
 var www = Path.Combine(piletDir, "node_modules", piralInstance, "app");
 var wwwProvider = new PhysicalFileProvider(www);
@@ -35,6 +37,36 @@ Console.WriteLine("  outPath = {0}", outPath);
 Console.WriteLine("  appId = {0}", appId);
 Console.WriteLine("  feed = {0}", feedUrl);
 Console.WriteLine("");
+
+static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
+{
+    if (File.Exists(piletJsonPath))
+    {
+        using var jsonStream = File.Open(piletJsonPath, FileMode.Open);
+        var pilet = JsonSerializer.Deserialize<PiletJson>(jsonStream);
+        var key = pilet?.PiralInstances?.Keys.FirstOrDefault();
+
+        if (key is not null)
+        {
+            return key;
+        }
+    }
+
+    if (File.Exists(packageJsonPath))
+    {
+        using var jsonStream = File.Open(packageJsonPath, FileMode.Open);
+        var pilet = JsonSerializer.Deserialize<PackageJson>(jsonStream);
+        var key = pilet?.Piral?.Name;
+
+        if (key is not null)
+        {
+            return key;
+        }
+    }
+
+    throw new InvalidOperationException("No Piral instance has been found. Cannot start the server.");
+}
+
 
 static int FreeTcpPort()
 {
