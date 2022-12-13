@@ -1,7 +1,0 @@
-{
-    "injectors": {
-        "pilet": {
-            "meta": "meta.json"
-        }
-    }
-}

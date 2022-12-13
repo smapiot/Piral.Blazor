@@ -196,6 +196,7 @@ namespace Piral.Blazor.Tools.Tasks
 
             var target = ProjectDir;
             var infoFile = Path.Combine(target, ".blazorrc");
+            var krasFile = Path.Combine(target, ".krasrc");
             var packageJsonFile = Path.Combine(target, "package.json");
             var piletJsonFile = Path.Combine(target, "pilet.json");
             var files = Directory.GetFiles(ContentFolder, "*", SearchOption.AllDirectories);
@@ -239,6 +240,7 @@ namespace Piral.Blazor.Tools.Tasks
             }
 
             File.WriteAllText(infoFile, $"Date={timestamp}\nVersion={ToolsVersion}\nPiralInstance={Emulator}\nSource={Source}");
+            File.WriteAllText(krasFile, "{\n  \"injectors\": {\n    \"pilet\": {\n      \"meta\": \"meta.json\"\n    }\n  }\n}");
         }
 
         private void EnableAnalyzer()
@@ -328,12 +330,16 @@ namespace Piral.Blazor.Tools.Tasks
                     .Where(m => m.StartsWith("PiralInstance="))
                     .Select(m => m.Substring(14)).FirstOrDefault();
 
-                if (version == ToolsVersion && date.CompareTo(DateTime.Now.AddDays(-2)) >= 0 && piralInstance == Emulator)
+                if (version != ToolsVersion || piralInstance != Emulator)
+                {
+                    // Something fundamental changed - let's just delete and scaffold again
+                }
+                else if (date.CompareTo(DateTime.Now.AddDays(-2)) >= 0)
                 {
                     Log.LogMessage($"Scaffolded infrastructure seems up to date.");
                     return false;
                 }
-                else if (piralInstance == Emulator)
+                else
                 {
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
                     Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");

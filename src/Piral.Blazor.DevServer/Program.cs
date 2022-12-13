@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Piral.Blazor.DevServer;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Mime;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
@@ -9,7 +11,7 @@ using System.Text.Json;
 
 var wwwRoot = "wwwroot";
 var piletApiSegment = "/$pilet-api";
-var cliPort = FreeTcpPort();
+var cliPort = GetFreeTcpPort();
 var feedHost = $"localhost:{cliPort}";
 var feedUrl = $"http://{feedHost}";
 var applicationPath = args.SkipWhile(a => a != "--applicationpath").Skip(1).First();
@@ -25,7 +27,7 @@ var piralInstance = FindPiralInstance(piletJsonPath, packageJsonPath);
 var distDir = Path.Combine(piletDir, "dist");
 var www = Path.Combine(piletDir, "node_modules", piralInstance, "app");
 var wwwProvider = new PhysicalFileProvider(www);
-var cliProcess = StartCli(piletDir, cliPort);
+var cliProcess = StartPiralCli(piletDir, cliPort);
 
 Console.WriteLine("Starting Piral.Blazor.DevServer ...");
 Console.WriteLine("");
@@ -66,8 +68,7 @@ static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
     throw new InvalidOperationException("No Piral instance has been found. Cannot start the server.");
 }
 
-
-static int FreeTcpPort()
+static int GetFreeTcpPort()
 {
     var l = new TcpListener(IPAddress.Loopback, 0);
     l.Start();
@@ -76,7 +77,7 @@ static int FreeTcpPort()
     return port;
 }
 
-static Process StartCli(string piletDir, int cliPort)
+static Process StartPiralCli(string piletDir, int cliPort)
 {
     var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
     var npx = isWindows ? "cmd.exe" : "npx";
@@ -111,6 +112,8 @@ static void AppendHeaders(WebApplication app, HttpContext context)
 
     if (app.Environment.IsDevelopment())
     {
+        headers.Append("Cache-Control", "no-cache");
+
         if (Environment.GetEnvironmentVariable("DOTNET_MODIFIABLE_ASSEMBLIES") is string dotnetModifiableAssemblies)
         {
             headers.Append("DOTNET-MODIFIABLE-ASSEMBLIES", dotnetModifiableAssemblies);
@@ -121,6 +124,17 @@ static void AppendHeaders(WebApplication app, HttpContext context)
             headers.Append("ASPNETCORE-BROWSER-TOOLS", "true");
         }
     }
+}
+
+static IContentTypeProvider CreateStaticFileTypeProvider()
+{
+    var contentTypeProvider = new FileExtensionContentTypeProvider();
+    contentTypeProvider.Mappings.TryAdd(".dll", MediaTypeNames.Application.Octet);
+    contentTypeProvider.Mappings.TryAdd(".pdb", MediaTypeNames.Application.Octet);
+    contentTypeProvider.Mappings.TryAdd(".br", MediaTypeNames.Application.Octet);
+    contentTypeProvider.Mappings.TryAdd(".dat", MediaTypeNames.Application.Octet);
+    contentTypeProvider.Mappings.TryAdd(".blat", MediaTypeNames.Application.Octet);
+    return contentTypeProvider;
 }
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -152,6 +166,7 @@ app.UseStaticFiles(new StaticFileOptions
     OnPrepareResponse = (res) => AppendHeaders(app, res.Context),
     FileProvider = wwwProvider,
     ServeUnknownFileTypes = true,
+    ContentTypeProvider = CreateStaticFileTypeProvider(),
 });
 app.Use(async (context, next) =>
 {
@@ -159,6 +174,8 @@ app.Use(async (context, next) =>
     var host = context.Request.Host;
     var scheme = context.Request.IsHttps ? "https" : "http";
 
+    // right now we support a single-pilet only; in the future multiple pilets may
+    // be debugged, too
     if (reqPath.StartsWith($"{piletApiSegment}/0"))
     {
         var path = reqPath.Replace($"{piletApiSegment}/0/", "");
@@ -224,7 +241,11 @@ app.Use(async (context, next) =>
 app.UseRouting();
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapFallbackToFile("index.html", new StaticFileOptions { FileProvider = wwwProvider });
+    endpoints.MapFallbackToFile("index.html", new StaticFileOptions
+    {
+        OnPrepareResponse = (res) => AppendHeaders(app, res.Context),
+        FileProvider = wwwProvider,
+    });
 });
 
 app.Run();
