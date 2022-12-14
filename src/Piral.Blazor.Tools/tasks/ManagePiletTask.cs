@@ -139,8 +139,8 @@ namespace Piral.Blazor.Tools.Tasks
                     Arguments = $"{npmPrefix}--version",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
+                    CreateNoWindow = true,
+                },
             };
 
             proc.Start();
@@ -157,6 +157,11 @@ namespace Piral.Blazor.Tools.Tasks
             }
 
             proc.WaitForExit();
+
+            if (proc.ExitCode != 0)
+            {
+                throw new InvalidOperationException("npm did not run successful. You'll need to install npm for using Piral.Blazor.");
+            }
 
             var majorVersion = version.Split('.').First();
 
@@ -211,18 +216,23 @@ namespace Piral.Blazor.Tools.Tasks
                 var piletJsonContent = File.ReadAllText(piletJsonFile);
                 var piletJson = JsonConvert.DeserializeObject<PiletJsonObject>(piletJsonContent);
 
-                if (piletJson.PiralInstances.Any(x => x.Value.Selected))
+                if (piletJson.PiralInstances?.Any(x => x.Value.Selected) ?? false)
                 {
-                    piralInstanceName = piletJson.PiralInstances.FirstOrDefault(x => x.Value.Selected).Key;
+                    piralInstanceName = piletJson.PiralInstances?.FirstOrDefault(x => x.Value.Selected).Key;
                 }
                 else
                 {
-                    piralInstanceName = piletJson.PiralInstances.Keys.First();
+                    piralInstanceName = piletJson.PiralInstances?.Keys.First();
                 }
             }
             else
             {
-                piralInstanceName = packageJson.Piral.Name;
+                piralInstanceName = packageJson.Piral?.Name;
+            }
+
+            if (piralInstanceName is null)
+            {
+                throw new InvalidOperationException("The provided Piral instance cannot be found. Something went wrong during scaffolding.");
             }
 
             foreach (var sourceFile in files)
@@ -300,12 +310,24 @@ namespace Piral.Blazor.Tools.Tasks
                     WorkingDirectory = cwd,
                     Arguments = arguments,
                     UseShellExecute = false,
-                    CreateNoWindow = true
-                }
+                    CreateNoWindow = true,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                },
             };
 
+            proc.OutputDataReceived += (sender, e) => Log.LogCommandLine($"[stdout] {e.Data}");
+            proc.ErrorDataReceived += (sender, e) => Log.LogCommandLine($"[stderr] {e.Data}");
+
             proc.Start();
+            proc.BeginOutputReadLine();
+            proc.BeginErrorReadLine();
             proc.WaitForExit();
+
+            if (proc.ExitCode != 0)
+            {
+                Log.LogWarning("The provided command '{0} {1}' in '{2}' did not finish successfully. The process might be corrupted.", cmd, arguments, cwd);
+            }
         }
 
         private bool PreparePilet()
@@ -360,7 +382,7 @@ namespace Piral.Blazor.Tools.Tasks
             Run(npm, target, $"{npmPrefix}init -y");
             Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
             Run(npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
-            Run(npx, target, $"{npxPrefix}pilet new {Emulator} --registry {NpmRegistry} --bundler none --no-install");
+            Run(npx, target, $"{npxPrefix}pilet new \"{Emulator}\" --registry \"{NpmRegistry}\" --bundler none --no-install");
 
             return true;
         }

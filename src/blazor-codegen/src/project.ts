@@ -70,7 +70,7 @@ export async function checkInstallation(
 
     const [npmBlazorVersion] = result;
     const [blazorRelease] = npmBlazorVersion.split(".");
-    const installCmd = `npm i blazor@^${blazorRelease} piral-blazor@${piralVersion}`;
+    const installCmd = `npm i blazor@^${blazorRelease} piral-blazor@${piralVersion} --no-save --legacy-peer-deps`;
     await execAsync(installCmd);
   }
 }

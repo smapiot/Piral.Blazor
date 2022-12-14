@@ -41,15 +41,4 @@
             ConfigFolderName="$(ConfigFolder)"
 			Version="$(Version)" />
     </Target>
-
-    <Target Name="OverwriteIndexHtml" BeforeTargets="Build">
-        <PropertyGroup>
-            <_indexHtml>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=$(_piletUrl)/&quot; /&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</_indexHtml>
-        </PropertyGroup>
-        <WriteLinesToFile
-            File="$(MSBuildProjectDirectory)\wwwroot\index.html"
-            Lines="$(_indexHtml)"
-            Overwrite="true"
-            Encoding="UTF-8" />
-    </Target>
 </Project>
