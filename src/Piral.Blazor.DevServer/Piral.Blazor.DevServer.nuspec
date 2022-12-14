@@ -4,7 +4,7 @@
     <id>$packageId$</id>
     <version>$version$</version>
     <authors>$authors$</authors>
-    <licenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</licenseUrl>
+    <licenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-7.0/LICENSE</licenseUrl>
     <icon>icon.png</icon>
     <projectUrl>https://github.com/smapiot/Piral.Blazor</projectUrl>
     <description>Blazor Dev Server for Blazor pilets.</description>
@@ -14,6 +14,6 @@
   <files>
     <file src="..\icon.png" target="" />
     <file src="build\**" target="build" />
-    <file src="bin\Release\net6.0\**" target="tools" />
+    <file src="bin\Release\net7.0\**" target="tools" />
   </files>
 </package>

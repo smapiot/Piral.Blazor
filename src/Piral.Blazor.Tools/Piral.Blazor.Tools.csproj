@@ -2,12 +2,12 @@
 
     <PropertyGroup>
         <PackageId>Piral.Blazor.Tools</PackageId>
-        <VersionPrefix>6.0.4</VersionPrefix>
+        <VersionPrefix>7.0.4</VersionPrefix>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
         <IsPackable>true</IsPackable>
         <PackageIcon>icon.png</PackageIcon>
-        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
+        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-7.0/LICENSE</PackageLicenseUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
         <TargetFramework>netstandard2.0</TargetFramework>
