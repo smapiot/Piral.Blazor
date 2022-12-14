@@ -1,0 +1,31 @@
+﻿@inject IComponentActivationService Activation
+
+@if (_element is not null)
+{
+    <DynamicComponent Type="@_element.Component" Parameters="@_element.Args" />
+}
+
+@code {
+    private PiralElement _element;
+
+    /// <summary>
+    /// The reference id of the activated element.
+    /// </summary>
+    [Parameter]
+    public string Rid { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        _element = Activation.GetElement(Rid);
+
+        if (_element is not null)
+        {
+            _element.Changed += (s, e) =>
+            {
+                this.StateHasChanged();
+            };
+        }
+
+        return base.OnInitializedAsync();
+    }
+}

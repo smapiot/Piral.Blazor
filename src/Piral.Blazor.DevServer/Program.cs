@@ -152,7 +152,7 @@ var inMemoryConfiguration = new Dictionary<string, string>
     [WebHostDefaults.StaticWebAssetsKey] = staticAssets,
 };
 
-builder.Configuration.AddInMemoryCollection(inMemoryConfiguration);
+builder.Configuration.AddInMemoryCollection(inMemoryConfiguration!);
 builder.Configuration.AddJsonFile(Path.Combine(applicationDirectory, "blazor-devserversettings.json"), optional: true, reloadOnChange: true);
 builder.Services.AddHttpClient();
 
@@ -225,7 +225,7 @@ app.Use(async (context, next) =>
     }
     else if (reqPath.StartsWith(piletApiSegment) && context.Request.Method == "GET")
     {
-        var httpFactory = context.RequestServices.GetService<IHttpClientFactory>();
+        var httpFactory = context.RequestServices.GetService<IHttpClientFactory>()!;
         var client = httpFactory.CreateClient();
         var url = $"{feedUrl}{reqPath}";
         var json = await client.GetStringAsync(url);
@@ -239,6 +239,7 @@ app.Use(async (context, next) =>
     }
 });
 app.UseRouting();
+#pragma warning disable ASP0014 // Suggest using top level route registrations
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapFallbackToFile("index.html", new StaticFileOptions
@@ -247,5 +248,6 @@ app.UseEndpoints(endpoints =>
         FileProvider = wwwProvider,
     });
 });
+#pragma warning restore ASP0014 // Suggest using top level route registrations
 
 app.Run();
