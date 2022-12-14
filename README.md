@@ -17,13 +17,13 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 
 ### Creating a Blazor Pilet
 
-To create a Blazor pilet using `Piral.Blazor`, two approaches can be used:
+We recommend that you watch the video [on scaffolding from the standard VS template](https://youtu.be/Ychzp2xMxes) before you go over the details below.
+
+In general, to create a Blazor pilet using `Piral.Blazor`, two approaches can be used:
 
 #### 1. From Scratch
 
-In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](/src/Piral.Blazor.Template)
-
-[![Using Piral Blazor](https://img.youtube.com/vi/8kWkkNgE3ao/0.jpg)](https://www.youtube.com/watch?v=8kWkkNgE3ao)
+In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](/src/Piral.Blazor.Template).
 
 #### 2. Transforming an Existing Application
 
@@ -41,8 +41,11 @@ In this case, follow these steps:
    (You can optionally also specify an `NpmRegistry` property. The default for this is set to `https://registry.npmjs.org/`)
 
 2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages, make sure they both have a version number of format `6.0.x`
-3. rename `Program.cs` to `Module.cs`, and make sure to make the `Main` method an empty method.
-4. Build the project. The first time you do this, this can take some time as it will fully scaffold the pilet.
+3. Remove the `Microsoft.AspNetCore.Components.WebAssembly.DevServer` package and install the `Piral.Blazor.DevServer` package (using the same version as the packages from (2))
+4. Rename `Program.cs` to `Module.cs`, and make sure to make the `Main` method an empty method.
+5. Build the project. The first time you do this, this can take some time as it will fully scaffold the pilet.
+
+If you run the solution using `F5` the `Piral.Blazor.DevServer` will start the Piral CLI under the hood. This allows you to not only use .NET Hot-Reload, but also replace the pilets on demand.
 
 ## Usage
 
@@ -95,13 +98,14 @@ but realistically you'd publish the app shell to a private registry on a differe
 
 Besides these two options (required `PiralInstance` and optional `NpmRegistry`) the following settings exist:
 
+- `Version`: Sets the version of the pilet. This is a/the standard project property.
 - `PiralInstance`: Sets the name (or local path) of the app shell.
 - `NpmRegistry`: Sets the URL of the npm registry to use. Will be used for getting npm dependencies of the app shell (and the app shell itself).
-- `Bundler`: Sets the name of the bundler to use. By default this is `webpack5`. The list of all available bundlers can be found [in the Piral documentation](https://docs.piral.io/reference/documentation/bundlers).
+- `Bundler`: Sets the name of the bundler to use. By default this is `esbuild`. The list of all available bundlers can be found [in the Piral documentation](https://docs.piral.io/reference/documentation/bundlers).
 - `ProjectsWithStaticFiles`: Sets the names of the projects that contain static files, which require to be copied to the output directory. Separate the names of these projects by semicolons.
 - `Monorepo`: Sets the behavior of the scaffolding to a monorepo mode. The value must be `enable` to switch this on.
 - `PiralCliVersion`: Determines the version of the `piral-cli` tooling to use. By default this is `latest`.
-- `Version`: Sets the version of the pilet. This is a/the standard project property.
+- `PiralBundlerVersion`: Determines the version of the `piral-cli-<bundler>` to use. By default, this is the same as the value of the `PiralCliVersion`.
 - `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
 - `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
 
@@ -114,6 +118,8 @@ A more extensive example:
     <TargetFramework>net6.0</TargetFramework>
     <Version>1.2.3</Version>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
+    <PiralCliVersion>next</PiralCliVersion>
+    <PiralBundlerVersion>0.15.0</PiralBundlerVersion>
     <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
     <Bundler>esbuild</Bundler>
     <Monorepo>disable</Monorepo>
@@ -521,6 +527,12 @@ The content of the *js-imports.json* file is a JSON array. For example:
 ```
 
 Includes the two dependencies via the respective `import` statements.
+
+### DevServer Settings
+
+The `Piral.Blazor.DevServer` can be configured, too. Much like the standard / official Blazor DevServer you can introduce a *blazor-devserversettings.json* file that describes more options. Right now the contained options are the same as the one for the official Blazor DevServer.
+
+In addition, the options for the DevServer also touch the configured options for the `Piral.Blazor.Tools`, such as `OutputFolder` which is used to define where the scaffolded pilet is stored.
 
 ## License
 
