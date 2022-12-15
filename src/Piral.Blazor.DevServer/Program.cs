@@ -140,6 +140,7 @@ static IContentTypeProvider CreateStaticFileTypeProvider()
     contentTypeProvider.Mappings.TryAdd(".br", MediaTypeNames.Application.Octet);
     contentTypeProvider.Mappings.TryAdd(".dat", MediaTypeNames.Application.Octet);
     contentTypeProvider.Mappings.TryAdd(".blat", MediaTypeNames.Application.Octet);
+    contentTypeProvider.Mappings.TryAdd(".wasm", "application/wasm");
     return contentTypeProvider;
 }
 

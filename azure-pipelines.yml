@@ -42,9 +42,10 @@ steps:
   displayName: 'Run Tests'
 
 - script: |
-    dotnet build ./src/Piral.Blazor.Core --configuration Release --output ./dist/release
-    dotnet build ./src/Piral.Blazor.Core --configuration Debug --output ./dist/debug
-    cd dist
+    cd ./src/Piral.Blazor.Core
+    dotnet publish -c Release --output ../../dist/release
+    dotnet publish -c Debug --output ../../dist/debug
+    cd ../../dist
     cp ../template/* .
     cp ../LICENSE .
     export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./release/Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
