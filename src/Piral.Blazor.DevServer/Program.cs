@@ -27,6 +27,7 @@ var piralInstance = FindPiralInstance(piletJsonPath, packageJsonPath);
 var distDir = Path.Combine(piletDir, "dist");
 var www = Path.Combine(piletDir, "node_modules", piralInstance, "app");
 var wwwProvider = new PhysicalFileProvider(www);
+var contentTypeProvider = CreateStaticFileTypeProvider();
 var cliProcess = StartPiralCli(piletDir, cliPort);
 
 Console.WriteLine("Starting Piral.Blazor.DevServer ...");
@@ -105,15 +106,14 @@ static Process StartPiralCli(string piletDir, int cliPort)
     return process;
 }
 
-static void AppendHeaders(WebApplication app, HttpContext context)
+static void AppendHeaders(HttpContext context, WebApplication app)
 {
     var headers = context.Response.Headers;
     headers.Append("Blazor-Environment", app.Environment.EnvironmentName);
+    headers.Append("Cache-Control", "no-cache");
 
     if (app.Environment.IsDevelopment())
     {
-        headers.Append("Cache-Control", "no-cache");
-
         if (Environment.GetEnvironmentVariable("DOTNET_MODIFIABLE_ASSEMBLIES") is string dotnetModifiableAssemblies)
         {
             headers.Append("DOTNET-MODIFIABLE-ASSEMBLIES", dotnetModifiableAssemblies);
@@ -124,6 +124,12 @@ static void AppendHeaders(WebApplication app, HttpContext context)
             headers.Append("ASPNETCORE-BROWSER-TOOLS", "true");
         }
     }
+}
+
+static void AppendContentType(HttpContext context, IContentTypeProvider contentTypeProvider, string filePath)
+{
+    contentTypeProvider.TryGetContentType(filePath, out var contentType);
+    context.Response.ContentType = contentType ?? "application/octet-stream";
 }
 
 static IContentTypeProvider CreateStaticFileTypeProvider()
@@ -163,10 +169,10 @@ app.UseWebSockets();
 app.UseWebAssemblyDebugging();
 app.UseStaticFiles(new StaticFileOptions
 {
-    OnPrepareResponse = (res) => AppendHeaders(app, res.Context),
+    OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
     FileProvider = wwwProvider,
     ServeUnknownFileTypes = true,
-    ContentTypeProvider = CreateStaticFileTypeProvider(),
+    ContentTypeProvider = contentTypeProvider,
 });
 app.Use(async (context, next) =>
 {
@@ -180,7 +186,8 @@ app.Use(async (context, next) =>
     {
         var path = reqPath.Replace($"{piletApiSegment}/0/", "");
         var filePath = Path.Combine(distDir, path);
-        AppendHeaders(app, context);
+        AppendHeaders(context, app);
+        AppendContentType(context, contentTypeProvider, path);
         await context.Response.SendFileAsync(filePath);
     }
     else if (reqPath.StartsWith(piletApiSegment) && context.WebSockets.IsWebSocketRequest)
@@ -230,7 +237,7 @@ app.Use(async (context, next) =>
         var url = $"{feedUrl}{reqPath}";
         var json = await client.GetStringAsync(url);
         var newJson = json.Replace(feedUrl, $"{scheme}://{host}");
-        context.Response.Headers.Add("Content-Type", "application/json");
+        AppendContentType(context, contentTypeProvider, "meta.json");
         await context.Response.WriteAsync(newJson);
     }
     else
@@ -244,7 +251,7 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapFallbackToFile("index.html", new StaticFileOptions
     {
-        OnPrepareResponse = (res) => AppendHeaders(app, res.Context),
+        OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
         FileProvider = wwwProvider,
     });
 });
