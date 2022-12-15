@@ -46,7 +46,7 @@ steps:
     export TARGET_VERSION=`node -e 'console.log(require("./obj/project.assets.json").project.version)'`
     export NPM_TOKEN=$(npmToken)
     dotnet publish -c Release --output ../../dist/release
-    dotnet publish -c Debug --output ../../dist/debug
+    dotnet publish -c Debug --output ../../dist/debug /p:CopyOutputSymbolsToPublishDirectory=true
     cd ../../dist
     cp ../template/* .
     cp ../LICENSE .
