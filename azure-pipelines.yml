@@ -43,13 +43,13 @@ steps:
 
 - script: |
     cd ./src/Piral.Blazor.Core
+    export TARGET_VERSION=`node -e 'console.log(require("./obj/project.assets.json").project.version)'`
+    export NPM_TOKEN=$(npmToken)
     dotnet publish -c Release --output ../../dist/release
     dotnet publish -c Debug --output ../../dist/debug
     cd ../../dist
     cp ../template/* .
     cp ../LICENSE .
-    export TARGET_VERSION=`node -e 'console.log(Object.keys(require("./release/Piral.Blazor.Utils.deps.json").libraries)[0].split("/").pop())'`
-    export NPM_TOKEN=$(npmToken)
     npm version $TARGET_VERSION
     echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
     echo always-auth=true >> ~/.npmrc
