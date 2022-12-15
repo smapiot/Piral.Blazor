@@ -7,8 +7,6 @@ import { action, analyzer, configuration, targetFramework } from "./constants";
 
 const execAsync = promisify(exec);
 
-const matchVersion = /\d+\.\d+\.\d+/;
-
 /** Extracts the project name from a blazor project folder */
 export function getProjectName(projectFolder: string) {
   return new Promise((resolve, reject) => {
@@ -49,7 +47,7 @@ export async function buildSolution(cwd: string) {
 }
 
 export async function checkInstallation(
-  piletBlazorVersion: string,
+  blazorVersion: string,
   shellPackagePath: string
 ) {
   try {
@@ -60,17 +58,7 @@ export async function checkInstallation(
       "The npm packages `blazor` and `piral-blazor` have not been not found. Installing them now..."
     );
     const piralVersion = getPiralVersion(shellPackagePath);
-    const result = matchVersion.exec(piletBlazorVersion);
-
-    if (!result) {
-      throw new Error(
-        "Could not detect version of Blazor. Something does not seem right."
-      );
-    }
-
-    const [npmBlazorVersion] = result;
-    const [blazorRelease] = npmBlazorVersion.split(".");
-    const installCmd = `npm i blazor@^${blazorRelease} piral-blazor@${piralVersion} --no-save --legacy-peer-deps`;
+    const installCmd = `npm i blazor@${blazorVersion} piral-blazor@${piralVersion} --no-save --legacy-peer-deps`;
     await execAsync(installCmd);
   }
 }

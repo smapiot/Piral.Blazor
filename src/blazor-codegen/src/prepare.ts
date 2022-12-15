@@ -1,37 +1,84 @@
 import { resolve, join } from "path";
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import { copyAll } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { diffBlazorBootFiles } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
-import { alwaysIgnored, bbjson, swajson, packageJsonFilename, piletJsonFilename, variant } from "./constants";
 import { BlazorManifest, StaticAssets } from "./types";
+import {
+  alwaysIgnored,
+  bbjson,
+  swajson,
+  packageJsonFilename,
+  piletJsonFilename,
+  variant,
+  blazorrc,
+} from "./constants";
 
 function toFramework(files: Array<string>) {
   return files.map((n) => `_framework/${n}`);
 }
 
-export async function prepare(targetDir: string, staticAssets: StaticAssets) {
-  const piralPiletFolder = resolve(__dirname, "..");
+function findInstanceName(piralPiletFolder: string) {
   const packageJson = require(resolve(piralPiletFolder, packageJsonFilename));
-
-  const piletJsonFilePath = join(piralPiletFolder, piletJsonFilename).replace(/\\/g, "/");
+  const piletJsonFilePath = join(piralPiletFolder, piletJsonFilename).replace(
+    /\\/g,
+    "/"
+  );
   const piletJsonFileExists = existsSync(piletJsonFilePath);
-  let instanceName;
-  if(piletJsonFileExists){
+
+  if (piletJsonFileExists) {
     const piletJson = require(resolve(piralPiletFolder, piletJsonFilename));
-    const selectedInstance = Object.keys(piletJson.piralInstances).find(key => piletJson.piralInstances[key].selected);
-    if(selectedInstance !== undefined){
-      instanceName = selectedInstance;
-    } else{
-      instanceName = Object.keys(piletJson.piralInstances)[0];
+    const selectedInstance = Object.keys(piletJson.piralInstances).find(
+      (key) => piletJson.piralInstances[key].selected
+    );
+
+    if (selectedInstance !== undefined) {
+      return selectedInstance;
     }
-  } else{
-    instanceName = packageJson.piral.name;
+
+    return Object.keys(piletJson.piralInstances)[0];
   }
 
+  return packageJson.piral.name;
+}
 
+function findBlazorVersion(piralPiletFolder: string) {
+  const key = "Version=";
+  const blazorrcPath = resolve(piralPiletFolder, blazorrc);
+  const content = readFileSync(blazorrcPath, "utf8");
+  const line = content
+    .split("\r")
+    .join("")
+    .split("\n")
+    .find((m) => m.startsWith(key));
+
+  if (typeof line === "string") {
+    return line.substring(key.length);
+  }
+
+  return undefined;
+}
+
+function getBlazorRelease(version: string) {
+  const matchVersion = /\d+\.\d+\.\d+/;
+  const result = matchVersion.exec(version);
+
+  if (!result) {
+    throw new Error(
+      "Could not detect version of Blazor. Something does not seem right."
+    );
+  }
+
+  const [npmBlazorVersion] = result;
+  const [blazorRelease] = npmBlazorVersion.split(".");
+  return `^${blazorRelease}`;
+}
+
+export async function prepare(targetDir: string, staticAssets: StaticAssets) {
+  const piralPiletFolder = resolve(__dirname, "..");
+  const instanceName = findInstanceName(piralPiletFolder);
   const appdir = findAppDir(piralPiletFolder, instanceName);
 
   const manifestSource = staticAssets.Assets.find(
@@ -81,11 +128,15 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     return { dlls, pdbs, standalone, manifest };
   } else {
+    const blazorVersion =
+      findBlazorVersion(piralPiletFolder) ||
+      getBlazorRelease(piletDotnetVersion);
+
     console.log(
       "The app shell does not contain `piral-blazor`. Using standalone mode."
     );
 
-    await checkInstallation(piletDotnetVersion, shellPackagePath);
+    await checkInstallation(blazorVersion, shellPackagePath);
 
     const originalManifest: BlazorManifest = require(bbStandalonePath);
     const frameworkFiles = toFramework([

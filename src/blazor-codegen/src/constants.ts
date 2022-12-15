@@ -10,6 +10,7 @@ export const configuration = isRelease ? "Release" : "Debug";
 export const action = isRelease ? "publish" : "build";
 export const variant = isRelease ? "release" : "debug";
 
+export const blazorrc = ".blazorrc";
 export const bbjson = "blazor.boot.json";
 export const pajson = "project.assets.json";
 export const packageJsonFilename = "package.json";
