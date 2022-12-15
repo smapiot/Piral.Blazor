@@ -339,9 +339,9 @@ async function prepare(targetDir, staticAssets) {
     const originalManifest = require(bbStandalonePath);
     const frameworkFiles = toFramework([
       bbjson,
-      ...Object.keys(originalManifest.resources.assembly),
-      ...Object.keys(originalManifest.resources.pdb),
-      ...Object.keys(originalManifest.resources.runtime)
+      ...Object.keys(originalManifest.resources.assembly || {}),
+      ...Object.keys(originalManifest.resources.pdb || {}),
+      ...Object.keys(originalManifest.resources.runtime || {})
     ]);
     const ignored = [...alwaysIgnored, ...frameworkFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, originalManifest);

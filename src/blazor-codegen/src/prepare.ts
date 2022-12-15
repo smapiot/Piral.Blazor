@@ -90,9 +90,9 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
     const originalManifest: BlazorManifest = require(bbStandalonePath);
     const frameworkFiles = toFramework([
       bbjson,
-      ...Object.keys(originalManifest.resources.assembly),
-      ...Object.keys(originalManifest.resources.pdb),
-      ...Object.keys(originalManifest.resources.runtime),
+      ...Object.keys(originalManifest.resources.assembly || {}),
+      ...Object.keys(originalManifest.resources.pdb || {}),
+      ...Object.keys(originalManifest.resources.runtime || {}),
     ]);
     const ignored = [...alwaysIgnored, ...frameworkFiles];
 
