@@ -11,6 +11,7 @@ namespace Piral.Blazor.Core
     public class Manipulator<T>
     {
         const BindingFlags privateInstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+        const BindingFlags privateStaticFlags = BindingFlags.Static | BindingFlags.NonPublic;
 
         private readonly ILogger<T> _logger;
         private ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>> _initializers;
@@ -28,7 +29,7 @@ namespace Piral.Blazor.Core
                 var renderer = typeof(WebAssemblyHost)
                     .GetField("_renderer", privateInstanceFlags)
                     .GetValue(host);
-                    
+
                 var componentFactory = typeof(Renderer)
                     .GetField("_componentFactory", privateInstanceFlags)
                     .GetValue(renderer);
@@ -40,8 +41,8 @@ namespace Piral.Blazor.Core
                 var ComponentFactory = componentFactory!.GetType();
 
                 _initializers = ComponentFactory
-                    .GetField("_cachedInitializers", privateInstanceFlags)
-                    .GetValue(componentFactory) as ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>>;
+                    .GetField("_cachedInitializers", privateStaticFlags)
+                    .GetValue(null) as ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>>;
 
                 InstantiateComponent = (provider, componentType) => {
                     ComponentFactory
