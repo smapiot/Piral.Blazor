@@ -12,7 +12,7 @@
     <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
     <TargetFramework>net7.0</TargetFramework>
     <BlazorEnableCompression>false</BlazorEnableCompression>
-    <BlazorWebAssemblyEnableLinking>false</BlazorWebAssemblyEnableLinking>
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +29,11 @@
 
   <ItemGroup>
     <None Include="..\icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Microsoft.AspNetCore.Components" />
+    <TrimmerRootAssembly Include="Microsoft.AspNetCore.Components.WebAssembly" />
   </ItemGroup>
 
 </Project>
