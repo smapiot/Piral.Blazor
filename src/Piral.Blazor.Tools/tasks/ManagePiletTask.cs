@@ -425,12 +425,14 @@ namespace Piral.Blazor.Tools.Tasks
         private void OverwritePackageJson()
         {
             var packageJsonFile = Path.Combine(ProjectDir, "package.json");
+
             if (!File.Exists(packageJsonFile))
             {
                 throw new Exception($"The file '{packageJsonFile}' does not exist.");
             }
 
             var overwritePackageJsonFile = Path.Combine(ConfigDir, "package-overwrites.json");
+
             if (!File.Exists(overwritePackageJsonFile)) 
             {
                 Log.LogMessage("No 'package-overwrites.json' file found to merge into package.json.");
@@ -446,12 +448,47 @@ namespace Piral.Blazor.Tools.Tasks
 
             if (JToken.DeepEquals(result, packageJson))
             {
-                Log.LogMessage("The file 'package-overwrites.json' had nothing to merge into 'package.json'");
+                Log.LogMessage("The file 'package-overwrites.json' had nothing to merge into 'package.json'.");
             }
             else
             {
                 File.WriteAllText(packageJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
-                Log.LogMessage("Successfully merged 'package-overwrites.json' width 'package.json'");
+                Log.LogMessage("Successfully merged 'package-overwrites.json' with 'package.json'.");
+            }
+        }
+
+        private void OverwriteMetaJson()
+        {
+            var metaJsonFile = Path.Combine(ProjectDir, "meta.json");
+
+            if (!File.Exists(metaJsonFile))
+            {
+                throw new Exception($"The file '{metaJsonFile}' does not exist.");
+            }
+
+            var overwriteMetaJsonFile = Path.Combine(ConfigDir, "meta-overwrites.json");
+
+            if (!File.Exists(overwriteMetaJsonFile)) 
+            {
+                Log.LogMessage("No 'meta-overwrites.json' file found to merge into meta.json.");
+                return;
+            }
+
+            var result = new JObject();
+            var metaJson = JObject.Parse(File.ReadAllText(metaJsonFile)); 
+            var overwritesJson = JObject.Parse(File.ReadAllText(overwriteMetaJsonFile)); 
+
+            result.Merge(metaJson); 
+            result.Merge(overwritesJson);
+
+            if (JToken.DeepEquals(result, metaJson))
+            {
+                Log.LogMessage("The file 'meta-overwrites.json' had nothing to merge into 'meta.json'.");
+            }
+            else
+            {
+                File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
+                Log.LogMessage("Successfully merged 'meta-overwrites.json' with 'meta.json'.");
             }
         }
 
@@ -486,6 +523,7 @@ namespace Piral.Blazor.Tools.Tasks
 
                     UpdatePackageVersion();
                     OverwritePackageJson();
+                    OverwriteMetaJson();
                     
                     if (IsMonorepo)
                     {

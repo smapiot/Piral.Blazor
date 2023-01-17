@@ -1,28 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <PackageId>Piral.Blazor.Tools</PackageId>
-        <VersionPrefix>6.0.4</VersionPrefix>
-        <Authors>Florian Rappl</Authors>
-        <Company>smapiot</Company>
-        <IsPackable>true</IsPackable>
-        <PackageIcon>icon.png</PackageIcon>
-        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
-        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
-        <TargetFramework>netstandard2.0</TargetFramework>
-    </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>Piral.Blazor.Tools</PackageId>
+    <VersionPrefix>6.0.5</VersionPrefix>
+    <Authors>Florian Rappl</Authors>
+    <Company>smapiot</Company>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\icon.png" Pack="true" PackagePath="" />
-        <None Include="build\**" Pack="true" PackagePath="build\" />
-        <None Include="content\**" Pack="true" PackagePath="content\" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="..\icon.png" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+    <None Include="build\**" Pack="true" PackagePath="build\" />
+    <None Include="content\**" Pack="true" PackagePath="content\" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.0.0" />
-      <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" /> 
-    </ItemGroup> 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.0.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" /> 
+  </ItemGroup>
 
 </Project>

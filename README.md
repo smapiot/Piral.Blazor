@@ -9,7 +9,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 <img src="https://piral.io/logo-simple.f8667084.png" height="10">
 &nbsp;Piral</a>.
 
-> This is the branch for Blazor 6.0 with .NET 6.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2) or [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) branch.
+> This is the branch for Blazor 6.0 with .NET 6.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2) or [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0) branch. For the more recent .NET version see the [`blazor-7.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-7.0) branch.
 
 ## Getting Started
 
@@ -23,7 +23,7 @@ In general, to create a Blazor pilet using `Piral.Blazor`, two approaches can be
 
 #### 1. From Scratch
 
-In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](/src/Piral.Blazor.Template).
+In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](https://www.nuget.org/packages/Piral.Blazor.Template).
 
 #### 2. Transforming an Existing Application
 
@@ -460,6 +460,7 @@ There are some special files that you can add in your project (adjacent to the *
 - *.piralconfig/setup.tsx*
 - *.piralconfig/teardown.tsx*
 - *.piralconfig/package-overwrites.json*
+- *.piralconfig/meta-overwrites.json*
 - *.piralconfig/js-imports.json*
 
 Let's see what they do and how they can be used.
@@ -509,6 +510,22 @@ This would add a development dependency to the `axios` package. Likewise, other 
 
 The rules for the merge follow the [Json.NET](https://www.newtonsoft.com/json/help/html/MergeJson.htm) approach.
 
+### Overwriting the Debug Meta Data
+
+The generated / used pilet is served from the local file system instead of a feed service. Therefore, it will not have things like a configuration store. However, you might want to use one - or at least test against one. For this, usually a *meta.json* file can be used. The content of this *meta.json* is then merged into the metadata of a served pilet. For Piral.Blazor this file is premade, however, its content can still be overwritten using a *meta-overwrites.json* file.
+
+For instance, to include a custom `config` field (with one config called `backendUrl`) in the pilet's metadata you can use the following content:
+
+```json
+{
+  "config": {
+    "backendUrl": "http://localhost:7345"
+  }
+}
+```
+
+The rules for the merge follow the [Json.NET](https://www.newtonsoft.com/json/help/html/MergeJson.htm) approach.
+
 ### Extending the Pilet's Teardown
 
 The *teardown.tsx* file can be used to define more things that should be done in a pilet's `teardown` function. By default, the content of the `teardown` function is auto generated. Things such as `pages` and `extensions` would be automatically unregistered. However, in some cases you will need to unregister things manually. You can do this here.
@@ -536,4 +553,4 @@ In addition, the options for the DevServer also touch the configured options for
 
 ## License
 
-Piral.Blazor is released using the MIT license. For more information see the [license file](./LICENSE).
+Piral.Blazor is released using the MIT license. For more information see the [license file](https://raw.githubusercontent.com/smapiot/Piral.Blazor/blazor-6.0/LICENSE).

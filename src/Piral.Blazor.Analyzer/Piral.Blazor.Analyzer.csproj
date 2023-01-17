@@ -1,26 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
-        <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-        <VersionPrefix>6.0.4</VersionPrefix>
-        <Authors>Florian Rappl</Authors>
-        <Company>smapiot</Company>
-        <PackageIcon>icon.png</PackageIcon>
-        <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
-        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
-        
-        <PackAsTool>true</PackAsTool>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
+    <VersionPrefix>6.0.5</VersionPrefix>
+    <Authors>Florian Rappl</Authors>
+    <Company>smapiot</Company>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
+    <PackAsTool>true</PackAsTool>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.21617.1" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.21617.1" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <None Include="..\icon.png" Pack="true" PackagePath="" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="..\icon.png" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
     
 </Project>

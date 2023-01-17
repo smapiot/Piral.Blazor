@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <PackageType>Template</PackageType>
-    <VersionPrefix>6.0.4</VersionPrefix>
+    <VersionPrefix>6.0.5</VersionPrefix>
     <PackageId>Piral.Blazor.Template</PackageId>
     <Title>Piral Blazor Pilet Template</Title>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <Description>Template for creating a new Piral Blazor pilet.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>aspnet;templates;blazor;spa;piral;microfrontend;pilet;mife;react</PackageTags>
     <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
@@ -26,6 +27,7 @@
 
   <ItemGroup>
     <None Include="..\icon.png" Pack="true" PackagePath="" />
+    <None Include=".\README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
