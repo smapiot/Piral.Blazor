@@ -1,6 +1,8 @@
 import glob from "glob";
 import { basename } from "path";
+import { readFile } from "fs";
 import { promisify } from "util";
+import { XMLParser } from "fast-xml-parser";
 import { exec, spawn } from "child_process";
 import { getPiralVersion } from "./piral";
 import { action, analyzer, configuration, targetFramework } from "./constants";
@@ -25,7 +27,33 @@ export function getProjectName(projectFolder: string) {
             )}`
           )
         );
-      return resolve(basename(matches[0]).replace(".csproj", ""));
+      const path = matches[0];
+      const defaultAssetName = basename(matches[0]).replace(".csproj", "");
+
+      readFile(path, "utf8", (err, xmlData) => {
+        if (err) {
+          reject(err);
+        } else {
+          const xmlParser = new XMLParser();
+          const { Project } = xmlParser.parse(xmlData);
+
+          if (
+            typeof Project.PropertyGroup === "object" &&
+            Project.PropertyGroup
+          ) {
+            const propertyGroups = Array.isArray(Project.PropertyGroup)
+              ? Project.PropertyGroup
+              : [Project.PropertyGroup];
+            const propertyGroup = propertyGroups.find((p) => p.AssemblyName);
+
+            if (propertyGroup) {
+              return resolve(propertyGroup.AssemblyName);
+            }
+          }
+
+          resolve(defaultAssetName);
+        }
+      });
     });
   });
 }
