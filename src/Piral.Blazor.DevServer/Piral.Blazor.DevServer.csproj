@@ -6,10 +6,10 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
-	    <IsProjectReferenceProvider>false</IsProjectReferenceProvider>
-	    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
-	    <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
-	    <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
+        <IsProjectReferenceProvider>false</IsProjectReferenceProvider>
+        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+        <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
+        <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
         <VersionPrefix>6.0.5</VersionPrefix>
         <Description>Blazor Dev Server for Blazor pilets.</Description>
         <Authors>Florian Rappl</Authors>
