@@ -1,4 +1,5 @@
 @inject IComponentActivationService Activation
+@implements IDisposable
 
 <DynamicComponent Type="@Activation.Root" Parameters="@parameters" />
 
@@ -9,14 +10,21 @@
         { "ChildContent", componentView }
     };
 
+    private void RootChanged(object sender, EventArgs e)
+    {
+        this.StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        Activation.RootChanged -= RootChanged;
+    }
+
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            Activation.RootChanged += (s, e) =>
-            {
-                this.StateHasChanged();
-            };
+            Activation.RootChanged += RootChanged;
         }
 
         return base.OnAfterRenderAsync(firstRender);

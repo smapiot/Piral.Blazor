@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System;
+using Microsoft.Extensions.Configuration;
 
 namespace Piral.Blazor.Utils
 {
@@ -28,5 +29,10 @@ namespace Piral.Blazor.Utils
         /// Gets the version of the current pilet.
         /// </summary>
         string Version { get; }
+
+        /// <summary>
+        /// Event emitted when the language has been changed.
+        /// </summary>
+        event EventHandler LanguageChanged;
     }
 }

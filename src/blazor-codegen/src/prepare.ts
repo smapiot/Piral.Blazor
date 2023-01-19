@@ -5,7 +5,14 @@ import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { diffBlazorBootFiles } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
-import { alwaysIgnored, bbjson, swajson, packageJsonFilename, piletJsonFilename, variant } from "./constants";
+import {
+  alwaysIgnored,
+  bbjson,
+  swajson,
+  packageJsonFilename,
+  piletJsonFilename,
+  variant,
+} from "./constants";
 import { BlazorManifest, StaticAssets } from "./types";
 
 function toFramework(files: Array<string>) {
@@ -16,21 +23,25 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const piralPiletFolder = resolve(__dirname, "..");
   const packageJson = require(resolve(piralPiletFolder, packageJsonFilename));
 
-  const piletJsonFilePath = join(piralPiletFolder, piletJsonFilename).replace(/\\/g, "/");
+  const piletJsonFilePath = join(piralPiletFolder, piletJsonFilename).replace(
+    /\\/g,
+    "/"
+  );
   const piletJsonFileExists = existsSync(piletJsonFilePath);
   let instanceName;
-  if(piletJsonFileExists){
+  if (piletJsonFileExists) {
     const piletJson = require(resolve(piralPiletFolder, piletJsonFilename));
-    const selectedInstance = Object.keys(piletJson.piralInstances).find(key => piletJson.piralInstances[key].selected);
-    if(selectedInstance !== undefined){
+    const selectedInstance = Object.keys(piletJson.piralInstances).find(
+      (key) => piletJson.piralInstances[key].selected
+    );
+    if (selectedInstance !== undefined) {
       instanceName = selectedInstance;
-    } else{
+    } else {
       instanceName = Object.keys(piletJson.piralInstances)[0];
     }
-  } else{
+  } else {
     instanceName = packageJson.piral.name;
   }
-
 
   const appdir = findAppDir(piralPiletFolder, instanceName);
 
@@ -57,6 +68,17 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest);
   const standalone = !blazorInAppshell;
+  const { satelliteResources = {} } = piletManifest.resources;
+
+  const satellites = Object.keys(satelliteResources).reduce(
+    (satellites, name) => {
+      const resources = satelliteResources[name];
+      const files = Object.keys(resources);
+      satellites[name] = toFramework(files);
+      return satellites;
+    },
+    {} as Record<string, Array<string>>
+  );
 
   if (blazorInAppshell) {
     console.log(
@@ -79,7 +101,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest };
+    return { dlls, pdbs, standalone, manifest, satellites };
   } else {
     console.log(
       "The app shell does not contain `piral-blazor`. Using standalone mode."
@@ -105,6 +127,6 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest };
+    return { dlls, pdbs, standalone, manifest, satellites };
   }
 }

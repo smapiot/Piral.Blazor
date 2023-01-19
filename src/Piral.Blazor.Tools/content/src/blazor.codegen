@@ -1821,8 +1821,14 @@ function getProjectName(projectFolder) {
           reject(err2);
         } else {
           const xmlParser = new import_fast_xml_parser.XMLParser();
-          const foo = xmlParser.parse(xmlData);
-          console.log(foo);
+          const { Project } = xmlParser.parse(xmlData);
+          if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
+            const propertyGroups = Array.isArray(Project.PropertyGroup) ? Project.PropertyGroup : [Project.PropertyGroup];
+            const propertyGroup = propertyGroups.find((p) => p.AssemblyName);
+            if (propertyGroup) {
+              return resolve5(propertyGroup.AssemblyName);
+            }
+          }
           resolve5(defaultAssetName);
         }
       });
@@ -1906,6 +1912,13 @@ async function prepare(targetDir, staticAssets) {
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest);
   const standalone = !blazorInAppshell;
+  const { satelliteResources = {} } = piletManifest.resources;
+  const satellites = Object.keys(satelliteResources).reduce((satellites2, name) => {
+    const resources = satelliteResources[name];
+    const files = Object.keys(resources);
+    satellites2[name] = toFramework(files);
+    return satellites2;
+  }, {});
   if (blazorInAppshell) {
     console.log("The app shell already integrates `piral-blazor` with `blazor`.");
     const appShellManifest = require(bbAppShellPath);
@@ -1915,7 +1928,7 @@ async function prepare(targetDir, staticAssets) {
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, appShellManifest);
     checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
     copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, standalone, manifest };
+    return { dlls, pdbs, standalone, manifest, satellites };
   } else {
     console.log("The app shell does not contain `piral-blazor`. Using standalone mode.");
     await checkInstallation(piletDotnetVersion, shellPackagePath);
@@ -1929,7 +1942,7 @@ async function prepare(targetDir, staticAssets) {
     const ignored = [...alwaysIgnored, ...frameworkFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, originalManifest);
     copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, standalone, manifest };
+    return { dlls, pdbs, standalone, manifest, satellites };
   }
 }
 
@@ -2037,7 +2050,7 @@ Seen error: ${err}`);
   }
   const projectAssets = require(pafile);
   const staticAssets = require(swafile);
-  const { standalone, manifest, dlls, pdbs } = await prepare(targetDir, staticAssets);
+  const { standalone, manifest, dlls, pdbs, satellites } = await prepare(targetDir, staticAssets);
   this.addDependency(swafile);
   this.addDependency(pafile);
   this.addDependency(manifest);
@@ -2055,7 +2068,8 @@ Seen error: ${err}`);
   const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) => getFilePath(staticAssets, name));
   const registerDependenciesCode = `export function registerDependencies(app) {
     const references = ${JSON.stringify(files)}.map((file) => path + file);
-    app.defineBlazorReferences(references);
+    const satellites = ${JSON.stringify(satellites) || "undefined"};
+    app.defineBlazorReferences(references, satellites);
   }`;
   const registerOptionsCode = `export function registerOptions(app) {
     app.defineBlazorOptions({ resourcePathRoot: path });
