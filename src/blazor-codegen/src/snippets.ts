@@ -31,7 +31,7 @@ function withoutCss(href) {
 }`;
 
 export const standaloneRemapCode = `
-  app.defineBlazorReferences = (refs) => pbc.defineBlazorReferences(refs, app.meta);
+  app.defineBlazorReferences = (refs, satellites) => pbc.defineBlazorReferences(refs, app.meta, satellites);
   app.defineBlazorOptions = pbc.defineBlazorOptions || (() => {});
   app.fromBlazor = pbc.fromBlazor;
   app.releaseBlazorReferences = pbc.releaseBlazorReferences;
