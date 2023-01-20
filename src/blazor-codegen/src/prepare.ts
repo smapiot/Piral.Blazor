@@ -68,9 +68,9 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest);
   const standalone = !blazorInAppshell;
-  const { satelliteResources = {} } = piletManifest.resources;
+  const { satelliteResources } = piletManifest.resources;
 
-  const satellites = Object.keys(satelliteResources).reduce(
+  const satellites = Object.keys(satelliteResources || {}).reduce(
     (satellites, name) => {
       const resources = satelliteResources[name];
       const files = Object.keys(resources);

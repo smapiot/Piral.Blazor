@@ -459,7 +459,7 @@ You can also provide your own providers here (or nest them as you want):
 }
 ```
 
-Note, that there is always just one `PiralAppRoot` component. If you did not supply one then the default `PiralAppRoot` will be used. If you already provided one, no other `PiralAppRoot` can be used.
+**Note**: There is always just one `PiralAppRoot` component. If you did not supply one then the default `PiralAppRoot` will be used. If you already provided one, no other `PiralAppRoot` can be used.
 
 ## Running and Debugging the Pilet :rocket:
 
@@ -481,13 +481,15 @@ In addition to this, if you want to debug your Blazor pilet using for example Vi
 
 There are some special files that you can add in your project (adjacent to the *.csproj* file):
 
-- *.piralconfig/setup.tsx*
-- *.piralconfig/teardown.tsx*
-- *.piralconfig/package-overwrites.json*
-- *.piralconfig/meta-overwrites.json*
-- *.piralconfig/js-imports.json*
+- *setup.tsx*
+- *teardown.tsx*
+- *package-overwrites.json*
+- *meta-overwrites.json*
+- *js-imports.json*
 
-Let's see what they do and how they can be used.
+**Note**: The location of these files can also be changed through the `ConfigFolder` option. By default, this one is empty, i.e., all files have to be placed adjacent to the *.csproj* file as mentioned above. However, if you set the value to, e.g., *.piletconfig* then the files will be retrieved from this subdirectory. For instance, the setup file would then be read from *.piletconfig/setup.tsx*.
+
+Let's see what these files do and how they can be used.
 
 ### Extending the Pilet's Setup
 
