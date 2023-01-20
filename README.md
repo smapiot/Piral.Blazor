@@ -399,6 +399,30 @@ The only helper there is `GetUrl`. You can use it like:
 
 In the example above the resource `images/something.png` would be placed in the `wwwroot` folder (i.e., `wwwroot/images/something`). As the content of the `wwwroot` folder is copied, the image will also be copied. However, the old local URL is not valid in a pilet, which needs to prefix its resources with its base URL. The function above does that. In that case, the URL would maybe be something like `http://localhost:1234/$pilet-api/0/images/something.png` while debugging, and another fully qualified URL later in production.
 
+### Localization
+
+Localization works almost exactly as with standard Blazor, except that the language can be changed at runtime directly rather then requiring a full reload of the page.
+
+The other difference is that the initial language is no longer decided by the server's response headers, but rather by the app shell. The initial configuration options of the `piral-blazor` plugin allow setting the `initialLanguage`. These options also allow setting up a callback to decide when to change the language (and to what language). If not explicitly stated Blazor will just listen to the `select-language` event of Piral, providing a key `currentLanguage` in the event arguments.
+
+To dynamically change / refresh your components when the language change you'll need to listen to the `LanguageChanged` event emitted by the injected `IPiletService` instance:
+
+```razor
+@inject IPiletService pilet
+
+<h2>@loc["greeting"]</h2>
+
+@code {
+    protected override void OnInitialized()
+    {
+        pilet.LanguageChanged += (s, e) => this.StateHasChanged();
+        base.OnInitialized();
+    }
+}
+```
+
+This way, your components will always remain up-to-date and render the right translations.
+
 ### Root Component
 
 By default, the Blazor pilets run in a dedicated Blazor application with no root component. If you need a root component, e.g., to provide some common values from a `CascadingValue` component such as `CascadingAuthenticationState` from the `Microsoft.AspNetCore.Components.Authorization` package, you can actually override the default root component:
