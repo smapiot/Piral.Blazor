@@ -408,6 +408,7 @@ The other difference is that the initial language is no longer decided by the se
 To dynamically change / refresh your components when the language change you'll need to listen to the `LanguageChanged` event emitted by the injected `IPiletService` instance:
 
 ```razor
+@inject IStringLocalizer<MyComponent> loc
 @inject IPiletService pilet
 
 <h2>@loc["greeting"]</h2>
