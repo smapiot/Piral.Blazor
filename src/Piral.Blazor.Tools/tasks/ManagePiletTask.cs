@@ -70,6 +70,8 @@ namespace Piral.Blazor.Tools.Tasks
 
         public string ConfigFolderName { get; set; } = "";
 
+        public string MocksFolderName { get; set; } = "mocks";
+
         #endregion
 
         #region Helper Properties
@@ -83,6 +85,8 @@ namespace Piral.Blazor.Tools.Tasks
         private string ProjectDir => Path.Combine(TargetDir, ProjectName);
 
         private string ConfigDir => Path.Combine(Source, ConfigFolderName);
+
+        private string MocksDir => Path.Combine(Source, MocksFolderName);
 
         private bool IsPiralInstanceFile => PiralInstance.StartsWith(".");
 
@@ -422,80 +426,101 @@ namespace Piral.Blazor.Tools.Tasks
             }
         }
 
+        private void UpdateKrasSources()
+        {
+            var krasrc = ".krasrc";
+            var krasRcPath = Path.Combine(ProjectDir, krasrc);
+
+            if (File.Exists(krasRcPath) && Directory.Exists(MocksDir))
+            {
+                var mocksDir = GetRelativePath(ProjectDir, MocksDir);
+                var result = new JObject();
+                var addedJson = JObject.Parse($"{{\"sources\":[\"{mocksDir}\"]}}");
+                var originalJson = JObject.Parse(File.ReadAllText(krasRcPath));
+
+                result.Merge(originalJson);
+                result.Merge(addedJson);
+
+                if (!JToken.DeepEquals(result, originalJson))
+                {
+                    File.WriteAllText(krasRcPath, JsonConvert.SerializeObject(result, Formatting.Indented));
+                    Log.LogMessage($"Successfully updated '{krasrc}' with mocks from '{MocksDir}'.");
+                }
+            }
+        }
+
         private void OverwritePackageJson()
         {
             var packageJsonFile = Path.Combine(ProjectDir, "package.json");
-
-            if (!File.Exists(packageJsonFile))
-            {
-                throw new Exception($"The file '{packageJsonFile}' does not exist.");
-            }
-
             var overwritePackageJsonFile = Path.Combine(ConfigDir, "package-overwrites.json");
-
-            if (!File.Exists(overwritePackageJsonFile)) 
-            {
-                Log.LogMessage("No 'package-overwrites.json' file found to merge into package.json.");
-                return;
-            }
-
-            var result = new JObject();
-            var packageJson = JObject.Parse(File.ReadAllText(packageJsonFile)); 
-            var overwritesJson = JObject.Parse(File.ReadAllText(overwritePackageJsonFile)); 
-
-            result.Merge(packageJson); 
-            result.Merge(overwritesJson);
-
-            if (JToken.DeepEquals(result, packageJson))
-            {
-                Log.LogMessage("The file 'package-overwrites.json' had nothing to merge into 'package.json'.");
-            }
-            else
-            {
-                File.WriteAllText(packageJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
-                Log.LogMessage("Successfully merged 'package-overwrites.json' with 'package.json'.");
-            }
+            MergeJsons(packageJsonFile, overwritePackageJsonFile);
         }
 
         private void OverwriteMetaJson()
         {
             var metaJsonFile = Path.Combine(ProjectDir, "meta.json");
-
-            if (!File.Exists(metaJsonFile))
-            {
-                throw new Exception($"The file '{metaJsonFile}' does not exist.");
-            }
-
             var overwriteMetaJsonFile = Path.Combine(ConfigDir, "meta-overwrites.json");
+            MergeJsons(metaJsonFile, overwriteMetaJsonFile);
+        }
 
-            if (!File.Exists(overwriteMetaJsonFile)) 
-            {
-                Log.LogMessage("No 'meta-overwrites.json' file found to merge into meta.json.");
-                return;
-            }
-
-            var result = new JObject();
-            var metaJson = JObject.Parse(File.ReadAllText(metaJsonFile)); 
-            var overwritesJson = JObject.Parse(File.ReadAllText(overwriteMetaJsonFile)); 
-
-            result.Merge(metaJson); 
-            result.Merge(overwritesJson);
-
-            if (JToken.DeepEquals(result, metaJson))
-            {
-                Log.LogMessage("The file 'meta-overwrites.json' had nothing to merge into 'meta.json'.");
-            }
-            else
-            {
-                File.WriteAllText(metaJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
-                Log.LogMessage("Successfully merged 'meta-overwrites.json' with 'meta.json'.");
-            }
+        private void OverwriteKrasRc()
+        {
+            var krasJsonFile = Path.Combine(ProjectDir, ".krasrc");
+            var overwriteKrasJsonFile = Path.Combine(ConfigDir, "kras-overwrites.json");
+            MergeJsons(krasJsonFile, overwriteKrasJsonFile);
         }
 
         private void InstallDependencies()
         {
             Log.LogMessage("Installing dependencies...");
             Run(npm, ProjectDir, $"{npmPrefix}install --silent");
+        }
+
+        private void UpdateAuxiliaryFiles()
+        {
+            UpdatePackageVersion();
+            UpdateKrasSources();
+            OverwritePackageJson();
+            OverwriteMetaJson();
+            OverwriteKrasRc();
+        }
+
+        #endregion
+
+        #region Helpers
+
+        private void MergeJsons(string originalJsonFile, string overwritesJsonFile)
+        {
+            var source = Path.GetFileName(originalJsonFile);
+            var target = Path.GetFileName(overwritesJsonFile);
+
+            if (!File.Exists(originalJsonFile))
+            {
+                throw new Exception($"The file '{originalJsonFile}' does not exist.");
+            }
+
+            if (!File.Exists(overwritesJsonFile)) 
+            {
+                Log.LogMessage($"No '{target}' file found to merge into '{source}'.");
+                return;
+            }
+
+            var result = new JObject();
+            var originalJson = JObject.Parse(File.ReadAllText(originalJsonFile)); 
+            var overwritesJson = JObject.Parse(File.ReadAllText(overwritesJsonFile)); 
+
+            result.Merge(originalJson); 
+            result.Merge(overwritesJson);
+
+            if (JToken.DeepEquals(result, originalJson))
+            {
+                Log.LogMessage($"The file '{target}' had nothing to merge into '{source}'.");
+            }
+            else
+            {
+                File.WriteAllText(originalJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
+                Log.LogMessage($"Successfully merged '{target}' with '{source}'.");
+            }
         }
 
         #endregion
@@ -521,9 +546,8 @@ namespace Piral.Blazor.Tools.Tasks
                         CopyContentFiles();
                     }
 
-                    UpdatePackageVersion();
-                    OverwritePackageJson();
-                    OverwriteMetaJson();
+                    UpdateAuxiliaryFiles();
+
                     
                     if (IsMonorepo)
                     {
@@ -538,7 +562,7 @@ namespace Piral.Blazor.Tools.Tasks
                 }
                 else
                 {
-                    UpdatePackageVersion();
+                    UpdateAuxiliaryFiles();
                 }
 
                 return true;

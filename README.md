@@ -108,6 +108,7 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `PiralBundlerVersion`: Determines the version of the `piral-cli-<bundler>` to use. By default, this is the same as the value of the `PiralCliVersion`.
 - `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
 - `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
+- `MocksFolder`: Sets the folder where the Kras mock files are stored (default: `.\mocks`).
 
 A more extensive example:
 
@@ -486,6 +487,7 @@ There are some special files that you can add in your project (adjacent to the *
 - *teardown.tsx*
 - *package-overwrites.json*
 - *meta-overwrites.json*
+- *kras-overwrites.json*
 - *js-imports.json*
 
 **Note**: The location of these files can also be changed through the `ConfigFolder` option. By default, this one is empty, i.e., all files have to be placed adjacent to the *.csproj* file as mentioned above. However, if you set the value to, e.g., *.piletconfig* then the files will be retrieved from this subdirectory. For instance, the setup file would then be read from *.piletconfig/setup.tsx*.
@@ -574,7 +576,9 @@ Includes the two dependencies via the respective `import` statements.
 
 ### DevServer Settings
 
-The `Piral.Blazor.DevServer` can be configured, too. Much like the standard / official Blazor DevServer you can introduce a *blazor-devserversettings.json* file that describes more options. Right now the contained options are the same as the one for the official Blazor DevServer.
+The `Piral.Blazor.DevServer` can be configured, too. Much like the standard / official Blazor DevServer you can introduce a *blazor-devserversettings.json* file that describes more options. Most of the contained options are the same as the one for the official Blazor DevServer.
+
+TODO describe mock settings!!!
 
 In addition, the options for the DevServer also touch the configured options for the `Piral.Blazor.Tools`, such as `OutputFolder` which is used to define where the scaffolded pilet is stored.
 
