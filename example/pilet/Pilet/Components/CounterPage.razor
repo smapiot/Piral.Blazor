@@ -1,8 +1,9 @@
 ﻿@page "/counter"
 @inject IConsoleMessageService consoleMessageService
 @inject IStringLocalizer<CounterPage> loc
+@inject IPiletService pilet
 
-<h1>Counter from Pilet!!</h1>
+<h1>Counter from Pilet!</h1>
 
 <h2>@loc["greeting"]</h2>
 
@@ -14,6 +15,12 @@
 
 @code {
     int currentCount = 0;
+
+    protected override void OnInitialized()
+    {
+        pilet.LanguageChanged += (s, e) => this.StateHasChanged();
+        base.OnInitialized();
+    }
 
     void IncrementCount()
     {
