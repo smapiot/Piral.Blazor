@@ -164,6 +164,7 @@ builder.Configuration.AddJsonFile(Path.Combine(applicationDirectory, "blazor-dev
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
+var forwardedPaths = app.Configuration.GetValue("forwardedPaths", new List<string> { });
 
 app.UseDeveloperExceptionPage();
 app.UseWebSockets();
@@ -240,6 +241,16 @@ app.Use(async (context, next) =>
         var newJson = json.Replace(feedUrl, $"{scheme}://{host}");
         AppendContentType(context, contentTypeProvider, "meta.json");
         await context.Response.WriteAsync(newJson);
+    }
+    else if (forwardedPaths.Any(path => reqPath.StartsWith(path)))
+    {
+        var httpFactory = context.RequestServices.GetService<IHttpClientFactory>()!;
+        var client = httpFactory.CreateClient();
+        var query = context.Request.QueryString.Value ?? string.Empty;
+        var url = new Uri($"{feedUrl}{reqPath}{query}");
+        var request = context.CreateProxyHttpRequest(url);
+        var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+        await context.CopyProxyHttpResponse(response);
     }
     else
     {
