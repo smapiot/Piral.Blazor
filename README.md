@@ -578,7 +578,9 @@ Includes the two dependencies via the respective `import` statements.
 
 The `Piral.Blazor.DevServer` can be configured, too. Much like the standard / official Blazor DevServer you can introduce a *blazor-devserversettings.json* file that describes more options. Most of the contained options are the same as the one for the official Blazor DevServer.
 
-TODO describe mock settings!!!
+Current options:
+
+- `forwardedPaths` - is an array of strings describing the path segments that should be forwarded to the Piral CLI dev server (using kras)
 
 In addition, the options for the DevServer also touch the configured options for the `Piral.Blazor.Tools`, such as `OutputFolder` which is used to define where the scaffolded pilet is stored.
 

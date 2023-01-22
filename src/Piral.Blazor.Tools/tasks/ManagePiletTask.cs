@@ -433,7 +433,7 @@ namespace Piral.Blazor.Tools.Tasks
 
             if (File.Exists(krasRcPath) && Directory.Exists(MocksDir))
             {
-                var mocksDir = GetRelativePath(ProjectDir, MocksDir);
+                var mocksDir = GetRelativePath(ProjectDir, MocksDir).Replace("\\", "/");
                 var result = new JObject();
                 var addedJson = JObject.Parse($"{{\"sources\":[\"{mocksDir}\"]}}");
                 var originalJson = JObject.Parse(File.ReadAllText(krasRcPath));
