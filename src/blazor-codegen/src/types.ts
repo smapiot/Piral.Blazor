@@ -12,7 +12,7 @@ export interface BlazorManifest {
     extensions: any;
     lazyAssembly: any;
     libraryInitializers: any;
-    satelliteResources: any;
+    satelliteResources: Record<string, Record<string, string>>;
   };
 }
 

@@ -20,7 +20,7 @@ function toFramework(files: Array<string>) {
   return files.map((n) => `_framework/${n}`);
 }
 
-function findInstanceName(piralPiletFolder: string) {
+function findInstanceName(piralPiletFolder: string): string {
   const packageJson = require(resolve(piralPiletFolder, packageJsonFilename));
   const piletJsonFilePath = join(piralPiletFolder, piletJsonFilename).replace(
     /\\/g,
@@ -104,6 +104,17 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest);
   const standalone = !blazorInAppshell;
+  const { satelliteResources } = piletManifest.resources;
+
+  const satellites = Object.keys(satelliteResources || {}).reduce(
+    (satellites, name) => {
+      const resources = satelliteResources[name];
+      const files = Object.keys(resources);
+      satellites[name] = toFramework(files);
+      return satellites;
+    },
+    {} as Record<string, Array<string>>
+  );
 
   if (blazorInAppshell) {
     console.log(
@@ -126,7 +137,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest };
+    return { dlls, pdbs, standalone, manifest, satellites };
   } else {
     const blazorVersion =
       findBlazorVersion(piralPiletFolder) ||
@@ -156,6 +167,6 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest };
+    return { dlls, pdbs, standalone, manifest, satellites };
   }
 }

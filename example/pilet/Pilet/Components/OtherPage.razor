@@ -1,6 +1,6 @@
 ﻿@page "/other"
 @page "/other/single/{id}"
-@inject IPiletService Pilet
+@inject IPiletService pilet
 
 @if (Id != null)
 {
@@ -47,13 +47,13 @@ else
         switch (bid)
         {
             case 1:
-                return @<img src=@Pilet.GetUrl("images/chrome.png") alt="Chrome" />;
+                return @<img src=@pilet.GetUrl("images/chrome.png") alt="Chrome" />;
             case 2:
-                return @<img src=@Pilet.GetUrl("images/opera.png") alt="Opera" />;
+                return @<img src=@pilet.GetUrl("images/opera.png") alt="Opera" />;
             case 3:
-                return @<img src=@Pilet.GetUrl("images/safari.png") alt="Safari" />;
+                return @<img src=@pilet.GetUrl("images/safari.png") alt="Safari" />;
             default:
-                return @<img src=@Pilet.GetUrl("images/firefox.png") alt="Firefox" />;
+                return @<img src=@pilet.GetUrl("images/firefox.png") alt="Firefox" />;
         }
     }
 

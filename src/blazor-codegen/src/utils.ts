@@ -1,5 +1,4 @@
 import { existsSync } from "fs";
-import { basename } from "path";
 import { BlazorManifest, BlazorResourceType, StaticAssets } from "./types";
 
 function getAllKeys(manifest: BlazorManifest, type: BlazorResourceType) {
@@ -14,12 +13,6 @@ function getUniqueKeys(
   const original = getAllKeys(originalManifest, type);
   const dedicated = getAllKeys(piletManifest, type);
   return dedicated.filter((m) => !original.includes(m));
-}
-
-const projExtension = ".csproj";
-
-export function getProjName(x: string) {
-  return basename(x).slice(0, -projExtension.length);
 }
 
 export function rebuildNeeded(pafile: string, swafile: string) {

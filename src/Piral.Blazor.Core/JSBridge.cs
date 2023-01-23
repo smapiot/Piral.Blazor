@@ -82,6 +82,21 @@ namespace Piral.Blazor.Core
 
         #endregion
 
+        #region Auxiliary APIs
+
+        [JSInvokable]
+        public static Task SetLanguage(string language)
+        {
+            if (ActivationService is not null)
+            {
+                ActivationService.Language = language;
+            }
+
+            return Task.CompletedTask;
+        }
+
+        #endregion
+
         #region Modern Loading / Initialization API
 
         [JSInvokable]
@@ -89,7 +104,8 @@ namespace Piral.Blazor.Core
         {
             // "load" --> enables using "LoadPilet" / "UnloadPilet" instead of "LoadComponentsFromLibrary" etc.
             // "custom-element" --> enables using "CreateElement" etc. intead of "Activate" etc.
-            return Task.FromResult(new[] { "load", "custom-element" });
+            // "language" --> enables using 
+            return Task.FromResult(new[] { "load", "custom-element", "language" });
         }
 
         [JSInvokable]
@@ -102,8 +118,10 @@ namespace Piral.Blazor.Core
                 var client = Host.Services.GetRequiredService<HttpClient>();
                 var dll = await client.GetStreamAsync(pilet.DllUrl);
                 var pdb = pilet.PdbUrl != null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
-                data.Library = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-                data.Service = new PiletService(pilet);
+                var library = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
+                var service = new PiletService(pilet);
+                data.Library = library;
+                data.Service = service;
 
                 foreach (var url in pilet.Dependencies)
                 {
@@ -116,6 +134,32 @@ namespace Piral.Blazor.Core
                     }
                 }
 
+                if (pilet.Satellites is not null && ActivationService is not null)
+                {
+                    Func<string, Task> changeLanguage = async (language) =>
+                    {
+                        if (pilet.Satellites.TryGetValue(language, out var satellites))
+                        {
+                            foreach (var satellite in satellites)
+                            {
+                                var url = data.Service.GetUrl(satellite);
+                                var dep = await client.GetStreamAsync(url);
+                                AssemblyLoadContext.Default.LoadFromStream(dep);
+                            }
+                        }
+
+                        service.InformLanguageChange();
+                    };
+
+                    data.LanguageHandler = (s, e) =>
+                    {
+                        changeLanguage(ActivationService.Language);
+                    };
+
+                    ActivationService.LanguageChanged += data.LanguageHandler;
+                    data.LanguageHandler.Invoke(null, EventArgs.Empty);
+                }
+
                 ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service);
             }
         }
@@ -123,9 +167,10 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static Task UnloadPilet(string id)
         {
-            if (_pilets.Remove(id, out var data))
+            if (_pilets.Remove(id, out var data) && ActivationService is not null)
             {
-                ActivationService?.UnloadComponentsFromAssembly(data.Library);
+                ActivationService.LanguageChanged -= data.LanguageHandler;
+                ActivationService.UnloadComponentsFromAssembly(data.Library);
             }
 
             return Task.CompletedTask;
@@ -182,7 +227,9 @@ namespace Piral.Blazor.Core
         {
             public Assembly Library { get; set; }
 
-            public IPiletService Service { get; set; }
+            public PiletService Service { get; set; }
+
+            public EventHandler LanguageHandler { get; set; }
         }
 
         #endregion

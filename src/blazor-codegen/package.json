@@ -16,6 +16,7 @@
   "devDependencies": {
     "@types/glob": "^7.2.0",
     "@types/node": "^18.0.0",
-    "esbuild": "^0.14.47"
+    "esbuild": "^0.14.47",
+    "fast-xml-parser": "^4.0.13"
   }
 }

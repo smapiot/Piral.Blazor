@@ -13,6 +13,8 @@ namespace Piral.Blazor.Core
         private readonly string _name;
         private readonly string _version;
 
+        public event EventHandler LanguageChanged;
+
         public PiletService(string baseUrl)
         {
             _name = "(unknown)";
@@ -29,7 +31,7 @@ namespace Piral.Blazor.Core
             _name = pilet.Name;
             _version = pilet.Version;
 
-            // Move base URL up in case of a `_framework` containment
+            // base URL is already given
             _baseUrl = new Uri(pilet.BaseUrl);
             // Create config wrapper
             _config = new ConfigurationBuilder().AddJsonStream(GetStream(pilet.Config)).Build();
@@ -50,6 +52,8 @@ namespace Piral.Blazor.Core
 
             return new Uri(_baseUrl, localPath).AbsoluteUri;
         }
+
+        public void InformLanguageChange() => LanguageChanged?.Invoke(this, EventArgs.Empty);
 
         private static Stream GetStream(string s) => new MemoryStream(Encoding.UTF8.GetBytes(s));
     }

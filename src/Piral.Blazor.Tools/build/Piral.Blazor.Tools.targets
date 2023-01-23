@@ -39,6 +39,7 @@
             Bundler="$(Bundler)"
             NpmRegistry="$(NpmRegistry)"
             ConfigFolderName="$(ConfigFolder)"
+            MocksFolderName="$(MocksFolder)"
 			Version="$(Version)" />
     </Target>
 </Project>

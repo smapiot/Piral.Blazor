@@ -1,4 +1,5 @@
 @inject IComponentActivationService Activation
+@implements IDisposable
 
 @foreach (var active in Activation.Components)
 {
@@ -10,14 +11,21 @@
 }
 
 @code {
+    private void ComponentChanged(object sender, EventArgs e)
+    {
+        this.StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Activation.ComponentsChanged -= ComponentChanged;
+    }
+
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            Activation.ComponentsChanged += (s, e) =>
-            {
-                this.StateHasChanged();
-            };
+            Activation.ComponentsChanged += ComponentChanged;
         }
 
         return base.OnAfterRenderAsync(firstRender);

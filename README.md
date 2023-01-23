@@ -23,7 +23,7 @@ In general, to create a Blazor pilet using `Piral.Blazor`, two approaches can be
 
 #### 1. From Scratch
 
-In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](/src/Piral.Blazor.Template).
+In this case, it is highly recommended to use our template. More information and installation instructions can be found in [`Piral.Blazor.Template`](https://www.nuget.org/packages/Piral.Blazor.Template).
 
 #### 2. Transforming an Existing Application
 
@@ -108,6 +108,7 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `PiralBundlerVersion`: Determines the version of the `piral-cli-<bundler>` to use. By default, this is the same as the value of the `PiralCliVersion`.
 - `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
 - `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
+- `MocksFolder`: Sets the folder where the Kras mock files are stored (default: `.\mocks`).
 
 A more extensive example:
 
@@ -399,6 +400,31 @@ The only helper there is `GetUrl`. You can use it like:
 
 In the example above the resource `images/something.png` would be placed in the `wwwroot` folder (i.e., `wwwroot/images/something`). As the content of the `wwwroot` folder is copied, the image will also be copied. However, the old local URL is not valid in a pilet, which needs to prefix its resources with its base URL. The function above does that. In that case, the URL would maybe be something like `http://localhost:1234/$pilet-api/0/images/something.png` while debugging, and another fully qualified URL later in production.
 
+### Localization
+
+Localization works almost exactly as with standard Blazor, except that the language can be changed at runtime directly rather then requiring a full reload of the page.
+
+The other difference is that the initial language is no longer decided by the server's response headers, but rather by the app shell. The initial configuration options of the `piral-blazor` plugin allow setting the `initialLanguage`. These options also allow setting up a callback to decide when to change the language (and to what language). If not explicitly stated Blazor will just listen to the `select-language` event of Piral, providing a key `currentLanguage` in the event arguments.
+
+To dynamically change / refresh your components when the language change you'll need to listen to the `LanguageChanged` event emitted by the injected `IPiletService` instance:
+
+```razor
+@inject IStringLocalizer<MyComponent> loc
+@inject IPiletService pilet
+
+<h2>@loc["greeting"]</h2>
+
+@code {
+    protected override void OnInitialized()
+    {
+        pilet.LanguageChanged += (s, e) => this.StateHasChanged();
+        base.OnInitialized();
+    }
+}
+```
+
+This way, your components will always remain up-to-date and render the right translations.
+
 ### Root Component
 
 By default, the Blazor pilets run in a dedicated Blazor application with no root component. If you need a root component, e.g., to provide some common values from a `CascadingValue` component such as `CascadingAuthenticationState` from the `Microsoft.AspNetCore.Components.Authorization` package, you can actually override the default root component:
@@ -435,7 +461,7 @@ You can also provide your own providers here (or nest them as you want):
 }
 ```
 
-Note, that there is always just one `PiralAppRoot` component. If you did not supply one then the default `PiralAppRoot` will be used. If you already provided one, no other `PiralAppRoot` can be used.
+**Note**: There is always just one `PiralAppRoot` component. If you did not supply one then the default `PiralAppRoot` will be used. If you already provided one, no other `PiralAppRoot` can be used.
 
 ## Running and Debugging the Pilet :rocket:
 
@@ -457,12 +483,16 @@ In addition to this, if you want to debug your Blazor pilet using for example Vi
 
 There are some special files that you can add in your project (adjacent to the *.csproj* file):
 
-- *.piralconfig/setup.tsx*
-- *.piralconfig/teardown.tsx*
-- *.piralconfig/package-overwrites.json*
-- *.piralconfig/js-imports.json*
+- *setup.tsx*
+- *teardown.tsx*
+- *package-overwrites.json*
+- *meta-overwrites.json*
+- *kras-overwrites.json*
+- *js-imports.json*
 
-Let's see what they do and how they can be used.
+**Note**: The location of these files can also be changed through the `ConfigFolder` option. By default, this one is empty, i.e., all files have to be placed adjacent to the *.csproj* file as mentioned above. However, if you set the value to, e.g., *.piletconfig* then the files will be retrieved from this subdirectory. For instance, the setup file would then be read from *.piletconfig/setup.tsx*.
+
+Let's see what these files do and how they can be used.
 
 ### Extending the Pilet's Setup
 
@@ -509,6 +539,22 @@ This would add a development dependency to the `axios` package. Likewise, other 
 
 The rules for the merge follow the [Json.NET](https://www.newtonsoft.com/json/help/html/MergeJson.htm) approach.
 
+### Overwriting the Debug Meta Data
+
+The generated / used pilet is served from the local file system instead of a feed service. Therefore, it will not have things like a configuration store. However, you might want to use one - or at least test against one. For this, usually a *meta.json* file can be used. The content of this *meta.json* is then merged into the metadata of a served pilet. For Piral.Blazor this file is premade, however, its content can still be overwritten using a *meta-overwrites.json* file.
+
+For instance, to include a custom `config` field (with one config called `backendUrl`) in the pilet's metadata you can use the following content:
+
+```json
+{
+  "config": {
+    "backendUrl": "http://localhost:7345"
+  }
+}
+```
+
+The rules for the merge follow the [Json.NET](https://www.newtonsoft.com/json/help/html/MergeJson.htm) approach.
+
 ### Extending the Pilet's Teardown
 
 The *teardown.tsx* file can be used to define more things that should be done in a pilet's `teardown` function. By default, the content of the `teardown` function is auto generated. Things such as `pages` and `extensions` would be automatically unregistered. However, in some cases you will need to unregister things manually. You can do this here.
@@ -530,10 +576,24 @@ Includes the two dependencies via the respective `import` statements.
 
 ### DevServer Settings
 
-The `Piral.Blazor.DevServer` can be configured, too. Much like the standard / official Blazor DevServer you can introduce a *blazor-devserversettings.json* file that describes more options. Right now the contained options are the same as the one for the official Blazor DevServer.
+The `Piral.Blazor.DevServer` can be configured, too. Much like the standard / official Blazor DevServer you can introduce a *blazor-devserversettings.json* file that describes more options. Most of the contained options are the same as the one for the official Blazor DevServer.
+
+Current options found in the `Piral` section:
+
+- `forwardedPaths` - is an array of strings describing the path segments that should be forwarded to the Piral CLI dev server (using kras)
+
+Example:
+
+```json
+{
+  "Piral": {
+    "forwardedPaths": [ "/foo" ]
+  }
+}
+```
 
 In addition, the options for the DevServer also touch the configured options for the `Piral.Blazor.Tools`, such as `OutputFolder` which is used to define where the scaffolded pilet is stored.
 
 ## License
 
-Piral.Blazor is released using the MIT license. For more information see the [license file](./LICENSE).
+Piral.Blazor is released using the MIT license. For more information see the [license file](https://raw.githubusercontent.com/smapiot/Piral.Blazor/blazor-6.0/LICENSE).

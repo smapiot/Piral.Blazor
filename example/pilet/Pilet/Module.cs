@@ -13,12 +13,13 @@ namespace Blazor.LibA
 		public static void ConfigureServices(IServiceCollection services)
 		{
 			// configure (local) dependency injection here
-		}
+			//services.AddLocalization();
+        }
     
 		public static void ConfigureShared(IServiceCollection services)
 		{
 			// configure (globally shared) dependency injection here
-			services.AddComponentLibServices();
+			services.AddComponentLibServices().AddLocalization();
 		}
 	}
 }

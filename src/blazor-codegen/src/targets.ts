@@ -1,4 +1,3 @@
-import { getProjName } from "./utils";
 import { stripVersion } from "./version";
 import { targetFramework, targetFrameworkAlt } from "./constants";
 import { ProjectAssets, Targets } from "./types";
@@ -22,6 +21,11 @@ function createAllRefs(internaltargets: Targets, externalTargets: Targets) {
     deps.forEach(createExternalRefs);
     refs.add(fileName);
   };
+
+  for (const [fileName, deps] of Object.entries(externalTargets)) {
+    deps.forEach(createExternalRefs);
+    refs.add(fileName);
+  }
 
   for (const [fileName, deps] of Object.entries(internaltargets)) {
     deps.forEach(createExternalRefs);
@@ -87,18 +91,12 @@ function defineTargets(
     )
   );
 
-  const rawReferences =
-    projectAssets.project?.restore?.frameworks?.[targetFramework]
-      ?.projectReferences ?? {};
-
-  const projectReferences = Object.keys(rawReferences).map(getProjName);
-
   // Get internal project
   const projectName = projectAssets.project?.restore?.projectName;
 
   // depencency arr = deps + references
   const internalTargets = {
-    [projectName]: [...projectDependencies, ...projectReferences],
+    [projectName]: projectDependencies,
   };
 
   return [internalTargets, externalTargets];
