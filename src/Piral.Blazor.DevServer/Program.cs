@@ -154,7 +154,8 @@ builder.Configuration.AddJsonFile(Path.Combine(applicationDirectory, "blazor-dev
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
-var forwardedPaths = app.Configuration.GetValue("forwardedPaths", new string [0]);
+var piOptions = app.Configuration.GetSection("Piral").Get<PiralOptions>();
+var forwardedPaths = piOptions?.ForwardedPaths ?? Array.Empty<string>();
 
 Console.WriteLine("Starting Piral.Blazor.DevServer ...");
 Console.WriteLine("");
