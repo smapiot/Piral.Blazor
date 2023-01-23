@@ -30,16 +30,6 @@ var wwwProvider = new PhysicalFileProvider(www);
 var contentTypeProvider = CreateStaticFileTypeProvider();
 var cliProcess = StartPiralCli(piletDir, cliPort);
 
-Console.WriteLine("Starting Piral.Blazor.DevServer ...");
-Console.WriteLine("");
-Console.WriteLine("  applicationPath = {0}", applicationPath);
-Console.WriteLine("  piralInstance = {0}", piralInstance);
-Console.WriteLine("  piletDir = {0}", piletDir);
-Console.WriteLine("  outPath = {0}", outPath);
-Console.WriteLine("  appId = {0}", appId);
-Console.WriteLine("  feed = {0}", feedUrl);
-Console.WriteLine("");
-
 static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
 {
     if (File.Exists(piletJsonPath))
@@ -164,7 +154,18 @@ builder.Configuration.AddJsonFile(Path.Combine(applicationDirectory, "blazor-dev
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
-var forwardedPaths = app.Configuration.GetValue("forwardedPaths", new List<string> { });
+var forwardedPaths = app.Configuration.GetValue("forwardedPaths", new string [0]);
+
+Console.WriteLine("Starting Piral.Blazor.DevServer ...");
+Console.WriteLine("");
+Console.WriteLine("  applicationPath = {0}", applicationPath);
+Console.WriteLine("  forwardedPaths = {0}", string.Join(", ", forwardedPaths));
+Console.WriteLine("  piralInstance = {0}", piralInstance);
+Console.WriteLine("  piletDir = {0}", piletDir);
+Console.WriteLine("  outPath = {0}", outPath);
+Console.WriteLine("  appId = {0}", appId);
+Console.WriteLine("  feed = {0}", feedUrl);
+Console.WriteLine("");
 
 app.UseDeveloperExceptionPage();
 app.UseWebSockets();
