@@ -2,7 +2,8 @@
 
 namespace Piral.Blazor.Utils
 {
-    public sealed class PiralAppRootAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class, Inherited = true)]
+    public class PiralAppRootAttribute : Attribute
     {
         /// <summary>
         /// Registers a Piral app root component.
