@@ -273,6 +273,13 @@ namespace Piral.Blazor.Tools.Tasks
             }
         }
 
+        private void ChangeOutputDirectory()
+        {
+            var target = ProjectDir;
+            var packageJsonFile = Path.Combine(target, "package.json");
+            ExtendJson(packageJsonFile, $"{{\"main\":\"dist/index.js\"}}");
+        }
+
         private void CleanMonorepo()
         {
             var target = ProjectDir;
@@ -388,6 +395,8 @@ namespace Piral.Blazor.Tools.Tasks
             Run(npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
             Run(npx, target, $"{npxPrefix}pilet new \"{Emulator}\" --registry \"{NpmRegistry}\" --bundler none --no-install");
 
+            ChangeOutputDirectory();
+
             return true;
         }
 
@@ -434,18 +443,7 @@ namespace Piral.Blazor.Tools.Tasks
             if (File.Exists(krasRcPath) && Directory.Exists(MocksDir))
             {
                 var mocksDir = GetRelativePath(ProjectDir, MocksDir).Replace("\\", "/");
-                var result = new JObject();
-                var addedJson = JObject.Parse($"{{\"sources\":[\"{mocksDir}\"]}}");
-                var originalJson = JObject.Parse(File.ReadAllText(krasRcPath));
-
-                result.Merge(originalJson);
-                result.Merge(addedJson);
-
-                if (!JToken.DeepEquals(result, originalJson))
-                {
-                    File.WriteAllText(krasRcPath, JsonConvert.SerializeObject(result, Formatting.Indented));
-                    Log.LogMessage($"Successfully updated '{krasrc}' with mocks from '{MocksDir}'.");
-                }
+                ExtendJson(krasRcPath, $"{{\"sources\":[\"{mocksDir}\"]}}");
             }
         }
 
@@ -520,6 +518,23 @@ namespace Piral.Blazor.Tools.Tasks
             {
                 File.WriteAllText(originalJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
                 Log.LogMessage($"Successfully merged '{target}' with '{source}'.");
+            }
+        }
+
+        private void ExtendJson(string jsonPath, string newJsonContent)
+        {
+            var source = Path.GetFileName(jsonPath);
+            var result = new JObject();
+            var addedJson = JObject.Parse(newJsonContent);
+            var originalJson = JObject.Parse(File.ReadAllText(jsonPath));
+
+            result.Merge(originalJson);
+            result.Merge(addedJson);
+
+            if (!JToken.DeepEquals(result, originalJson))
+            {
+                File.WriteAllText(jsonPath, JsonConvert.SerializeObject(result, Formatting.Indented));
+                Log.LogMessage($"Successfully updated '{source}'.");
             }
         }
 
