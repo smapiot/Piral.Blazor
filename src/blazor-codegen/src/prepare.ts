@@ -99,9 +99,9 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
     checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
 
-    copyAll(ignored, staticAssets, targetDir);
+    const watchPaths = copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest, satellites };
+    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
   } else {
     console.log(
       "The app shell does not contain `piral-blazor`. Using standalone mode."
@@ -125,8 +125,8 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
       originalManifest
     );
 
-    copyAll(ignored, staticAssets, targetDir);
+    const watchPaths = copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest, satellites };
+    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
   }
 }
