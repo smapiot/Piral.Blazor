@@ -2,7 +2,8 @@
 
 namespace Piral.Blazor.Utils
 {
-    public sealed class PiralComponentAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class, Inherited = true)]
+    public class PiralComponentAttribute : Attribute
     {
         /// <summary>
         /// Registers a Piral component

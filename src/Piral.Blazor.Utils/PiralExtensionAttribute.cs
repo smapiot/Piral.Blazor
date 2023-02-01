@@ -3,7 +3,7 @@
 namespace Piral.Blazor.Utils
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    public sealed class PiralExtensionAttribute : Attribute
+    public class PiralExtensionAttribute : Attribute
     {
         /// <summary>
         /// Registers a Piral extension for a specific extensionId

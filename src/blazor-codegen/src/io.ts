@@ -3,6 +3,8 @@ import { basename, dirname, resolve } from "path";
 import { StaticAsset, StaticAssets } from "./types";
 
 function copyFiles(assets: Array<StaticAsset>, target: string) {
+  const watchPaths: Array<string> = [];
+
   for (const asset of assets) {
     const fromPath = asset.Identity;
     const toPath = resolve(target, getAssetPath(asset));
@@ -10,7 +12,10 @@ function copyFiles(assets: Array<StaticAsset>, target: string) {
 
     mkdirSync(toDir, { recursive: true });
     copyFileSync(fromPath, toPath);
+    watchPaths.push(fromPath);
   }
+
+  return watchPaths;
 }
 
 export function isAsset(asset: StaticAsset, name: string) {
@@ -43,5 +48,5 @@ export function copyAll(
   );
 
   //File copy
-  copyFiles(staticFiles, targetDir);
+  return copyFiles(staticFiles, targetDir);
 }

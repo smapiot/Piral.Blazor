@@ -1595,13 +1595,16 @@ var import_fs6 = require("fs");
 var import_fs = require("fs");
 var import_path = require("path");
 function copyFiles(assets, target) {
+  const watchPaths = [];
   for (const asset of assets) {
     const fromPath = asset.Identity;
     const toPath2 = (0, import_path.resolve)(target, getAssetPath(asset));
     const toDir = (0, import_path.dirname)(toPath2);
     (0, import_fs.mkdirSync)(toDir, { recursive: true });
     (0, import_fs.copyFileSync)(fromPath, toPath2);
+    watchPaths.push(fromPath);
   }
+  return watchPaths;
 }
 function isAsset(asset, name) {
   return (0, import_path.basename)(asset.RelativePath) === name;
@@ -1618,7 +1621,7 @@ function getFilePath(source, name) {
 }
 function copyAll(ignored, source, targetDir) {
   const staticFiles = source.Assets.filter((asset) => !ignored.includes(getAssetPath(asset)));
-  copyFiles(staticFiles, targetDir);
+  return copyFiles(staticFiles, targetDir);
 }
 
 // src/utils.ts
@@ -1941,8 +1944,8 @@ async function prepare(targetDir, staticAssets) {
     const ignored = [...alwaysIgnored, ...existingFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, appShellManifest);
     checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
-    copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, standalone, manifest, satellites };
+    const watchPaths = copyAll(ignored, staticAssets, targetDir);
+    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
   } else {
     const blazorVersion = findBlazorVersion(piralPiletFolder) || getBlazorRelease(piletDotnetVersion);
     console.log("The app shell does not contain `piral-blazor`. Using standalone mode.");
@@ -1956,8 +1959,8 @@ async function prepare(targetDir, staticAssets) {
     ]);
     const ignored = [...alwaysIgnored, ...frameworkFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(appdir, instanceName, piletManifest, originalManifest);
-    copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, standalone, manifest, satellites };
+    const watchPaths = copyAll(ignored, staticAssets, targetDir);
+    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
   }
 }
 
@@ -2065,10 +2068,8 @@ Seen error: ${err}`);
   }
   const projectAssets = require(pafile);
   const staticAssets = require(swafile);
-  const { standalone, manifest, dlls, pdbs, satellites } = await prepare(targetDir, staticAssets);
-  this.addDependency(swafile);
-  this.addDependency(pafile);
-  this.addDependency(manifest);
+  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } = await prepare(targetDir, staticAssets);
+  [swafile, pafile, manifest, ...watchPaths].forEach((path) => this.addDependency(path));
   if (standalone) {
     allImports.push(`import * as pbc from 'piral-blazor/convert';`);
   }
