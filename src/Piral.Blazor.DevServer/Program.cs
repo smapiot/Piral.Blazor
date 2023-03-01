@@ -67,12 +67,12 @@ static int GetFreeTcpPort()
     return port;
 }
 
-static Process StartPiralCli(string piletDir, int cliPort)
+static Process StartPiralCli(string piletDir, int cliPort, string feed)
 {
     var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
     var npx = isWindows ? "cmd.exe" : "npx";
     var npxPrefix = isWindows ? "/c npx.cmd " : "";
-    var extraArgs = remoteFeedUrl ? $" --feed {remoteFeedUrl}" : "";
+    var extraArgs = feed ? $" --feed {feed}" : "";
 
     var process = Process.Start(new ProcessStartInfo
     {
@@ -157,7 +157,7 @@ var app = builder.Build();
 var piOptions = app.Configuration.GetSection("Piral").Get<PiralOptions>();
 var forwardedPaths = piOptions?.ForwardedPaths ?? Array.Empty<string>();
 var remoteFeedUrl = piOptions?.FeedUrl;
-var cliProcess = StartPiralCli(piletDir, cliPort);
+var cliProcess = StartPiralCli(piletDir, cliPort, remoteFeedUrl);
 
 Console.WriteLine("Starting Piral.Blazor.DevServer ...");
 Console.WriteLine("");
