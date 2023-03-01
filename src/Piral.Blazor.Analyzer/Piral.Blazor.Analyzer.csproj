@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-    <VersionPrefix>7.0.6</VersionPrefix>
+    <VersionPrefix>7.0.7</VersionPrefix>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <PackageReadmeFile>README.md</PackageReadmeFile>

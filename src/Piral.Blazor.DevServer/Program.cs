@@ -28,7 +28,6 @@ var distDir = Path.Combine(piletDir, "dist");
 var www = Path.Combine(piletDir, "node_modules", piralInstance, "app");
 var wwwProvider = new PhysicalFileProvider(www);
 var contentTypeProvider = CreateStaticFileTypeProvider();
-var cliProcess = StartPiralCli(piletDir, cliPort);
 
 static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
 {
@@ -73,6 +72,7 @@ static Process StartPiralCli(string piletDir, int cliPort)
     var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
     var npx = isWindows ? "cmd.exe" : "npx";
     var npxPrefix = isWindows ? "/c npx.cmd " : "";
+    var extraArgs = remoteFeedUrl ? $" --feed {remoteFeedUrl}" : "";
 
     var process = Process.Start(new ProcessStartInfo
     {
@@ -80,7 +80,7 @@ static Process StartPiralCli(string piletDir, int cliPort)
         WorkingDirectory = piletDir,
         UseShellExecute = false,
         CreateNoWindow = true,
-        Arguments = $"{npxPrefix}pilet debug --port {cliPort}",
+        Arguments = $"{npxPrefix}pilet debug --port {cliPort}{extraArgs}",
         RedirectStandardOutput = true,
         RedirectStandardError = true,
     })!;
@@ -156,11 +156,14 @@ builder.Services.AddHttpClient();
 var app = builder.Build();
 var piOptions = app.Configuration.GetSection("Piral").Get<PiralOptions>();
 var forwardedPaths = piOptions?.ForwardedPaths ?? Array.Empty<string>();
+var remoteFeedUrl = piOptions?.FeedUrl;
+var cliProcess = StartPiralCli(piletDir, cliPort);
 
 Console.WriteLine("Starting Piral.Blazor.DevServer ...");
 Console.WriteLine("");
 Console.WriteLine("  applicationPath = {0}", applicationPath);
 Console.WriteLine("  forwardedPaths = {0}", string.Join(", ", forwardedPaths));
+Console.WriteLine("  remoteFeedUrl = {0}", remoteFeedUrl);
 Console.WriteLine("  piralInstance = {0}", piralInstance);
 Console.WriteLine("  piletDir = {0}", piletDir);
 Console.WriteLine("  outPath = {0}", outPath);

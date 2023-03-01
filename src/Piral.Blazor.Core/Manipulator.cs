@@ -58,6 +58,12 @@ namespace Piral.Blazor.Core
         
         public void OverrideComponentInitializer(Type componentType, IServiceProvider provider)
         {
+            if (componentType.IsGenericType)
+            {
+                _logger.LogWarning("The given component '{0}' is generic and therefore cannot be exposed to the pilet as an entry component.", componentType.Name);
+                return;
+            }
+
             try
             {
                 InstantiateComponent(provider, componentType);

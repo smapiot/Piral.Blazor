@@ -53,9 +53,6 @@ namespace Piral.Blazor.Tools.Tasks
         public string Bundler { get; set; }
 
         [Required]
-        public string ToolsVersion { get; set; }
-
-        [Required]
         public string Framework { get; set; }
 
         [Required]
@@ -93,6 +90,8 @@ namespace Piral.Blazor.Tools.Tasks
         private bool IsMonorepo => Monorepo == "enable";
 
         private string Emulator => IsPiralInstanceFile ? PiralInstanceFile : PiralInstance;
+
+        private string ToolsVersion => typeof(ManagePiletTask).Assembly.GetName().Version.ToString();
 
         #endregion
 

@@ -207,6 +207,12 @@ namespace Piral.Blazor.Core
 
             foreach (var componentType in componentTypes)
             {
+                if (componentType.IsAbstract)
+                {
+                    // Skip abstract base classes
+                    continue;
+                }
+
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
 
                 foreach (var componentName in componentNames)
@@ -223,6 +229,12 @@ namespace Piral.Blazor.Core
 
             foreach (var componentType in componentTypes)
             {
+                if (componentType.IsAbstract)
+                {
+                    // Skip abstract base classes
+                    continue;
+                }
+
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
 
                 foreach (var componentName in componentNames)
@@ -286,7 +298,7 @@ namespace Piral.Blazor.Core
 
         private static IEnumerable<string> GetComponentNameToRegister(Type member, Type attributeType)
         {
-            var attributes = member.GetCustomAttributes(attributeType, false);
+            var attributes = member.GetCustomAttributes(attributeType, true);
 
             // get only the first occurence of the attribute for all but pages.
             // This is mostly relevant for extensions, which can have multiple attributes,
