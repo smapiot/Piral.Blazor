@@ -20,10 +20,6 @@
     </Target>
 
     <Target Name="Scaffold" DependsOnTargets="RunResolvePackageDependencies">
-        <PropertyGroup>
-            <_installedToolsVersion>@(PackageDefinitions->WithMetadataValue("Name", "Piral.Blazor.Tools")->'%(Version)')</_installedToolsVersion>
-        </PropertyGroup>
-		
         <ManagePiletTask
             Source="$(MSBuildProjectDirectory)"
             Target="$(OutputFolder)"
@@ -31,7 +27,6 @@
             FrameworkMoniker="$(TargetFrameworkMoniker)"
             CliVersion="$(PiralCliVersion)"
             BundlerVersion="$(PiralBundlerVersion)"
-            ToolsVersion="$(_installedToolsVersion)"
             ContentFolder="$(MSBuildThisFileDirectory)..\content"
             PiralInstance="$(PiralInstance)"
 			Monorepo="$(Monorepo)"
