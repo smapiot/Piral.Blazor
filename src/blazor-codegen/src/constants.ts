@@ -1,7 +1,4 @@
 // filled in by MSBuild
-export const targetFramework = "**MSBUILD_TargetFramework**";
-export const targetFrameworkAlt = "**MSBUILD_TargetFrameworkMoniker**";
-export const configFolderName = "**MSBUILD_ConfigFolder**";
 export const blazorprojectfolder = "**MSBUILD_ProjectFolder**";
 
 // dependent on the NODE_ENV variable set by piral cli

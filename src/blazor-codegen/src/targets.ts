@@ -1,6 +1,5 @@
 import { stripVersion } from "./version";
-import { targetFramework, targetFrameworkAlt } from "./constants";
-import { ProjectAssets, Targets } from "./types";
+import { ProjectAssets, ProjectConfig, Targets } from "./types";
 
 function createAllRefs(internaltargets: Targets, externalTargets: Targets) {
   // Sets de-duplicate AND keep their insertion order
@@ -36,16 +35,21 @@ function createAllRefs(internaltargets: Targets, externalTargets: Targets) {
 }
 
 function defineTargets(
+  config: ProjectConfig,
   uniqueDependencies: Array<string>,
   projectAssets: ProjectAssets
 ): [internal: Targets, external: Targets] {
   const isNotSharedDep = (x: string | undefined) =>
     typeof x === "string" && uniqueDependencies.includes(x);
+  const targetNames = [
+    `${config.targetFramework}/browser-wasm`,
+    config.targetFramework,
+  ];
 
   // Get all external dependencies
-  const targets =
-    projectAssets.targets?.[targetFrameworkAlt] ??
-    projectAssets.targets?.[targetFramework];
+  const [targets] = targetNames
+    .map((name) => projectAssets.targets?.[name])
+    .filter(Boolean);
 
   // Looks up the dll name for a project id
   const getDllName = (projectId: string) => {
@@ -87,7 +91,8 @@ function defineTargets(
 
   const projectDependencies = filterDeps(
     Object.keys(
-      projectAssets.project?.frameworks?.[targetFramework]?.dependencies ?? {}
+      projectAssets.project?.frameworks?.[config.targetFramework]
+        ?.dependencies ?? {}
     )
   );
 
@@ -103,9 +108,10 @@ function defineTargets(
 }
 
 export function createAllTargetRefs(
+  config: ProjectConfig,
   uniqueDependencies: Array<string>,
   projectAssets: ProjectAssets
 ) {
-  const targets = defineTargets(uniqueDependencies, projectAssets);
+  const targets = defineTargets(config, uniqueDependencies, projectAssets);
   return createAllRefs(...targets);
 }

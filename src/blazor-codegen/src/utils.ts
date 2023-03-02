@@ -1,5 +1,10 @@
 import { existsSync } from "fs";
-import { BlazorManifest, BlazorResourceType, StaticAssets } from "./types";
+import {
+  BlazorManifest,
+  BlazorResourceType,
+  ProjectConfig,
+  StaticAssets,
+} from "./types";
 
 function getAllKeys(manifest: BlazorManifest, type: BlazorResourceType) {
   return Object.keys(manifest.resources[type] || {});
@@ -15,15 +20,15 @@ function getUniqueKeys(
   return dedicated.filter((m) => !original.includes(m));
 }
 
-export function rebuildNeeded(pafile: string, swafile: string) {
-  if (existsSync(pafile) && existsSync(swafile)) {
-    const staticAssets: StaticAssets = require(swafile);
+export function rebuildNeeded(config: ProjectConfig) {
+  if (existsSync(config.paFile) && existsSync(config.swaFile)) {
+    const staticAssets: StaticAssets = require(config.swaFile);
 
-    if (staticAssets.Assets.every(m => existsSync(m.Identity))) {
+    if (staticAssets.Assets.every((m) => existsSync(m.Identity))) {
       return false;
     }
   }
-  
+
   return true;
 }
 

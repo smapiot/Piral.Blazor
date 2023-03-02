@@ -109,6 +109,7 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
 - `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
 - `MocksFolder`: Sets the folder where the Kras mock files are stored (default: `.\mocks`).
+- `PiletPriority`: Sets the optional priority of the pilet when loading. Blazor pilet DLLs with higher numbers will always be loaded before the current DLL (default: *none*).
 
 A more extensive example:
 

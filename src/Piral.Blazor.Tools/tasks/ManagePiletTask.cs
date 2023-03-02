@@ -366,7 +366,7 @@ namespace Piral.Blazor.Tools.Tasks
                 {
                     // Something fundamental changed - let's just delete and scaffold again
                 }
-                else if (date.CompareTo(DateTime.Now.AddDays(-2)) >= 0)
+                else if (date.CompareTo(DateTime.Now.AddDays(-7)) >= 0)
                 {
                     Log.LogMessage($"Scaffolded infrastructure seems up to date.");
                     return false;

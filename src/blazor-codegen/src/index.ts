@@ -1,4 +1,4 @@
-import { join, resolve } from "path";
+import { join } from "path";
 import { existsSync } from "fs";
 import { getAssetPath, getFilePath } from "./io";
 import { rebuildNeeded } from "./utils";
@@ -6,6 +6,7 @@ import { createAllTargetRefs } from "./targets";
 import { prepare } from "./prepare";
 import { analyzeProject, buildSolution } from "./project";
 import { ProjectAssets, StaticAssets } from "./types";
+import { getProjectConfig } from "./config";
 import {
   fallbackPiletCode,
   makePiletCode,
@@ -13,49 +14,43 @@ import {
   standaloneRemapCode,
 } from "./snippets";
 import {
-  configuration,
-  targetFramework,
   setupfile,
   blazorprojectfolder,
   isRelease,
-  pajson,
-  swajson,
-  configFolderName,
   teardownfile,
 } from "./constants";
 
 const bv = "PIRAL_BLAZOR_LAST_BUILD";
-const piralconfigfolder = resolve(blazorprojectfolder, configFolderName);
-const objectsDir = resolve(blazorprojectfolder, "obj");
-const pafile = resolve(objectsDir, pajson);
-const swafile = resolve(objectsDir, configuration, targetFramework, swajson);
 
 module.exports = async function () {
   const allImports: Array<string> = [];
   const targetDir = this.options.outDir;
+  const config = await getProjectConfig(blazorprojectfolder);
 
   // always build when files not found or in release
   // never re-build just when there is a change incoming
-  if (!process.env[bv] && (isRelease || rebuildNeeded(pafile, swafile))) {
+  if (!process.env[bv] && (isRelease || rebuildNeeded(config))) {
     try {
       await buildSolution(blazorprojectfolder);
     } catch (err) {
       throw new Error(
-        `Something went wrong with the Blazor build.\n` +
-          `Make sure there is at least one Blazor project in your solution.\n` +
-          `Seen error: ${err}`
+        [
+          `Something went wrong with the Blazor build.`,
+          `Make sure there is at least one Blazor project in your solution.`,
+          `Seen error: ${err}`,
+        ].join("\n")
       );
     }
   }
 
   // Require modules
-  const projectAssets: ProjectAssets = require(pafile);
-  const staticAssets: StaticAssets = require(swafile);
+  const projectAssets: ProjectAssets = require(config.paFile);
+  const staticAssets: StaticAssets = require(config.swaFile);
 
   const { standalone, manifest, dlls, pdbs, satellites, watchPaths } =
     await prepare(targetDir, staticAssets);
 
-  [swafile, pafile, manifest, ...watchPaths].forEach((path) =>
+  [config.swaFile, config.paFile, manifest, ...watchPaths].forEach((path) =>
     this.addDependency(path)
   );
 
@@ -85,7 +80,7 @@ module.exports = async function () {
     .map(getAssetPath);
 
   // Dervice files
-  const refs = createAllTargetRefs(uniqueDependencies, projectAssets);
+  const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);
   const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) =>
     getFilePath(staticAssets, name)
   );
@@ -93,7 +88,7 @@ module.exports = async function () {
   const registerDependenciesCode = `export function registerDependencies(app) {
     const references = ${JSON.stringify(files)}.map((file) => path + file);
     const satellites = ${JSON.stringify(satellites) || "undefined"};
-    app.defineBlazorReferences(references, satellites);
+    app.defineBlazorReferences(references, satellites, ${config.priority});
   }`;
 
   //Options
@@ -102,7 +97,7 @@ module.exports = async function () {
   }`;
 
   // Setup file
-  const setupFilePath = join(piralconfigfolder, setupfile).replace(/\\/g, "/");
+  const setupFilePath = join(config.configDir, setupfile).replace(/\\/g, "/");
   const setupFileExists = existsSync(setupFilePath);
 
   if (setupFileExists) {
@@ -127,7 +122,7 @@ module.exports = async function () {
   }`;
 
   // Teardown file
-  const teardownFilePath = join(piralconfigfolder, teardownfile).replace(
+  const teardownFilePath = join(config.configDir, teardownfile).replace(
     /\\/g,
     "/"
   );
@@ -156,7 +151,7 @@ module.exports = async function () {
   );
 
   try {
-    const { routes, extensions } = await analyzeProject(blazorprojectfolder);
+    const { routes, extensions } = await analyzeProject(config);
     const standardPiletCode = makePiletCode(routes, extensions);
 
     process.env[bv] = `time:${Date.now()}`;
