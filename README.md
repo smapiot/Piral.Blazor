@@ -205,6 +205,8 @@ export default (app: PiletApi, addScript: AddScript) => {
 
 The first argument is the (relative) path to the RCL script, while the optional second argument provides additional attributes for the script to be added to the DOM.
 
+**Important**: Non-abstract / exposed components with `PiralComponent` cannot have a type parameter. As these are directly instantiated from JavaScript there is no way to define the type to be used. As such, you cannot mark components as `@[PiralComponent]` and `@typeparam`. If you want to use a generic component, then wrap it (i.e., use a second component declared as a `PiralComponent`, which only mounts / renders the first component with the desired generic type).
+
 ### Using Parameters
 
 Parameters (or "props") are properly forwarded. Usually, it should be sufficient to declare `[Parameter]` properties in the Blazor components. Besides, there are more advanced ways.
@@ -231,6 +233,8 @@ For instance, to access the `params` prop of an extension you can use the `Piral
 ```
 
 For the serialization you'll need to use either a `JsonElement` or something that can be serialized into. In this case, we used a class called `MyParams`.
+
+**Important**: Make sure that your classes here are *serializable*, i.e., that they have a default / empty constructor (no parameters) and are public. Best case: These should be [POCOs](https://en.wikipedia.org/wiki/Plain_old_CLR_object).
 
 With the `PiralParameter` you can also access / forward children to improve object access:
 
@@ -601,12 +605,22 @@ Current options found in the `Piral` section:
   ```json
   {
     "Piral": {
-      "feedUrl": [ "https://feed.piral.cloud/api/v1/pilet/sample" ]
+      "feedUrl": "https://feed.piral.cloud/api/v1/pilet/sample"
     }
   }
   ```
 
 In addition, the options for the DevServer also touch the configured options for the `Piral.Blazor.Tools`, such as `OutputFolder` which is used to define where the scaffolded pilet is stored.
+
+### Setting the Logging Level
+
+The log level can be set either within your Blazor pilets using the `ILoggingConfiguration` service or from JavaScript:
+
+```js
+DotNet.invokeMethodAsync('Piral.Blazor.Core', 'SetLogLevel', logLevel);
+```
+
+Here, the value for `logLevel` should be between 0-6, where 0 logs everything (even traces) and 6 logs nothing. Alternatively, you can also set a log level when initializing `piral-blazor`.
 
 ## License
 
