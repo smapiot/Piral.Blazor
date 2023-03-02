@@ -67,12 +67,12 @@ static int GetFreeTcpPort()
     return port;
 }
 
-static Process StartPiralCli(string piletDir, int cliPort, string feed)
+static Process StartPiralCli(string piletDir, int cliPort, string? feed)
 {
     var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
     var npx = isWindows ? "cmd.exe" : "npx";
     var npxPrefix = isWindows ? "/c npx.cmd " : "";
-    var extraArgs = feed ? $" --feed {feed}" : "";
+    var extraArgs = !string.IsNullOrEmpty(feed) ? $" --feed {feed}" : "";
 
     var process = Process.Start(new ProcessStartInfo
     {

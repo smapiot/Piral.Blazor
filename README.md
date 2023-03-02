@@ -109,7 +109,7 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
 - `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
 - `MocksFolder`: Sets the folder where the Kras mock files are stored (default: `.\mocks`).
-- `PiletPriority`: Sets the optional priority of the pilet when loading. Blazor pilet DLLs with higher numbers will always be loaded before the current DLL (default: *none*).
+- `PiletPriority`: Sets the optional priority of the pilet when loading (any representable positive number). DLLs of Blazor pilets with higher numbers will *always* be loaded before the current DLLs (default: *none*).
 
 A more extensive example:
 
@@ -130,6 +130,7 @@ A more extensive example:
       someotherproject;
       thirdproj
     </ProjectsWithStaticFiles>
+    <PiletPriority>999</PiletPriority>
   </PropertyGroup>
 
   <!-- ... -->
@@ -583,15 +584,27 @@ Current options found in the `Piral` section:
 
 - `forwardedPaths` - is an array of strings describing the path segments that should be forwarded to the Piral CLI dev server (using kras)
 
-Example:
+  Example:
 
-```json
-{
-  "Piral": {
-    "forwardedPaths": [ "/foo" ]
+  ```json
+  {
+    "Piral": {
+      "forwardedPaths": [ "/foo" ]
+    }
   }
-}
-```
+  ```
+
+- `feedUrl` - is a string defining an URL for including an external / remote feed of pilets into the debug process
+
+  Example:
+
+  ```json
+  {
+    "Piral": {
+      "feedUrl": [ "https://feed.piral.cloud/api/v1/pilet/sample" ]
+    }
+  }
+  ```
 
 In addition, the options for the DevServer also touch the configured options for the `Piral.Blazor.Tools`, such as `OutputFolder` which is used to define where the scaffolded pilet is stored.
 
