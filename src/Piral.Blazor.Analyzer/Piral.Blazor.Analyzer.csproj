@@ -9,6 +9,7 @@
     <Company>smapiot</Company>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
+    <PackageDescription>The analyzer to retrieve assembly details when building Blazor pilets.</PackageDescription>
     <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-7.0/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>        
