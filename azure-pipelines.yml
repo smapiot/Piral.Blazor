@@ -21,20 +21,23 @@ steps:
     version: '6.0.x'
     packageType: sdk
 
-- script: dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
-  displayName: 'Build Core'
+- script: |
+    dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER
+    dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER
+    dotnet build ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER
+    dotnet build ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER
+    dotnet build ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER
+  displayName: 'Build Assemblies (Pre)'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
 
-- script: dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
-  displayName: 'Build Utils'
-
-- script: dotnet build ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration)
-  displayName: 'Build Analyzer'
-
-- script: dotnet build ./src/Piral.Blazor.Tools --configuration $(buildConfiguration)
-  displayName: 'Build Tools'
-
-- script: dotnet build ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration)
-  displayName: 'Build DevServer'
+- script: |
+    dotnet build ./src/Piral.Blazor.Core --configuration $(buildConfiguration)
+    dotnet build ./src/Piral.Blazor.Utils --configuration $(buildConfiguration)
+    dotnet build ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration)
+    dotnet build ./src/Piral.Blazor.Tools --configuration $(buildConfiguration)
+    dotnet build ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration)
+  displayName: 'Build Assemblies'
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - script: |
     dotnet build tests
@@ -74,52 +77,24 @@ steps:
 - script: rm -rf dist
   displayName: 'Reset Output'
 
-- script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
-  displayName: 'Pack Core (Pre)'
+- script: |
+    dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+    dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+    dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+    dotnet pack ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+    dotnet pack ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+    dotnet pack ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
+  displayName: 'Pack Assemblies (Pre)'
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
 
-- script: dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
-  displayName: 'Pack Core'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-
-- script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
-  displayName: 'Pack Utils (Pre)'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
-
-- script: dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
-  displayName: 'Pack Utils'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-
-- script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
-  displayName: 'Pack Template (Pre)'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
-
-- script: dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --output ./dist
-  displayName: 'Pack Template'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-
-- script: dotnet pack ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
-  displayName: 'Pack Analyzer (Pre)'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
-
-- script: dotnet pack ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration) --output ./dist
-  displayName: 'Pack Analyzer'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-
-- script: dotnet pack ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
-  displayName: 'Pack Tools (Pre)'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
-
-- script: dotnet pack ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --output ./dist
-  displayName: 'Pack Tools'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-
-- script: dotnet pack ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration) --version-suffix pre.$BUILD_BUILDNUMBER --output ./dist
-  displayName: 'Pack DevServer (Pre)'
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/blazor-'))
-
-- script: dotnet pack ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration) --output ./dist
-  displayName: 'Pack DevServer'
+- script: |
+    dotnet pack ./src/Piral.Blazor.Core --configuration $(buildConfiguration) --output ./dist
+    dotnet pack ./src/Piral.Blazor.Utils --configuration $(buildConfiguration) --output ./dist
+    dotnet pack ./src/Piral.Blazor.Template --configuration $(buildConfiguration) --output ./dist
+    dotnet pack ./src/Piral.Blazor.Analyzer --configuration $(buildConfiguration) --output ./dist
+    dotnet pack ./src/Piral.Blazor.Tools --configuration $(buildConfiguration) --output ./dist
+    dotnet pack ./src/Piral.Blazor.DevServer --configuration $(buildConfiguration) --output ./dist
+  displayName: 'Pack Assemblies'
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - task: NuGetCommand@2

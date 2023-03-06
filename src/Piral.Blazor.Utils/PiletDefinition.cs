@@ -30,6 +30,6 @@ namespace Piral.Blazor.Utils
         public List<string> Dependencies { get; set; }
 
         [JsonPropertyName("satellites")]
-        public Dictionary<string, List<string>>? Satellites { get; set; }
+        public Dictionary<string, List<string>> Satellites { get; set; }
     }
 }

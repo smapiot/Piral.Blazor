@@ -190,7 +190,13 @@ namespace Piral.Blazor.Core
                 element.WriteTo(writer);
             }
 
-            return JsonSerializer.Deserialize(bufferWriter.WrittenSpan, type);
+            return JsonSerializer.Deserialize(bufferWriter.WrittenSpan, type, new JsonSerializerOptions
+            {
+                IgnoreReadOnlyFields = true,
+                IgnoreReadOnlyProperties = true,
+                IncludeFields = true,
+                PropertyNameCaseInsensitive = true,
+            });
         }
 
         private static object GetDefaultValue(this Type t)

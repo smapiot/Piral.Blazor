@@ -22,6 +22,7 @@ namespace Piral.Blazor.Core
                 .AddSingleton<IComponentActivationService, ComponentActivationService>()
                 .AddSingleton<IModuleContainerService, ModuleContainerService>();
 
+            builder.ConfigureLogger();
             builder.ConfigureContainer(factory);
 
             var host = builder.Build();

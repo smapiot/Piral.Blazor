@@ -10,6 +10,7 @@
     <Description>Template for creating a new Piral Blazor pilet.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
+    <PackageDescription>The template for creating Blazor pilets.</PackageDescription>
     <PackageTags>aspnet;templates;blazor;spa;piral;microfrontend;pilet;mife;react</PackageTags>
     <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-6.0/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>

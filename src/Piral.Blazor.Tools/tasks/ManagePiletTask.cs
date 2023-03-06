@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Piral.Blazor.Tools.Models;
 using System;
+using System.Reflection;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -91,7 +92,7 @@ namespace Piral.Blazor.Tools.Tasks
 
         private string Emulator => IsPiralInstanceFile ? PiralInstanceFile : PiralInstance;
 
-        private string ToolsVersion => typeof(ManagePiletTask).Assembly.GetName().Version.ToString();
+        private string ToolsVersion => typeof(ManagePiletTask).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
         #endregion
 
@@ -366,7 +367,7 @@ namespace Piral.Blazor.Tools.Tasks
                 {
                     // Something fundamental changed - let's just delete and scaffold again
                 }
-                else if (date.CompareTo(DateTime.Now.AddDays(-2)) >= 0)
+                else if (date.CompareTo(DateTime.Now.AddDays(-7)) >= 0)
                 {
                     Log.LogMessage($"Scaffolded infrastructure seems up to date.");
                     return false;

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using Piral.Blazor.Utils;
 using System;
@@ -103,8 +104,9 @@ namespace Piral.Blazor.Core
         public static Task<string[]> GetCapabilities()
         {
             // "load" --> enables using "LoadPilet" / "UnloadPilet" instead of "LoadComponentsFromLibrary" etc.
-            // "language" --> enables using 
-            return Task.FromResult(new[] { "load", "language" });
+            // "language" --> enables using satellite assemblies
+            // "logging" --> enables setting the log level
+            return Task.FromResult(new[] { "load", "language", "logging" });
         }
 
         [JSInvokable]
@@ -172,6 +174,18 @@ namespace Piral.Blazor.Core
                 ActivationService.UnloadComponentsFromAssembly(data.Library);
             }
 
+            return Task.CompletedTask;
+        }
+
+        #endregion
+
+        #region Logging API
+
+        [JSInvokable]
+        public static Task SetLogLevel(int level)
+        {
+            var config = Host.Services.GetService<ILoggingConfiguration>();
+            config.SetLevel((LogLevel)level);
             return Task.CompletedTask;
         }
 

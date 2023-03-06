@@ -61,7 +61,6 @@ namespace Piral.Blazor.Core
             typeof(PiralAppRootAttribute),
             typeof(PiralComponentAttribute),
             typeof(PiralExtensionAttribute),
-            typeof(ExposePiletAttribute),
             typeof(RouteAttribute)
         };
 
@@ -326,8 +325,6 @@ namespace Piral.Blazor.Core
                         $"extension-{member.FullName}",
                     Type _ when attributeType == typeof(PiralComponentAttribute) =>
                         $"{((PiralComponentAttribute)attribute).Name ?? member.FullName}",
-                    Type _ when attributeType == typeof(ExposePiletAttribute) =>
-                        $"{((ExposePiletAttribute)attribute).Name ?? member.FullName}",
                     Type _ when attributeType == typeof(PiralAppRootAttribute) =>
                         appRoot,
                     _ => null

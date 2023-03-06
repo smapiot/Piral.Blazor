@@ -16,6 +16,17 @@ export interface BlazorManifest {
   };
 }
 
+export interface ProjectConfig {
+  targetFramework: string;
+  configDir: string;
+  paFile: string;
+  swaFile: string;
+  objectsDir: string;
+  projectDir: string;
+  projectName: string;
+  priority: string;
+}
+
 export type BlazorResourceType = keyof BlazorManifest["resources"];
 
 export type Targets = Record<string, Array<string>>;
