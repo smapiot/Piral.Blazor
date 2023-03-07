@@ -5,7 +5,7 @@ import { XMLParser } from "fast-xml-parser";
 import { configuration, pajson, swajson } from "./constants";
 import { ProjectConfig } from "./types";
 
-function getProjectName(Project: any, defaultName: string) {
+function getProjectName(Project: any, defaultName: string): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
@@ -20,7 +20,7 @@ function getProjectName(Project: any, defaultName: string) {
   return defaultName;
 }
 
-function getPriority(Project: any) {
+function getPriority(Project: any): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
@@ -35,7 +35,10 @@ function getPriority(Project: any) {
   return "undefined";
 }
 
-function getTargetFramework(Project: any, reject: (err: Error) => void) {
+function getTargetFramework(
+  Project: any,
+  reject: (err: Error) => void
+): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
@@ -50,16 +53,18 @@ function getTargetFramework(Project: any, reject: (err: Error) => void) {
   reject(
     new Error('The project file does not specify a "TargetFramework" property.')
   );
+
+  return "";
 }
 
-function getConfigFolderName(Project: any) {
+function getConfigFolderName(Project: any): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
     const propertyGroup = propertyGroups.find((p) => p.ConfigFolder);
 
-    if (propertyGroup && !isNaN(+propertyGroup.ConfigFolder)) {
+    if (propertyGroup) {
       return propertyGroup.ConfigFolder;
     }
   }

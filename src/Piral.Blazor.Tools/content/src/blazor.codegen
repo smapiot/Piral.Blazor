@@ -1971,12 +1971,13 @@ function getTargetFramework(Project, reject) {
     }
   }
   reject(new Error('The project file does not specify a "TargetFramework" property.'));
+  return "";
 }
 function getConfigFolderName(Project) {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup) ? Project.PropertyGroup : [Project.PropertyGroup];
     const propertyGroup = propertyGroups.find((p) => p.ConfigFolder);
-    if (propertyGroup && !isNaN(+propertyGroup.ConfigFolder)) {
+    if (propertyGroup) {
       return propertyGroup.ConfigFolder;
     }
   }
