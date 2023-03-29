@@ -1,40 +1,41 @@
-﻿@inject IComponentActivationService Activation
+@inject IComponentActivationService Activation
 @implements IDisposable
 
-<DynamicComponent Type="@Activation.Root" Parameters="@parameters" />
+<DynamicComponent Type="@_element.Component" Parameters="@_element.Args" />
 
 @code {
-    private readonly Dictionary<string, object> parameters = new Dictionary<string, object>{};
-
+    private PiralElement _element;
+    
     /// <summary>
     /// The reference id of the activated element.
     /// </summary>
     [Parameter]
     public string Rid { get; set; }
 
-    private void RootChanged(object sender, EventArgs e)
+    private void ElementChanged(object sender, EventArgs e)
     {
         this.StateHasChanged();
     }
     
     public void Dispose()
     {
-        Activation.RootChanged -= RootChanged;
+        if (_element is not null)
+        {
+            _element.Changed -= ElementChanged;
+        }
     }
 
     protected override Task OnInitializedAsync()
     {
-        RenderFragment child = @<ElementView Rid="@Rid" />;
-        parameters["ChildContent"] = child;
-
+        _element = Activation.GetElement(Rid);
         return base.OnInitializedAsync();
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && _element is not null)
         {
-            Activation.RootChanged += RootChanged;
+            _element.Changed += ElementChanged;
         }
 
         return base.OnAfterRenderAsync(firstRender);

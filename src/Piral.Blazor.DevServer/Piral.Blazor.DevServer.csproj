@@ -10,7 +10,7 @@
         <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
         <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
         <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
-        <VersionPrefix>7.0.7</VersionPrefix>
+        <VersionPrefix>7.0.8</VersionPrefix>
         <Description>Blazor Dev Server for Blazor pilets.</Description>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
