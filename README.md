@@ -389,13 +389,17 @@ The configuration uses the `meta.config` of the Pilet API provided by the pilet.
 
 ### Standard Pilet Service
 
-Every pilet gets automatically a service called `IPiletService` injected. This can be used to compute the URL of a resource.
+Every pilet gets automatically a service called `IPiletService` injected.
+
+#### Asset URLs
+
+The `IPiletService` service can be used to compute the URL of a resource.
 
 ```razor
 @inject IPiletService Pilet
 ```
 
-The only helper there is `GetUrl`. You can use it like:
+The relevant helper method is `GetUrl`. You can use it like:
 
 ```razor
 @page "/example"
@@ -405,6 +409,48 @@ The only helper there is `GetUrl`. You can use it like:
 ```
 
 In the example above the resource `images/something.png` would be placed in the `wwwroot` folder (i.e., `wwwroot/images/something`). As the content of the `wwwroot` folder is copied, the image will also be copied. However, the old local URL is not valid in a pilet, which needs to prefix its resources with its base URL. The function above does that. In that case, the URL would maybe be something like `http://localhost:1234/$pilet-api/0/images/something.png` while debugging, and another fully qualified URL later in production.
+
+#### Events
+
+You can use the `IPiletService` service to emit and receive events via the standard Pilet API event bus. This is great for doing loosely-coupled pilet-to-pilet communication.
+
+Example:
+
+```razor
+@attribute [PiralComponent]
+@inject IPiletService ps
+@implements IDisposable
+
+<aside class=@_sidebarClass>
+  <a @onclick=@CloseSidebar style="display: inline-block; padding: 0 10px; cursor: pointer;">x</a>
+</aside> 
+
+@code {
+    [Parameter]
+    public bool IsOpen { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> IsOpenChanged { get; set; }
+
+    string _sidebarClass { get => IsOpen ? "sidebar open" : "sidebar"; }
+
+    public void Dispose()
+    {
+        ps.RemoveEventListener<bool>("toggle-sidebar", ToggleSidebar);
+    }
+
+    protected override void OnInitialized()
+    {
+        ps.AddEventListener<bool>("toggle-sidebar", ToggleSidebar);
+    }
+
+    public void ToggleSidebar(bool value) => IsOpenChanged.InvokeAsync(value);
+
+    public void CloseSidebar() => ToggleSidebar(false);
+}
+```
+
+Another component can now trigger this by using `ps.DispatchEvent("toggle-sidebar", false);` with an injected `@inject IPiletService ps`.
 
 ### Localization
 
