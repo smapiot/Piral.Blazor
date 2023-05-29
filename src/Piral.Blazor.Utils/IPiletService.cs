@@ -34,5 +34,20 @@ namespace Piral.Blazor.Utils
         /// Event emitted when the language has been changed.
         /// </summary>
         event EventHandler LanguageChanged;
+
+        /// <summary>
+        /// Dispatches an event using the given type.
+        /// </summary>
+        void DispatchEvent<T>(string type, T args);
+
+        /// <summary>
+        /// Adds the provided event listener.
+        /// </summary>
+        void AddEventListener<T>(string type, Action<T> handler);
+
+        /// <summary>
+        /// Removes the provided event listener.
+        /// </summary>
+        void RemoveEventListener<T>(string type, Action<T> handler);
     }
 }

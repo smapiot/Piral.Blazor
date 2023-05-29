@@ -96,6 +96,17 @@ namespace Piral.Blazor.Core
             return Task.CompletedTask;
         }
 
+        [JSInvokable]
+        public static Task ProcessEvent(string type, JsonElement args)
+        {
+            foreach (var pilet in _pilets.Values)
+            {
+                pilet.Service.CallEventListeners(type, args);
+            }
+
+            return Task.CompletedTask;
+        }
+
         #endregion
 
         #region Modern Loading / Initialization API
@@ -107,7 +118,7 @@ namespace Piral.Blazor.Core
             // "custom-element" --> enables using "CreateElement" etc. intead of "Activate" etc.
             // "language" --> enables using satellite assemblies
             // "logging" --> enables setting the log level
-            return Task.FromResult(new[] { "load", "custom-element", "language", "logging" });
+            return Task.FromResult(new[] { "load", "custom-element", "language", "logging", "events" });
         }
 
         [JSInvokable]
@@ -118,10 +129,11 @@ namespace Piral.Blazor.Core
             if (_pilets.TryAdd(id, data))
             {
                 var client = Host.Services.GetRequiredService<HttpClient>();
+                var js = Host.Services.GetService<IJSRuntime>();
                 var dll = await client.GetStreamAsync(pilet.DllUrl);
                 var pdb = pilet.PdbUrl != null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
                 var library = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-                var service = new PiletService(pilet);
+                var service = new PiletService(js, pilet);
                 data.Library = library;
                 data.Service = service;
 
@@ -198,9 +210,10 @@ namespace Piral.Blazor.Core
         public static async Task LoadComponentsFromLibrary(string url)
         {
             var client = Host.Services.GetRequiredService<HttpClient>();
+            var js = Host.Services.GetService<IJSRuntime>();
             var dll = await client.GetStreamAsync(url);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
-            var pilet = new PiletService(url);
+            var pilet = new PiletService(js, url);
             ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
             _assemblies[url] = assembly;
         }
@@ -209,10 +222,11 @@ namespace Piral.Blazor.Core
         public static async Task LoadComponentsWithSymbolsFromLibrary(string dllUrl, string pdbUrl)
         {
             var client = Host.Services.GetRequiredService<HttpClient>();
+            var js = Host.Services.GetService<IJSRuntime>();
             var dll = await client.GetStreamAsync(dllUrl);
             var pdb = await client.GetStreamAsync(pdbUrl);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-            var pilet = new PiletService(dllUrl);
+            var pilet = new PiletService(js, dllUrl);
             ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
             _assemblies[dllUrl] = assembly;
         }
