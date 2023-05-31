@@ -450,7 +450,7 @@ namespace Piral.Blazor.Tools
                 json["version"] = Version;
             }
 
-            var name = json.Property("name")?.Value<string>();
+            var name = json.Property("name")?.Value.Value<string>();
 
             if (name is not null)
             {
