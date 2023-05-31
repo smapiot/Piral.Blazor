@@ -265,12 +265,12 @@ namespace Piral.Blazor.Tools
 
             if (File.Exists(dotnetToolsJson))
             {
-                Run(dotnet, ProjectDir, $"{dotnetPrefix}tool update Piral.Blazor.Analyzer --version {ToolsVersion} --local");
+                Run("dotnet", dotnet, ProjectDir, $"{dotnetPrefix}tool update Piral.Blazor.Analyzer --version {ToolsVersion} --local");
             }
             else
             {
-                Run(dotnet, Target, $"{dotnetPrefix}new tool-manifest --output .");
-                Run(dotnet, ProjectDir, $"{dotnetPrefix}tool install Piral.Blazor.Analyzer --version {ToolsVersion} --local");
+                Run("dotnet", dotnet, Target, $"{dotnetPrefix}new tool-manifest --output .");
+                Run("dotnet", dotnet, ProjectDir, $"{dotnetPrefix}tool install Piral.Blazor.Analyzer --version {ToolsVersion} --local");
             }
         }
 
@@ -312,7 +312,7 @@ namespace Piral.Blazor.Tools
             }
         }
 
-        private void Run(string cmd, string cwd, string arguments)
+        private void Run(string id, string cmd, string cwd, string arguments)
         {
             var proc = new Process
             {
@@ -328,8 +328,8 @@ namespace Piral.Blazor.Tools
                 },
             };
 
-            proc.OutputDataReceived += (sender, e) => Log.LogCommandLine($"[stdout] {e.Data}");
-            proc.ErrorDataReceived += (sender, e) => Log.LogCommandLine($"[stderr] {e.Data}");
+            proc.OutputDataReceived += (sender, e) => Log.LogCommandLine($"[{id}] {e.Data}");
+            proc.ErrorDataReceived += (sender, e) => Log.LogCommandLine($"[{id}] {e.Data}");
 
             proc.Start();
             proc.BeginOutputReadLine();
@@ -376,9 +376,9 @@ namespace Piral.Blazor.Tools
                 else
                 {
                     Log.LogMessage($"Updating the pilet infrastructure using piral-cli@{CliVersion}...");
-                    Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
-                    Run(npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
-                    Run(npx, target, $"{npxPrefix}pilet upgrade");
+                    Run("npm", npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
+                    Run("npm", npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
+                    Run("piral-cli", npx, target, $"{npxPrefix}pilet upgrade");
                     return true;
                 }
             }
@@ -391,10 +391,10 @@ namespace Piral.Blazor.Tools
             }
 
             Directory.CreateDirectory(target);
-            Run(npm, target, $"{npmPrefix}init -y");
-            Run(npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
-            Run(npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
-            Run(npx, target, $"{npxPrefix}pilet new \"{Emulator}\" --registry \"{NpmRegistry}\" --bundler none --no-install");
+            Run("npm", npm, target, $"{npmPrefix}init -y");
+            Run("npm", npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
+            Run("npm", npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
+            Run("piral-cli", npx, target, $"{npxPrefix}pilet new \"{Emulator}\" --registry \"{NpmRegistry}\" --bundler none --no-install");
 
             ChangeOutputDirectory();
 
@@ -415,27 +415,6 @@ namespace Piral.Blazor.Tools
             }
         }
 
-        private void UpdatePackageVersion()
-        {
-            var target = ProjectDir;
-            var packageJsonFile = Path.Combine(target, "package.json");
-
-            if (!File.Exists(packageJsonFile))
-            {
-                throw new Exception($"The file '{packageJsonFile}' does not exist.");
-            }
-
-            if (string.IsNullOrEmpty(Version))
-            {
-                Log.LogMessage("Keeping the current version set in the 'package.json'.");
-            }
-            else
-            {
-                Log.LogMessage("Set version in package.json file...");
-                Run(npm, target, $"{npmPrefix}version {Version} --allow-same-version --no-git-tag-version");
-            }
-        }
-
         private void UpdateKrasSources()
         {
             var krasrc = ".krasrc";
@@ -452,16 +431,34 @@ namespace Piral.Blazor.Tools
         {
             var packageJsonFile = Path.Combine(ProjectDir, "package.json");
             var overwritePackageJsonFile = Path.Combine(ConfigDir, "package-overwrites.json");
-            MergeJsons(packageJsonFile, overwritePackageJsonFile, json =>
-            {
-                var name = json.Property("name")?.Value<string>();
-                var normalizedName = NormalizeName(name);
+            MergeJsons(packageJsonFile, overwritePackageJsonFile);
+        }
 
-                if (normalizedName != name)
-                {
-                    json["name"] = normalizedName;
-                }
-            });
+        private void AdjustPackageJson()
+        {
+            var packageJsonFile = Path.Combine(ProjectDir, "package.json");
+
+            if (!File.Exists(packageJsonFile))
+            {
+                throw new Exception($"The file '{packageJsonFile}' does not exist.");
+            }
+
+            var json = JObject.Parse(File.ReadAllText(packageJsonFile));
+            
+            if (!string.IsNullOrEmpty(Version))
+            {
+                json["version"] = Version;
+            }
+
+            var name = json.Property("name")?.Value<string>();
+
+            if (name is not null)
+            {
+                json["name"] = NormalizeName(name);
+            }
+
+            File.WriteAllText(packageJsonFile, JsonConvert.SerializeObject(json, Formatting.Indented));
+            Log.LogMessage($"Successfully updated '{packageJsonFile}'.");
         }
 
         private void OverwriteMetaJson()
@@ -481,16 +478,16 @@ namespace Piral.Blazor.Tools
         private void InstallDependencies()
         {
             Log.LogMessage("Installing dependencies...");
-            Run(npm, ProjectDir, $"{npmPrefix}install --silent");
+            Run("npm", npm, ProjectDir, $"{npmPrefix}install --silent");
         }
 
         private void UpdateAuxiliaryFiles()
         {
-            UpdatePackageVersion();
             UpdateKrasSources();
             OverwritePackageJson();
             OverwriteMetaJson();
             OverwriteKrasRc();
+            AdjustPackageJson();
         }
 
         #endregion
@@ -523,7 +520,7 @@ namespace Piral.Blazor.Tools
             return name;
         }
 
-        private void MergeJsons(string originalJsonFile, string overwritesJsonFile, Action<JObject> normalizer = null)
+        private void MergeJsons(string originalJsonFile, string overwritesJsonFile)
         {
             var source = Path.GetFileName(originalJsonFile);
             var target = Path.GetFileName(overwritesJsonFile);
@@ -545,7 +542,6 @@ namespace Piral.Blazor.Tools
 
             result.Merge(originalJson); 
             result.Merge(overwritesJson);
-            normalizer?.Invoke(result);
 
             if (JToken.DeepEquals(result, originalJson))
             {

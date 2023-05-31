@@ -106,14 +106,14 @@ namespace Piral.Blazor.Tools
                 }
 
                 // Build the pilet
-                Run(npx, target, $"{npxPrefix}pilet build");
+                RunPiralCli(target, $"pilet build");
 
                 // Replace with files from publish
                 CompareAndReplace(outdir, root);
 
                 // Pack and publish
-                Run(npx, target, $"{npxPrefix}pilet pack");
-                Run(npx, target, $"{npxPrefix}pilet publish --url {FeedUrl} {auth}");
+                RunPiralCli(target, $"pilet pack");
+                RunPiralCli(target, $"pilet publish --url {FeedUrl} {auth}");
             }
         }
 
@@ -133,13 +133,15 @@ namespace Piral.Blazor.Tools
             }
         }
 
-        private void Run(string cmd, string cwd, string arguments)
+        private void RunPiralCli(string cwd, string arguments)
         {
+            var cmd = npx;
+            var args = $"{npxPrefix}{arguments}";
             var startInfo = new ProcessStartInfo
             {
                 FileName = cmd,
                 WorkingDirectory = cwd,
-                Arguments = arguments,
+                Arguments = args,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardError = true,
@@ -154,8 +156,8 @@ namespace Piral.Blazor.Tools
                 StartInfo = startInfo,
             };
 
-            proc.OutputDataReceived += (sender, e) => Log.LogCommandLine($"[stdout] {e.Data}");
-            proc.ErrorDataReceived += (sender, e) => Log.LogCommandLine($"[stderr] {e.Data}");
+            proc.OutputDataReceived += (sender, e) => Log.LogCommandLine($"[piral-cli] {e.Data}");
+            proc.ErrorDataReceived += (sender, e) => Log.LogCommandLine($"[piral-cli] {e.Data}");
 
             proc.Start();
             proc.BeginOutputReadLine();
@@ -164,7 +166,7 @@ namespace Piral.Blazor.Tools
 
             if (proc.ExitCode != 0)
             {
-                Log.LogWarning("The provided command '{0} {1}' in '{2}' did not finish successfully. The process might be corrupted.", cmd, arguments, cwd);
+                Log.LogWarning("The provided command '{0} {1}' in '{2}' did not finish successfully. The process might be corrupted.", cmd, args, cwd);
             }
         }
 
