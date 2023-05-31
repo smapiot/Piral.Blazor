@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Piral.Blazor.DevServer;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Mime;
 using System.Net.Sockets;
@@ -67,35 +66,6 @@ static int GetFreeTcpPort()
     return port;
 }
 
-static Process StartPiralCli(string piletDir, int cliPort, string? feed)
-{
-    var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-    var npx = isWindows ? "cmd.exe" : "npx";
-    var npxPrefix = isWindows ? "/c npx.cmd " : "";
-    var extraArgs = !string.IsNullOrEmpty(feed) ? $" --feed {feed}" : "";
-
-    var process = Process.Start(new ProcessStartInfo
-    {
-        FileName = npx,
-        WorkingDirectory = piletDir,
-        UseShellExecute = false,
-        CreateNoWindow = true,
-        Arguments = $"{npxPrefix}pilet debug --port {cliPort}{extraArgs}",
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-    })!;
-
-    process.ErrorDataReceived += (sender, e) => Console.WriteLine("[piral-cli] {0}", e.Data);
-    process.OutputDataReceived += (sender, e) => Console.WriteLine("[piral-cli] {0}", e.Data);
-    AppDomain.CurrentDomain.DomainUnload += (sender, e) => process.Kill();
-    AppDomain.CurrentDomain.ProcessExit += (sender, e) => process.Kill();
-
-    process.Start();
-    process.BeginErrorReadLine();
-    process.BeginOutputReadLine();
-    return process;
-}
-
 static void AppendHeaders(HttpContext context, WebApplication app)
 {
     var headers = context.Response.Headers;
@@ -152,12 +122,12 @@ var inMemoryConfiguration = new Dictionary<string, string>
 builder.Configuration.AddInMemoryCollection(inMemoryConfiguration!);
 builder.Configuration.AddJsonFile(Path.Combine(applicationDirectory, "blazor-devserversettings.json"), optional: true, reloadOnChange: true);
 builder.Services.AddHttpClient();
+builder.Services.AddHostedService(sp => new PiralCliService(piletDir, cliPort, sp.GetService<IConfiguration>()));
 
 var app = builder.Build();
 var piOptions = app.Configuration.GetSection("Piral").Get<PiralOptions>();
 var forwardedPaths = piOptions?.ForwardedPaths ?? Array.Empty<string>();
 var remoteFeedUrl = piOptions?.FeedUrl;
-var cliProcess = StartPiralCli(piletDir, cliPort, remoteFeedUrl);
 
 Console.WriteLine("Starting Piral.Blazor.DevServer ...");
 Console.WriteLine("");
