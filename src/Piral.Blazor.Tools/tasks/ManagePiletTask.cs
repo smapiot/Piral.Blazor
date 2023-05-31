@@ -563,7 +563,6 @@ namespace Piral.Blazor.Tools.Tasks
 
                     UpdateAuxiliaryFiles();
 
-                    
                     if (IsMonorepo)
                     {
                         CleanMonorepo();

@@ -1,9 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <PackageId>Piral.Blazor.Tools</PackageId>
     <VersionPrefix>7.0.8</VersionPrefix>
     <Authors>Florian Rappl</Authors>
+	<LangVersion>9</LangVersion>
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>

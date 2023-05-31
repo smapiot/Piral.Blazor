@@ -1599,12 +1599,17 @@ function copyFiles(assets, target) {
   for (const asset of assets) {
     const fromPath = asset.Identity;
     const toPath2 = (0, import_path.resolve)(target, getAssetPath(asset));
-    const toDir = (0, import_path.dirname)(toPath2);
-    (0, import_fs.mkdirSync)(toDir, { recursive: true });
-    (0, import_fs.copyFileSync)(fromPath, toPath2);
-    watchPaths.push(fromPath);
+    if (!isCompressFile(toPath2)) {
+      const toDir = (0, import_path.dirname)(toPath2);
+      (0, import_fs.mkdirSync)(toDir, { recursive: true });
+      (0, import_fs.copyFileSync)(fromPath, toPath2);
+      watchPaths.push(fromPath);
+    }
   }
   return watchPaths;
+}
+function isCompressFile(path) {
+  return path.endsWith(".gz") || path.endsWith(".br");
 }
 function isAsset(asset, name) {
   return (0, import_path.basename)(asset.RelativePath) === name;

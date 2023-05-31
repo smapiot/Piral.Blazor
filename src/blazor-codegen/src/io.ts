@@ -8,14 +8,22 @@ function copyFiles(assets: Array<StaticAsset>, target: string) {
   for (const asset of assets) {
     const fromPath = asset.Identity;
     const toPath = resolve(target, getAssetPath(asset));
-    const toDir = dirname(toPath);
 
-    mkdirSync(toDir, { recursive: true });
-    copyFileSync(fromPath, toPath);
-    watchPaths.push(fromPath);
+    // do not copy unnecessary files ...
+    if (!isCompressFile(toPath)) {
+      const toDir = dirname(toPath);
+
+      mkdirSync(toDir, { recursive: true });
+      copyFileSync(fromPath, toPath);
+      watchPaths.push(fromPath);
+    }
   }
 
   return watchPaths;
+}
+
+export function isCompressFile(path: string) {
+  return path.endsWith('.gz') || path.endsWith('.br');
 }
 
 export function isAsset(asset: StaticAsset, name: string) {

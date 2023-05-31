@@ -3,6 +3,10 @@
 		TaskName="ManagePiletTask"
 		AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
 
+	<UsingTask
+		TaskName="PublishPiletTask"
+		AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Piral.Blazor.Tools.dll" />
+
     <ItemGroup>
         <Content
 			Update="wwwroot\**"
@@ -37,4 +41,16 @@
             MocksFolderName="$(MocksFolder)"
 			Version="$(Version)" />
     </Target>
+
+	<Target Name="AfterPublish">
+		<PublishPiletTask
+			Source="$(MSBuildProjectDirectory)"
+            Target="$(OutputFolder)"
+            Framework="$(TargetFramework)"
+            FrameworkMoniker="$(TargetFrameworkMoniker)"
+            CliVersion="$(PiralCliVersion)"
+            ProjectName="$(MSBuildProjectName)"
+			FeedUrl="$(PublishFeedUrl)"
+			FeedApiKey="$(PublishFeedApiKey)" />
+	</Target>
 </Project>

@@ -11,5 +11,7 @@
         <MocksFolder>mocks</MocksFolder>
         <PiralCliVersion>latest</PiralCliVersion>
         <PiralBundlerVersion></PiralBundlerVersion>
+		<PublishFeedUrl></PublishFeedUrl>
+		<PublishFeedApiKey></PublishFeedApiKey>
     </PropertyGroup>
 </Project>
