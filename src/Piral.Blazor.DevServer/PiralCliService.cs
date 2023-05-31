@@ -16,10 +16,9 @@ namespace Piral.Blazor.DevServer
             _feed = configuration?.GetSection("Piral").Get<PiralOptions>()?.FeedUrl;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _cliProcess = StartPiralCli();
-            return Task.CompletedTask;
+            _cliProcess = await StartPiralCli();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -28,8 +27,10 @@ namespace Piral.Blazor.DevServer
             return Task.CompletedTask;
         }
 
-        private Process StartPiralCli()
+        private Task<Process> StartPiralCli()
         {
+            var tcs = new TaskCompletionSource<Process>();
+            var ct = new CancellationTokenSource(60 * 1000);
             var app = Process.GetCurrentProcess();
             var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
             var npx = isWindows ? "node.exe" : "node";
@@ -49,14 +50,26 @@ namespace Piral.Blazor.DevServer
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
             })!;
+            
+            var handler = new DataReceivedEventHandler((sender, e) =>
+            {
+                Console.WriteLine("[piral-cli] {0}", e.Data);
 
-            process.ErrorDataReceived += (sender, e) => Console.WriteLine("[piral-cli] {0}", e.Data);
-            process.OutputDataReceived += (sender, e) => Console.WriteLine("[piral-cli] {0}", e.Data);
+                if (e.Data?.IndexOf("Ready!") != -1)
+                {
+                    tcs.TrySetResult(process);
+                }
+            });
+
+            process.ErrorDataReceived += handler;
+            process.OutputDataReceived += handler;
+
+            ct.Token.Register(() => tcs.TrySetCanceled(), useSynchronizationContext: false);
 
             process.Start();
             process.BeginErrorReadLine();
             process.BeginOutputReadLine();
-            return process;
+            return tcs.Task;
         }
     }
 }
