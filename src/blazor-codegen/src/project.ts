@@ -12,7 +12,9 @@ export async function buildSolution(cwd: string) {
   process.env.PIRAL_BLAZOR_RUNNING = "yes";
 
   return new Promise<void>((resolve, reject) => {
-    const ps = spawn(`dotnet`, [action, "--configuration", configuration], {
+    // Right now we need this to ensure that the trimmer is not suddenly removing things in a weird way
+    // in the future this might be discarded by analyzing what libs opted-in to trimming and treating them differently
+    const ps = spawn(`dotnet`, [action, "--configuration", configuration, "/p:PublishTrimmed=false"], {
       cwd,
       env: process.env,
       detached: false,

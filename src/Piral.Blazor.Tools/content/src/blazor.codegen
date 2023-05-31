@@ -1821,7 +1821,7 @@ async function buildSolution(cwd) {
   console.log(`Running "${action}" on solution in ${configuration} mode...`);
   process.env.PIRAL_BLAZOR_RUNNING = "yes";
   return new Promise((resolve5, reject) => {
-    const ps = (0, import_child_process.spawn)(`dotnet`, [action, "--configuration", configuration], {
+    const ps = (0, import_child_process.spawn)(`dotnet`, [action, "--configuration", configuration, "/p:PublishTrimmed=false"], {
       cwd,
       env: process.env,
       detached: false,
