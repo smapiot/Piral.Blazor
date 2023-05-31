@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.JSInterop;
+using Piral.Blazor.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
-using Microsoft.JSInterop;
-using Piral.Blazor.Utils;
 
 namespace Piral.Blazor.Core
 {

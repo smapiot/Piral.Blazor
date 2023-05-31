@@ -10,8 +10,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 
-namespace Piral.Blazor.Tools.Tasks
+namespace Piral.Blazor.Tools
 {
     public class ManagePiletTask : Task
     {
@@ -451,7 +452,16 @@ namespace Piral.Blazor.Tools.Tasks
         {
             var packageJsonFile = Path.Combine(ProjectDir, "package.json");
             var overwritePackageJsonFile = Path.Combine(ConfigDir, "package-overwrites.json");
-            MergeJsons(packageJsonFile, overwritePackageJsonFile);
+            MergeJsons(packageJsonFile, overwritePackageJsonFile, json =>
+            {
+                var name = json.Property("name")?.Value<string>();
+                var normalizedName = NormalizeName(name);
+
+                if (normalizedName != name)
+                {
+                    json["name"] = normalizedName;
+                }
+            });
         }
 
         private void OverwriteMetaJson()
@@ -487,7 +497,33 @@ namespace Piral.Blazor.Tools.Tasks
 
         #region Helpers
 
-        private void MergeJsons(string originalJsonFile, string overwritesJsonFile)
+        private static string NormalizeName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "pilet";                
+            }
+
+            name = name.ToLowerInvariant();
+            name = name.Replace(' ', '-');
+            name = HttpUtility.UrlEncode(name);
+
+            foreach (var chr in "+~)('!*".ToCharArray())
+            {
+                name = name.Replace($"{chr}", "");
+            }
+
+            name = Regex.Replace(name, "%[0-9a-f]{2}", "");
+
+            if (name.Length > 214)
+            {
+                name = name.Substring(0, 214);
+            }
+
+            return name;
+        }
+
+        private void MergeJsons(string originalJsonFile, string overwritesJsonFile, Action<JObject> normalizer = null)
         {
             var source = Path.GetFileName(originalJsonFile);
             var target = Path.GetFileName(overwritesJsonFile);
@@ -509,6 +545,7 @@ namespace Piral.Blazor.Tools.Tasks
 
             result.Merge(originalJson); 
             result.Merge(overwritesJson);
+            normalizer?.Invoke(result);
 
             if (JToken.DeepEquals(result, originalJson))
             {

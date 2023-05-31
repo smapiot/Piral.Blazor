@@ -6,7 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Xml;
 
-namespace Piral.Blazor.Tools.Tasks
+namespace Piral.Blazor.Tools
 {
     public class PublishPiletTask : Task
     {
@@ -92,6 +92,12 @@ namespace Piral.Blazor.Tools.Tasks
                 var target = ProjectDir;
                 var outdir = Path.Combine(target, "dist");
                 var auth = string.IsNullOrEmpty(FeedApiKey) ? "--interactive" : $"--api-key {FeedApiKey}";
+
+                // Remove existing npm packages, if any
+                foreach (var tgz in Directory.GetFiles(target, "*.tgz", SearchOption.TopDirectoryOnly))
+                {
+                    File.Delete(tgz);
+                }
 
                 // Remove existing "dist" directory, if any
                 if (Directory.Exists(outdir))

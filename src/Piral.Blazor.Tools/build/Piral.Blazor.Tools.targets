@@ -19,8 +19,7 @@
     </PropertyGroup>
 
     <Target Name="SetupPiral" DependsOnTargets="ResolveStaticWebAssetsInputs" AfterTargets="Build">
-        <CallTarget
-			Targets="Scaffold" />
+        <CallTarget Targets="Scaffold" />
     </Target>
 
     <Target Name="Scaffold" DependsOnTargets="RunResolvePackageDependencies">
@@ -42,13 +41,12 @@
 			Version="$(Version)" />
     </Target>
 
-	<Target Name="AfterPublish">
+	<Target Name="PublishPilet" AfterTargets="AfterPublish">
 		<PublishPiletTask
 			Source="$(MSBuildProjectDirectory)"
             Target="$(OutputFolder)"
             Framework="$(TargetFramework)"
             FrameworkMoniker="$(TargetFrameworkMoniker)"
-            CliVersion="$(PiralCliVersion)"
             ProjectName="$(MSBuildProjectName)"
 			FeedUrl="$(PublishFeedUrl)"
 			FeedApiKey="$(PublishFeedApiKey)" />
