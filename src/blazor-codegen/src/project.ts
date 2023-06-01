@@ -7,6 +7,8 @@ import { ProjectConfig } from "./types";
 const execAsync = promisify(exec);
 
 export async function buildSolution(cwd: string) {
+  const trimmed = process.env.PIRAL_BLAZOR_TRIMMED === "yes";
+
   console.log(`Running "${action}" on solution in ${configuration} mode...`);
 
   process.env.PIRAL_BLAZOR_RUNNING = "yes";
@@ -14,12 +16,21 @@ export async function buildSolution(cwd: string) {
   return new Promise<void>((resolve, reject) => {
     // Right now we need this to ensure that the trimmer is not suddenly removing things in a weird way
     // in the future this might be discarded by analyzing what libs opted-in to trimming and treating them differently
-    const ps = spawn(`dotnet`, [action, "--configuration", configuration, "/p:PublishTrimmed=false"], {
-      cwd,
-      env: process.env,
-      detached: false,
-      stdio: "inherit",
-    });
+    const ps = spawn(
+      `dotnet`,
+      [
+        action,
+        "--configuration",
+        configuration,
+        `/p:PublishTrimmed=${trimmed}`,
+      ],
+      {
+        cwd,
+        env: process.env,
+        detached: false,
+        stdio: "inherit",
+      }
+    );
 
     ps.on("error", reject);
     ps.on("exit", resolve);
@@ -43,9 +54,7 @@ export async function checkInstallation(
   }
 }
 
-export async function analyzeProject(
-  config: ProjectConfig
-) {
+export async function analyzeProject(config: ProjectConfig) {
   const command = `dotnet ${analyzer} --base-dir "${config.projectDir}" --dll-name "${config.projectName}.dll" --target-framework "${config.targetFramework}" --configuration "${configuration}"`;
   const { stdout, stderr } = await execAsync(command);
 
