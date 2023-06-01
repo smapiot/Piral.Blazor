@@ -434,7 +434,7 @@ namespace Piral.Blazor.Tools
             MergeJsons(packageJsonFile, overwritePackageJsonFile);
         }
 
-        private void AdjustPackageJson()
+        private void UpdatePackageJson()
         {
             var packageJsonFile = Path.Combine(ProjectDir, "package.json");
 
@@ -483,11 +483,11 @@ namespace Piral.Blazor.Tools
 
         private void UpdateAuxiliaryFiles()
         {
+            UpdatePackageJson();
             UpdateKrasSources();
             OverwritePackageJson();
             OverwriteMetaJson();
             OverwriteKrasRc();
-            AdjustPackageJson();
         }
 
         #endregion
@@ -503,14 +503,30 @@ namespace Piral.Blazor.Tools
 
             name = name.ToLowerInvariant();
             name = name.Replace(' ', '-');
-            name = HttpUtility.UrlEncode(name);
 
-            foreach (var chr in "+~)('!*".ToCharArray())
+            foreach (var chr in "~)('!*".ToCharArray())
             {
                 name = name.Replace($"{chr}", "");
             }
 
-            name = Regex.Replace(name, "%[0-9a-f]{2}", "");
+            if (name.StartsWith("@"))
+            {
+                var rest = name.Substring(1);
+                var solidus = rest.IndexOf('/');
+
+                if (solidus == -1 || solidus == rest.Length - 1)
+                {
+                    return NormalizeName(rest);
+                }
+
+                var front = ReplaceUrlCharacters(rest.Substring(0, solidus));
+                var back = ReplaceUrlCharacters(rest.Substring(solidus + 1));
+                name = $"@{front}/{back}";
+            }
+            else
+            {
+                name = ReplaceUrlCharacters(name);
+            }
 
             if (name.Length > 214)
             {
@@ -518,6 +534,11 @@ namespace Piral.Blazor.Tools
             }
 
             return name;
+        }
+
+        private static string ReplaceUrlCharacters(string str)
+        {
+            return Regex.Replace(HttpUtility.UrlEncode(str), "%[0-9a-f]{2}", "");
         }
 
         private void MergeJsons(string originalJsonFile, string overwritesJsonFile)
