@@ -4,8 +4,11 @@ using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
+using System.Runtime.Loader;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Piral.Blazor.Core
 {
@@ -16,17 +19,22 @@ namespace Piral.Blazor.Core
         private readonly string _name;
         private readonly string _version;
         private readonly IJSRuntime _js;
+        private readonly HttpClient _client;
         private readonly List<EventListener> _listeners;
+        private readonly List<string> _loadedLanguages;
+        private readonly Dictionary<string, List<string>> _satellites;
 
         public event EventHandler LanguageChanged;
 
-        private PiletService(IJSRuntime js)
+        private PiletService(IJSRuntime js, HttpClient client)
         {
             _js = js;
             _listeners = new List<EventListener>();
+            _client = client;
+            _loadedLanguages = new List<string>();
         }
 
-        public PiletService(IJSRuntime js, string baseUrl) : this(js)
+        public PiletService(IJSRuntime js, HttpClient client, string baseUrl) : this(js, client)
         {
             _name = "(unknown)";
             _version = "0.0.0";
@@ -37,15 +45,19 @@ namespace Piral.Blazor.Core
             _config = new ConfigurationBuilder().AddJsonStream(GetStream("{}")).Build();
         }
 
-        public PiletService(IJSRuntime js, PiletDefinition pilet) : this(js)
+        public PiletService(IJSRuntime js, HttpClient client, PiletDefinition pilet) : this(js, client)
         {
             _name = pilet.Name;
             _version = pilet.Version;
 
+            // define satellites
+            _satellites = pilet.Satellites;
             // base URL is already given
             _baseUrl = new Uri(pilet.BaseUrl);
             // Create config wrapper
             _config = new ConfigurationBuilder().AddJsonStream(GetStream(pilet.Config)).Build();
+
+            LoadLanguage(Localization.Language).Forget();
         }
 
         public string Name => _name;
@@ -62,6 +74,24 @@ namespace Piral.Blazor.Core
             }
 
             return new Uri(_baseUrl, localPath).AbsoluteUri;
+        }
+
+        public async Task LoadLanguage(string language)
+        {
+            if (!_loadedLanguages.Contains(language))
+            {
+                _loadedLanguages.Add(language);
+
+                if (_satellites?.TryGetValue(language, out var satellites) ?? false)
+                {
+                    foreach (var satellite in satellites)
+                    {
+                        var url = GetUrl(satellite);
+                        var dep = await _client.GetStreamAsync(url);
+                        AssemblyLoadContext.Default.LoadFromStream(dep);
+                    }
+                }
+            }
         }
 
         public void InformLanguageChange() => LanguageChanged?.Invoke(this, EventArgs.Empty);

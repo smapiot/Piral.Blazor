@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -28,33 +27,9 @@ namespace Piral.Blazor.Core
 
         public event EventHandler RootChanged;
 
-        public event EventHandler LanguageChanged;
-
         public IEnumerable<ActiveComponent> Components => _active;
 
         public Type Root => GetComponent(appRoot) ?? typeof(DefaultRoot);
-
-        public string Language
-        {
-            get
-            {
-                return CultureInfo.CurrentCulture.Name;
-            }
-            set
-            {
-                var culture = CultureInfo.GetCultures(CultureTypes.AllCultures).FirstOrDefault(c => c.Name == value);
-
-                if (culture is not null)
-                {
-                    CultureInfo.DefaultThreadCurrentCulture = culture;
-                    CultureInfo.DefaultThreadCurrentUICulture = culture;
-                    CultureInfo.CurrentCulture = culture;
-                    CultureInfo.CurrentUICulture = culture;
-                }
-
-                LanguageChanged?.Invoke(this, EventArgs.Empty);
-            }
-        }
 
         private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
         {

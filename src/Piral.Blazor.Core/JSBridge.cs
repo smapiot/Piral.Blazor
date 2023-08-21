@@ -5,6 +5,7 @@ using Microsoft.JSInterop;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -88,11 +89,7 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static Task SetLanguage(string language)
         {
-            if (ActivationService is not null)
-            {
-                ActivationService.Language = language;
-            }
-
+            Localization.Language = language;
             return Task.CompletedTask;
         }
 
@@ -133,7 +130,7 @@ namespace Piral.Blazor.Core
                 var dll = await client.GetStreamAsync(pilet.DllUrl);
                 var pdb = pilet.PdbUrl != null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
                 var library = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-                var service = new PiletService(js, pilet);
+                var service = new PiletService(js, client, pilet);
                 data.Library = library;
                 data.Service = service;
 
@@ -148,32 +145,13 @@ namespace Piral.Blazor.Core
                     }
                 }
 
-                if (pilet.Satellites is not null && ActivationService is not null)
+                data.LanguageHandler = async (s, e) =>
                 {
-                    Func<string, Task> changeLanguage = async (language) =>
-                    {
-                        if (pilet.Satellites.TryGetValue(language, out var satellites))
-                        {
-                            foreach (var satellite in satellites)
-                            {
-                                var url = data.Service.GetUrl(satellite);
-                                var dep = await client.GetStreamAsync(url);
-                                AssemblyLoadContext.Default.LoadFromStream(dep);
-                            }
-                        }
+                    await data.Service.LoadLanguage(Localization.Language);
+                    service.InformLanguageChange();
+                };
 
-                        service.InformLanguageChange();
-                    };
-
-                    data.LanguageHandler = (s, e) =>
-                    {
-                        changeLanguage(ActivationService.Language);
-                    };
-
-                    ActivationService.LanguageChanged += data.LanguageHandler;
-                    data.LanguageHandler.Invoke(null, EventArgs.Empty);
-                }
-
+                Localization.LanguageChanged += data.LanguageHandler;
                 ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service);
             }
         }
@@ -181,10 +159,10 @@ namespace Piral.Blazor.Core
         [JSInvokable]
         public static Task UnloadPilet(string id)
         {
-            if (_pilets.Remove(id, out var data) && ActivationService is not null)
+            if (_pilets.Remove(id, out var data))
             {
-                ActivationService.LanguageChanged -= data.LanguageHandler;
-                ActivationService.UnloadComponentsFromAssembly(data.Library);
+                Localization.LanguageChanged -= data.LanguageHandler;
+                ActivationService?.UnloadComponentsFromAssembly(data.Library);
             }
 
             return Task.CompletedTask;
@@ -213,7 +191,7 @@ namespace Piral.Blazor.Core
             var js = Host.Services.GetService<IJSRuntime>();
             var dll = await client.GetStreamAsync(url);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
-            var pilet = new PiletService(js, url);
+            var pilet = new PiletService(js, client, url);
             ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
             _assemblies[url] = assembly;
         }
@@ -226,7 +204,7 @@ namespace Piral.Blazor.Core
             var dll = await client.GetStreamAsync(dllUrl);
             var pdb = await client.GetStreamAsync(pdbUrl);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
-            var pilet = new PiletService(js, dllUrl);
+            var pilet = new PiletService(js, client, dllUrl);
             ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
             _assemblies[dllUrl] = assembly;
         }

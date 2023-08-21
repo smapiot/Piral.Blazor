@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Piral.Blazor.Core
 {
@@ -24,6 +25,11 @@ namespace Piral.Blazor.Core
         private class Match
         {
             public IDictionary<string, object> @params { get; set; }
+        }
+        
+        public static void Forget(this Task task)
+        {
+            task.ConfigureAwait(false);
         }
 
         public static IDictionary<string, object> AdjustArguments(this Type type, IDictionary<string, JsonElement> args)

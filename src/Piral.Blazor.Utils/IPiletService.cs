@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 
 namespace Piral.Blazor.Utils
@@ -14,6 +15,13 @@ namespace Piral.Blazor.Utils
         /// https://current.cdn.com/pilets/my-pilet/1.0.0/images/foo.png).
         /// </summary>
         string GetUrl(string localPath);
+
+        /// <summary>
+        /// Loads the provided language. Usually, this is done under the hood
+        /// and does not need to be invoked explicitly. You could use this
+        /// for pre-loading some language under a certain condition.
+        /// </summary>
+        Task LoadLanguage(string language);
 
         /// <summary>
         /// Gets the configuration object for the current pilet.
