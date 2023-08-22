@@ -91,6 +91,16 @@ namespace Piral.Blazor.Core
                         AssemblyLoadContext.Default.LoadFromStream(dep);
                     }
                 }
+
+                // we also support loading region specific languages, e.g., "de-AT"
+                // in this case we also need to take the "front" to load all satellites
+                var idx = language.IndexOf('-');
+
+                if (idx != -1)
+                {
+                    var primaryLanguage = language.Substring(0, idx);
+                    await LoadLanguage(primaryLanguage);
+                }
             }
         }
 
