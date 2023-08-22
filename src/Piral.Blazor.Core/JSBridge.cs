@@ -115,7 +115,9 @@ namespace Piral.Blazor.Core
             // "custom-element" --> enables using "CreateElement" etc. intead of "Activate" etc.
             // "language" --> enables using satellite assemblies
             // "logging" --> enables setting the log level
-            return Task.FromResult(new[] { "load", "custom-element", "language", "logging", "events" });
+            // "events" --> enables support for emitting / subscribing to Piral events
+            // "dependency-symbols" --> enables support for dependency symbols in the metadata
+            return Task.FromResult(new[] { "load", "custom-element", "language", "logging", "events", "dependency-symbols" });
         }
 
         [JSInvokable]
@@ -140,8 +142,20 @@ namespace Piral.Blazor.Core
 
                     if (_dependencies.Add(name))
                     {
-                        var dep = await client.GetStreamAsync(url);
-                        AssemblyLoadContext.Default.LoadFromStream(dep);
+                        var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
+
+                        if (pilet.DependencySymbols?.Contains(symbols) ?? false)
+                        {
+                            var streams = await Task.WhenAll(client.GetStreamAsync(url), client.GetStreamAsync(symbols));
+                            var dep = streams[0];
+                            var depSymbols = streams[1];
+                            AssemblyLoadContext.Default.LoadFromStream(dep, depSymbols);
+                        }
+                        else
+                        {
+                            var dep = await client.GetStreamAsync(url);
+                            AssemblyLoadContext.Default.LoadFromStream(dep);
+                        }
                     }
                 }
 
