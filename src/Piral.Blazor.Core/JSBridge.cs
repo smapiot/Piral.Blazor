@@ -19,7 +19,6 @@ namespace Piral.Blazor.Core
     public static class JSBridge
     {
         private static Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
-        private static HashSet<string> _dependencies = new HashSet<string>();
         private static Dictionary<string, PiletData> _pilets = new Dictionary<string, PiletData>();
 
         public static ComponentActivationService ActivationService { get; set; }
@@ -131,31 +130,29 @@ namespace Piral.Blazor.Core
                 var js = Host.Services.GetService<IJSRuntime>();
                 var dll = await client.GetStreamAsync(pilet.DllUrl);
                 var pdb = pilet.PdbUrl != null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
-                var library = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
+                var context = new AssemblyLoadContext(id, true);
+                var library = context.LoadFromStream(dll, pdb);
                 var service = new PiletService(js, client, pilet);
                 data.Library = library;
                 data.Service = service;
+                data.Context = context;
 
                 foreach (var url in pilet.Dependencies)
                 {
                     var name = url.Split('/').Last();
+                    var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
 
-                    if (_dependencies.Add(name))
+                    if (pilet.DependencySymbols?.Contains(symbols) ?? false)
                     {
-                        var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
-
-                        if (pilet.DependencySymbols?.Contains(symbols) ?? false)
-                        {
-                            var streams = await Task.WhenAll(client.GetStreamAsync(url), client.GetStreamAsync(symbols));
-                            var dep = streams[0];
-                            var depSymbols = streams[1];
-                            AssemblyLoadContext.Default.LoadFromStream(dep, depSymbols);
-                        }
-                        else
-                        {
-                            var dep = await client.GetStreamAsync(url);
-                            AssemblyLoadContext.Default.LoadFromStream(dep);
-                        }
+                        var streams = await Task.WhenAll(client.GetStreamAsync(url), client.GetStreamAsync(symbols));
+                        var dep = streams[0];
+                        var depSymbols = streams[1];
+                        context.LoadFromStream(dep, depSymbols);
+                    }
+                    else
+                    {
+                        var dep = await client.GetStreamAsync(url);
+                        context.LoadFromStream(dep);
                     }
                 }
 
@@ -177,6 +174,7 @@ namespace Piral.Blazor.Core
             {
                 Localization.LanguageChanged -= data.LanguageHandler;
                 ActivationService?.UnloadComponentsFromAssembly(data.Library);
+                data.Context.Unload();
             }
 
             return Task.CompletedTask;
@@ -250,6 +248,8 @@ namespace Piral.Blazor.Core
             public PiletService Service { get; set; }
 
             public EventHandler LanguageHandler { get; set; }
+
+            public AssemblyLoadContext Context { get; set; }
         }
 
         #endregion
