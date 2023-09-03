@@ -15,7 +15,7 @@ namespace Piral.Blazor.Core
 
         private readonly ILogger<T> _logger;
         private ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>> _initializers;
-        private Action<IServiceProvider, Type> InstantiateComponent;
+        private Func<Type, Action<IServiceProvider, IComponent>> _createInitializer;
 
         public Manipulator(ILogger<T> logger)
         {
@@ -44,11 +44,9 @@ namespace Piral.Blazor.Core
                     .GetField("_cachedInitializers", privateStaticFlags)
                     .GetValue(null) as ConcurrentDictionary<Type, Action<IServiceProvider, IComponent>>;
 
-                InstantiateComponent = (provider, componentType) => {
-                    ComponentFactory
-                        .GetMethod("InstantiateComponent")
-                        .Invoke(componentFactory, new object[] { provider, componentType });
-                };
+				_createInitializer = ComponentFactory
+                    .GetMethod("CreateInitializer", privateStaticFlags)
+                    .CreateDelegate<Func<Type, Action<IServiceProvider, IComponent>>>();
             }
             catch (Exception ex)
             {
@@ -66,10 +64,8 @@ namespace Piral.Blazor.Core
 
             try
             {
-                InstantiateComponent(provider, componentType);
-
-                _initializers.AddOrUpdate(componentType, _ => null,
-                    (_, initializer) => (_, comp) => initializer(provider, comp));
+                var initializer = _createInitializer(componentType);
+				_initializers.TryAdd(componentType, (_, comp) => initializer(provider, comp));
             }
             catch (Exception ex)
             {

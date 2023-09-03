@@ -5,7 +5,6 @@ using Microsoft.JSInterop;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -129,7 +128,7 @@ namespace Piral.Blazor.Core
                 var client = Host.Services.GetRequiredService<HttpClient>();
                 var js = Host.Services.GetService<IJSRuntime>();
                 var dll = await client.GetStreamAsync(pilet.DllUrl);
-                var pdb = pilet.PdbUrl != null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
+                var pdb = pilet.PdbUrl is not null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
                 var context = new AssemblyLoadContext(id, true);
                 var library = context.LoadFromStream(dll, pdb);
                 var service = new PiletService(js, client, pilet);
