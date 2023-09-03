@@ -37,6 +37,26 @@ namespace Piral.Blazor.Core
             _piletProvider = PiralServiceProvider.CreatePiletServiceProvider(globalProvider, globalServices, _piletServices);
         }
 
-        public object GetService(Type serviceType) => _piletProvider.GetService(serviceType) ?? _globalProvider.GetService(serviceType);
+        public object GetService(Type serviceType)
+        {
+            try
+            {
+                var result = _piletProvider.GetService(serviceType);
+
+                // the result might be null, or in some cases (e.g., ILogger) an InvalidOperationException
+                if (result is null)
+                {
+                    throw new InvalidOperationException($"Unable to resolve service for type '{serviceType}'.");
+                }
+
+                // we got something, so just return it
+                return result;
+            }
+            catch (InvalidOperationException)
+            {
+                // just use whatever the global provider does with it
+                return _globalProvider.GetService(serviceType);
+            }
+        }
     }
 }
