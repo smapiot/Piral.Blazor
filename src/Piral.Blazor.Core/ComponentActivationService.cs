@@ -47,7 +47,7 @@ namespace Piral.Blazor.Core
             container.ConfigureHost(JSBridge.Host);
         }
 
-        public void Register(string componentName, Type componentType, IServiceProvider provider)
+        public void Register(string componentName, Type componentType)
         {
             if (_services.ContainsKey(componentName))
             {
@@ -56,7 +56,6 @@ namespace Piral.Blazor.Core
             else
             {
                 _services.Add(componentName, componentType);
-                _container.ConfigureComponent(componentType, provider);
 
                 if (componentName == appRoot)
                 {
@@ -178,7 +177,7 @@ namespace Piral.Blazor.Core
         public void LoadComponentsFromAssembly(Assembly assembly, IPiletService pilet)
         {
             var serviceProvider = _container.ConfigureModule(assembly, pilet);
-            var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
+            var componentTypes = assembly.GetTypes().Where(m => m.GetInterfaces().Contains(typeof(IComponent)));
 
             foreach (var componentType in componentTypes)
             {
@@ -190,12 +189,14 @@ namespace Piral.Blazor.Core
 
                 var componentNames = GetComponentNamesToRegister(componentType, AttributeTypes);
 
+                _container.ConfigureComponent(componentType, serviceProvider);
+
                 foreach (var componentName in componentNames)
                 {
-                    Register(componentName, componentType, serviceProvider);
+                    Register(componentName, componentType);
                     _logger.LogInformation($"registered {componentName}");
                 }
-            }
+            }            
         }
 
         public void UnloadComponentsFromAssembly(Assembly assembly)
@@ -268,16 +269,16 @@ namespace Piral.Blazor.Core
 
         private static IEnumerable<string> GetComponentNamesToRegister(Type member, IEnumerable<Type> attributeTypes)
         {
-            return attributeTypes.SelectMany(at => GetComponentNameToRegister(member, at)).Where(val => val != null);
+            return attributeTypes.SelectMany(at => GetComponentNameToRegister(member, at)).Where(val => val is not null);
         }
 
         private static IEnumerable<string> GetComponentNameToRegister(Type member, Type attributeType)
         {
             var attributes = member.GetCustomAttributes(attributeType, true);
 
-            // get only the first occurence of the attribute for all but pages.
+            // get only the first occurrence of the attribute for all but pages.
             // This is mostly relevant for extensions, which can have multiple attributes,
-            // but the name to register (FQN) will be the same for every occurence anyway.
+            // but the name to register (FQN) will be the same for every occurrence anyway.
             if (attributeType != typeof(RouteAttribute) && attributes.Count() > 1)
             {
                 attributes = attributes.ToList().Take(1).ToArray();
@@ -288,7 +289,7 @@ namespace Piral.Blazor.Core
                 return null;
             }
 
-            List<string> result = new();
+            var result = new List<string>();
 
             foreach (var attribute in attributes)
             {
