@@ -174,9 +174,19 @@ namespace Piral.Blazor.Core
             }
         }
 
-        public void LoadComponentsFromAssembly(Assembly assembly, IPiletService pilet)
+        public void LoadComponentsFromAssembly(Assembly assembly, IPiletService pilet, IEnumerable<Assembly> deps)
         {
             var serviceProvider = _container.ConfigureModule(assembly, pilet);
+            SetupAssembly(assembly, serviceProvider);
+
+            foreach (var dep in deps)
+            {
+                SetupAssembly(dep, serviceProvider);
+            }
+        }
+
+        private void SetupAssembly(Assembly assembly, IServiceProvider serviceProvider)
+        {            
             var componentTypes = assembly.GetTypes().Where(m => m.GetInterfaces().Contains(typeof(IComponent)));
 
             foreach (var componentType in componentTypes)
@@ -196,7 +206,7 @@ namespace Piral.Blazor.Core
                     Register(componentName, componentType);
                     _logger.LogInformation($"registered {componentName}");
                 }
-            }            
+            }
         }
 
         public void UnloadComponentsFromAssembly(Assembly assembly)

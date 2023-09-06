@@ -128,13 +128,14 @@ namespace Piral.Blazor.Core
                 var client = Host.Services.GetRequiredService<HttpClient>();
                 var js = Host.Services.GetService<IJSRuntime>();
                 var context = new AssemblyLoadContext(id, true);
+                var deps = new List<Assembly>();
 
                 foreach (var url in pilet.Dependencies)
                 {
                     var name = url.Split('/').Last();
                     var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
                     var pdbUrl = (pilet.DependencySymbols?.Contains(symbols) ?? false) ? symbols : null;
-                    await LoadAssemblyInContext(client, context, url, pdbUrl);
+                    deps.Add(await LoadAssemblyInContext(client, context, url, pdbUrl));
                 }
 
                 var library = await LoadAssemblyInContext(client, context, pilet.DllUrl, pilet.PdbUrl);
@@ -150,7 +151,7 @@ namespace Piral.Blazor.Core
                 };
 
                 Localization.LanguageChanged += data.LanguageHandler;
-                ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service);
+                ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service, deps);
             }
         }
 
@@ -191,7 +192,7 @@ namespace Piral.Blazor.Core
             var dll = await client.GetStreamAsync(url);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
             var pilet = new PiletService(js, client, url);
-            ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
+            ActivationService?.LoadComponentsFromAssembly(assembly, pilet, Enumerable.Empty<Assembly>());
             _assemblies[url] = assembly;
         }
 
@@ -204,7 +205,7 @@ namespace Piral.Blazor.Core
             var pdb = await client.GetStreamAsync(pdbUrl);
             var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
             var pilet = new PiletService(js, client, dllUrl);
-            ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
+            ActivationService?.LoadComponentsFromAssembly(assembly, pilet, Enumerable.Empty<Assembly>());
             _assemblies[dllUrl] = assembly;
         }
 
