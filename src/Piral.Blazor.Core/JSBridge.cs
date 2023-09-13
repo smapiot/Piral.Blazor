@@ -130,30 +130,20 @@ public static class JSBridge
             var dll = await client.GetStreamAsync(pilet.DllUrl);
             var pdb = pilet.PdbUrl is not null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
             var context = new AssemblyLoadContext(id, true);
-            var library = context.LoadFromStream(dll, pdb);
-            var service = new PiletService(js, client, pilet);
-            data.Library = library;
-            data.Service = service;
-            data.Context = context;
 
             foreach (var url in pilet.Dependencies)
             {
                 var name = url.Split('/').Last();
                 var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
-
-                if (pilet.DependencySymbols?.Contains(symbols) ?? false)
-                {
-                    var streams = await Task.WhenAll(client.GetStreamAsync(url), client.GetStreamAsync(symbols));
-                    var dep = streams[0];
-                    var depSymbols = streams[1];
-                    context.LoadFromStream(dep, depSymbols);
-                }
-                else
-                {
-                    var dep = await client.GetStreamAsync(url);
-                    context.LoadFromStream(dep);
-                }
+                var pdbUrl = (pilet.DependencySymbols?.Contains(symbols) ?? false) ? symbols : null;
+                await LoadAssemblyInContext(client, context, url, pdbUrl);
             }
+
+            var library = await LoadAssemblyInContext(client, context, pilet.DllUrl, pilet.PdbUrl);
+            var service = new PiletService(js, client, pilet);
+            data.Library = library;
+            data.Service = service;
+            data.Context = context;
 
             data.LanguageHandler = async (s, e) =>
             {
@@ -239,6 +229,22 @@ public static class JSBridge
     /// Every series of characters that is not alphanumeric gets consolidated into a dash
     /// </summary>
     private static string Sanitize(string value) => Regex.Replace(value, @"[^a-zA-Z0-9]+", "-");
+
+    private static async Task<Assembly> LoadAssemblyInContext(HttpClient client, AssemblyLoadContext context, string dllUrl, string pdbUrl)
+    {
+        if (pdbUrl is not null)
+        {
+            var streams = await Task.WhenAll(client.GetStreamAsync(dllUrl), client.GetStreamAsync(pdbUrl));
+            var dll = streams[0];
+            var pdb = streams[1];
+            return context.LoadFromStream(dll, pdb);
+        }
+        else
+        {
+            var dll = await client.GetStreamAsync(dllUrl);
+            return context.LoadFromStream(dll);
+        }
+    }
 
     class PiletData
     {
