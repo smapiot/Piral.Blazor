@@ -4,29 +4,29 @@
 <DynamicComponent Type="@Activation.Root" Parameters="@parameters" />
 
 @code {
-    private static readonly RenderFragment componentView = @<ComponentView />;
+private static readonly RenderFragment componentView = @<ComponentView />;
 
-    private readonly Dictionary<string, object> parameters = new Dictionary<string, object>{
-        { "ChildContent", componentView }
-    };
+private readonly Dictionary<string, object> parameters = new Dictionary<string, object>{
+    { "ChildContent", componentView }
+};
 
-    private void RootChanged(object sender, EventArgs e)
+private void RootChanged(object sender, EventArgs e)
+{
+    this.StateHasChanged();
+}
+
+public void Dispose()
+{
+    Activation.RootChanged -= RootChanged;
+}
+
+protected override Task OnAfterRenderAsync(bool firstRender)
+{
+    if (firstRender)
     {
-        this.StateHasChanged();
-    }
-    
-    public void Dispose()
-    {
-        Activation.RootChanged -= RootChanged;
+        Activation.RootChanged += RootChanged;
     }
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            Activation.RootChanged += RootChanged;
-        }
-
-        return base.OnAfterRenderAsync(firstRender);
-    }
+    return base.OnAfterRenderAsync(firstRender);
+}
 }

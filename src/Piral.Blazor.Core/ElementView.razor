@@ -4,40 +4,40 @@
 <DynamicComponent Type="@_element.Component" Parameters="@_element.Args" />
 
 @code {
-    private PiralElement _element;
-    
-    /// <summary>
-    /// The reference id of the activated element.
-    /// </summary>
-    [Parameter]
-    public string Rid { get; set; }
+private PiralElement _element;
 
-    private void ElementChanged(object sender, EventArgs e)
+/// <summary>
+/// The reference id of the activated element.
+/// </summary>
+[Parameter]
+public string Rid { get; set; }
+
+private void ElementChanged(object sender, EventArgs e)
+{
+    this.StateHasChanged();
+}
+
+public void Dispose()
+{
+    if (_element is not null)
     {
-        this.StateHasChanged();
+        _element.Changed -= ElementChanged;
     }
-    
-    public void Dispose()
+}
+
+protected override Task OnInitializedAsync()
+{
+    _element = Activation.GetElement(Rid);
+    return base.OnInitializedAsync();
+}
+
+protected override Task OnAfterRenderAsync(bool firstRender)
+{
+    if (firstRender && _element is not null)
     {
-        if (_element is not null)
-        {
-            _element.Changed -= ElementChanged;
-        }
+        _element.Changed += ElementChanged;
     }
 
-    protected override Task OnInitializedAsync()
-    {
-        _element = Activation.GetElement(Rid);
-        return base.OnInitializedAsync();
-    }
-
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && _element is not null)
-        {
-            _element.Changed += ElementChanged;
-        }
-
-        return base.OnAfterRenderAsync(firstRender);
-    }
+    return base.OnAfterRenderAsync(firstRender);
+}
 }

@@ -1,9 +1,8 @@
-﻿namespace Piral.Blazor.DevServer
-{
-    public class PiralOptions
-    {
-        public string[]? ForwardedPaths { get; set; }
+﻿namespace Piral.Blazor.DevServer;
 
-        public string? FeedUrl { get; set; }
-    }
+public class PiralOptions
+{
+    public string[]? ForwardedPaths { get; set; }
+
+    public string? FeedUrl { get; set; }
 }

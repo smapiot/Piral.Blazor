@@ -1,26 +1,25 @@
 ﻿using System;
 
-namespace Piral.Blazor.Utils
+namespace Piral.Blazor.Utils;
+
+[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+public class PiralComponentAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = true)]
-    public class PiralComponentAttribute : Attribute
+    /// <summary>
+    /// Registers a Piral component
+    /// </summary>
+    public PiralComponentAttribute() { }
+
+    /// <summary>
+    /// Registers a Piral component using a custom name
+    /// </summary>
+    public PiralComponentAttribute(string name)
     {
-        /// <summary>
-        /// Registers a Piral component
-        /// </summary>
-        public PiralComponentAttribute() { }
-
-        /// <summary>
-        /// Registers a Piral component using a custom name
-        /// </summary>
-        public PiralComponentAttribute(string name)
-        {
-            Name = name;
-        }
-
-        /// <summary>
-        /// Gets the name of the component in the pilet.
-        /// </summary>
-        public string Name { get; }
+        Name = name;
     }
+
+    /// <summary>
+    /// Gets the name of the component in the pilet.
+    /// </summary>
+    public string Name { get; }
 }

@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace Piral.Blazor.Core
+namespace Piral.Blazor.Core;
+
+public interface IGlobalServiceProvider : IServiceProvider
 {
-    public interface IGlobalServiceProvider : IServiceProvider
-    {
-        void AddProvider(IServiceProvider provider);
-    }
+    void AddProvider(IServiceProvider provider);
 }

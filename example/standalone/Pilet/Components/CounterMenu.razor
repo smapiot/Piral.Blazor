@@ -1,3 +1,21 @@
-﻿@attribute [PiralComponent("counter-menu")]
+﻿@using Microsoft.Extensions.Logging
 
-<a href="/counter" class="menu-item">Counter</a>
+@attribute [PiralComponent("counter-menu")]
+
+@inject ILogger<CounterMenu> logger;
+@inject IServiceProvider provider;
+
+<a href="/counter" class="menu-item" @onclick="Clicked">Counter</a>
+
+@code {
+    protected override void OnInitialized()
+    {
+        logger.LogInformation("Initialized with SP {0}", provider);
+        base.OnInitialized();
+    }
+
+    void Clicked()
+    {
+        logger.LogInformation("Menu clicked");
+    }
+}

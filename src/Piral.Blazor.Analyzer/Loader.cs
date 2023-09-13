@@ -2,28 +2,27 @@ using System;
 using System.IO;
 using System.Reflection;
 
-namespace Piral.Blazor.Analyzer
+namespace Piral.Blazor.Analyzer;
+
+[Serializable]
+internal class Loader : MarshalByRefObject
 {
-    [Serializable]
-    internal class Loader : MarshalByRefObject
+    internal static string LoadFromDirectoryName { get; set; }
+
+    internal static Assembly LoadDependency(object sender, ResolveEventArgs args)
     {
-        internal static string LoadFromDirectoryName { get; set; }
-
-        internal static Assembly LoadDependency(object sender, ResolveEventArgs args)
+        try
         {
-            Assembly assembly = null;
-            try
-            {
-                assembly = Assembly.LoadFile(FileNameFromAssemblyName(args.Name));
-            }
-            catch { }
-
-            return assembly;
+            return Assembly.LoadFile(FileNameFromAssemblyName(args.Name));
         }
-
-        private static string FileNameFromAssemblyName(string p)
+        catch
         {
-            return Path.Combine(LoadFromDirectoryName, p.Split(',')[0] + ".dll");
+            return null;
         }
+    }
+
+    private static string FileNameFromAssemblyName(string p)
+    {
+        return Path.Combine(LoadFromDirectoryName, p.Split(',')[0] + ".dll");
     }
 }

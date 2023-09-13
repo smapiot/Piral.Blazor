@@ -18,7 +18,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dazinator.Extensions.DependencyInjection.ChildContainers" Version="1.1.0-alpha.81" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Components.CustomElements" Version="7.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.10" PrivateAssets="all" />

@@ -1,11 +1,10 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Piral.Blazor.DevServer
+namespace Piral.Blazor.DevServer;
+
+public class PiletJson
 {
-    public class PiletJson
-    {
-        [JsonPropertyName("piralInstances")]
-        public Dictionary<string, JsonElement>? PiralInstances { get; set; }
-    }
+    [JsonPropertyName("piralInstances")]
+    public Dictionary<string, JsonElement>? PiralInstances { get; set; }
 }

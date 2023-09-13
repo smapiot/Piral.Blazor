@@ -4,39 +4,39 @@
 <DynamicComponent Type="@Activation.Root" Parameters="@parameters" />
 
 @code {
-    private readonly Dictionary<string, object> parameters = new Dictionary<string, object>{};
+private readonly Dictionary<string, object> parameters = new Dictionary<string, object>{};
 
-    /// <summary>
-    /// The reference id of the activated element.
-    /// </summary>
-    [Parameter]
-    public string Rid { get; set; }
+/// <summary>
+/// The reference id of the activated element.
+/// </summary>
+[Parameter]
+public string Rid { get; set; }
 
-    private void RootChanged(object sender, EventArgs e)
+private void RootChanged(object sender, EventArgs e)
+{
+    this.StateHasChanged();
+}
+
+public void Dispose()
+{
+    Activation.RootChanged -= RootChanged;
+}
+
+protected override Task OnInitializedAsync()
+{
+    RenderFragment child = @<ElementView Rid="@Rid" />;
+    parameters["ChildContent"] = child;
+
+    return base.OnInitializedAsync();
+}
+
+protected override Task OnAfterRenderAsync(bool firstRender)
+{
+    if (firstRender)
     {
-        this.StateHasChanged();
-    }
-    
-    public void Dispose()
-    {
-        Activation.RootChanged -= RootChanged;
+        Activation.RootChanged += RootChanged;
     }
 
-    protected override Task OnInitializedAsync()
-    {
-        RenderFragment child = @<ElementView Rid="@Rid" />;
-        parameters["ChildContent"] = child;
-
-        return base.OnInitializedAsync();
-    }
-
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            Activation.RootChanged += RootChanged;
-        }
-
-        return base.OnAfterRenderAsync(firstRender);
-    }
+    return base.OnAfterRenderAsync(firstRender);
+}
 }

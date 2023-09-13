@@ -11,23 +11,23 @@
 }
 
 @code {
-    private void ComponentChanged(object sender, EventArgs e)
+private void ComponentChanged(object sender, EventArgs e)
+{
+    this.StateHasChanged();
+}
+
+public void Dispose()
+{
+    Activation.ComponentsChanged -= ComponentChanged;
+}
+
+protected override Task OnAfterRenderAsync(bool firstRender)
+{
+    if (firstRender)
     {
-        this.StateHasChanged();
+        Activation.ComponentsChanged += ComponentChanged;
     }
 
-    public void Dispose()
-    {
-        Activation.ComponentsChanged -= ComponentChanged;
-    }
-
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            Activation.ComponentsChanged += ComponentChanged;
-        }
-
-        return base.OnAfterRenderAsync(firstRender);
-    }
+    return base.OnAfterRenderAsync(firstRender);
+}
 }
