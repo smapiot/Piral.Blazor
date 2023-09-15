@@ -17,8 +17,20 @@ namespace Piral.Blazor.Core;
 
 public static class JSBridge
 {
+    const string CORE_PILET_ID = "@default";
+
     private static Dictionary<string, Assembly> _assemblies = new();
     private static Dictionary<string, PiletData> _pilets = new();
+    private static List<string> _coreDependencies = new();
+    private static string[] _capabilities = new[] {
+        "load", // enables using "LoadPilet" / "UnloadPilet" instead of "LoadComponentsFromLibrary" etc.
+        "custom-element", // enables using "CreateElement" etc. intead of "Activate" etc.
+        "language", // enables using satellite assemblies
+        "logging", // enables setting the log level
+        "events", // enables support for emitting / subscribing to Piral events
+        "dependency-symbols", // enables support for dependency symbols in the metadata
+        "core-pilet" // enables the definition of a core pilet
+    };
 
     public static ComponentActivationService ActivationService { get; set; }
 
@@ -107,16 +119,10 @@ public static class JSBridge
     #region Modern Loading / Initialization API
 
     [JSInvokable]
-    public static Task<string[]> GetCapabilities()
-    {
-        // "load" --> enables using "LoadPilet" / "UnloadPilet" instead of "LoadComponentsFromLibrary" etc.
-        // "custom-element" --> enables using "CreateElement" etc. intead of "Activate" etc.
-        // "language" --> enables using satellite assemblies
-        // "logging" --> enables setting the log level
-        // "events" --> enables support for emitting / subscribing to Piral events
-        // "dependency-symbols" --> enables support for dependency symbols in the metadata
-        return Task.FromResult(new[] { "load", "custom-element", "language", "logging", "events", "dependency-symbols" });
-    }
+    public static Task<string[]> GetCapabilities() => Task.FromResult(_capabilities);
+    
+    [JSInvokable]
+    public static Task LoadCorePilet(PiletDefinition pilet) => LoadPilet(CORE_PILET_ID, pilet);
 
     [JSInvokable]
     public static async Task LoadPilet(string id, PiletDefinition pilet)
@@ -125,26 +131,37 @@ public static class JSBridge
 
         if (_pilets.TryAdd(id, data))
         {
+            var core = id == CORE_PILET_ID;
             var client = Host.Services.GetRequiredService<HttpClient>();
             var js = Host.Services.GetService<IJSRuntime>();
             var dll = await client.GetStreamAsync(pilet.DllUrl);
             var pdb = pilet.PdbUrl is not null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
-            var context = new AssemblyLoadContext(id, true);
+            var context = core ? AssemblyLoadContext.Default : new AssemblyLoadContext(id, true);
 
             foreach (var url in pilet.Dependencies)
             {
                 var name = url.Split('/').Last();
-                var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
-                var pdbUrl = (pilet.DependencySymbols?.Contains(symbols) ?? false) ? symbols : null;
-                await LoadAssemblyInContext(client, context, url, pdbUrl);
+                var shouldLoad = core || !_coreDependencies.Contains(name);
+
+                if (shouldLoad)
+                {
+                    var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
+                    var pdbUrl = (pilet.DependencySymbols?.Contains(symbols) ?? false) ? symbols : null;
+                    await LoadAssemblyInContext(client, context, url, pdbUrl);
+                }
+
+                if (core)
+                {
+                    _coreDependencies.Add(name);
+                }
             }
 
             var library = await LoadAssemblyInContext(client, context, pilet.DllUrl, pilet.PdbUrl);
-            var service = new PiletService(js, client, pilet);
+            var service = new PiletService(js, client, core, pilet);
+
             data.Library = library;
             data.Service = service;
             data.Context = context;
-
             data.LanguageHandler = async (s, e) =>
             {
                 await data.Service.LoadLanguage(Localization.Language);

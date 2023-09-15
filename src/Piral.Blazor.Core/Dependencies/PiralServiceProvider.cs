@@ -3,7 +3,7 @@ using System;
 
 namespace Piral.Blazor.Core.Dependencies;
 
-internal class PiralServiceProvider : IPiralServiceProvider
+public class PiralServiceProvider : IPiralServiceProvider
 {
     private readonly IServiceCollection _globalServices;
     private readonly IServiceProvider _globalServiceProvider;

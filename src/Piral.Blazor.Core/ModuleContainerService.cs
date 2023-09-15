@@ -45,7 +45,7 @@ public class ModuleContainerService : IModuleContainerService
             return _providers.GetValueOrDefault(alc);
         }
 
-        return null;
+        return _provider;
     }
 
     private static void ConfigureGlobalServices(IServiceCollection sc, Assembly assembly, IPiletService pilet)

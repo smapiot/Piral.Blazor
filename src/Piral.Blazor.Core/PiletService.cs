@@ -20,21 +20,23 @@ public sealed class PiletService : IPiletService
     private readonly string _version;
     private readonly IJSRuntime _js;
     private readonly HttpClient _client;
+    private readonly bool _core;
     private readonly List<EventListener> _listeners;
     private readonly List<string> _loadedLanguages;
     private readonly Dictionary<string, List<string>> _satellites;
 
     public event EventHandler LanguageChanged;
 
-    private PiletService(IJSRuntime js, HttpClient client)
+    private PiletService(IJSRuntime js, HttpClient client, bool core)
     {
         _js = js;
         _listeners = new List<EventListener>();
         _client = client;
+        _core = core;
         _loadedLanguages = new List<string>();
     }
 
-    public PiletService(IJSRuntime js, HttpClient client, string baseUrl) : this(js, client)
+    public PiletService(IJSRuntime js, HttpClient client, string baseUrl) : this(js, client, false)
     {
         _name = "(unknown)";
         _version = "0.0.0";
@@ -45,7 +47,7 @@ public sealed class PiletService : IPiletService
         _config = new ConfigurationBuilder().AddJsonStream(GetStream("{}")).Build();
     }
 
-    public PiletService(IJSRuntime js, HttpClient client, PiletDefinition pilet) : this(js, client)
+    public PiletService(IJSRuntime js, HttpClient client, bool core, PiletDefinition pilet) : this(js, client, core)
     {
         _name = pilet.Name;
         _version = pilet.Version;
@@ -63,6 +65,8 @@ public sealed class PiletService : IPiletService
     public string Name => _name;
 
     public string Version => _version;
+
+    public bool IsCore => _core;
 
     public IConfiguration Config => _config;
 
