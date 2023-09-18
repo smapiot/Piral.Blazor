@@ -23,7 +23,7 @@ public class PiralServiceProvider : IPiralServiceProvider
             {
                 childServices.Add(service);
             }
-        }, sp => sp.BuildServiceProvider(), ParentSingletonOpenGenericRegistrationsBehaviour.Delegate);
+        }, sp => sp.BuildServiceProvider(), ParentSingletonOpenGenericRegistrationsBehaviour.DuplicateSingletons);
     }
 
     public object GetService(Type serviceType) => _globalServiceProvider.GetService(serviceType);
