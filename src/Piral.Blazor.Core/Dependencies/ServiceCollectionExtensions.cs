@@ -53,6 +53,11 @@ internal static class ServiceCollectionExtensions
 
         if (unsupportedDescriptors.Any())
         {
+            foreach (var serviceDescriptor in unsupportedDescriptors)
+            {
+                Console.WriteLine("UNSUPPORTED {0}", serviceDescriptor);
+            }
+
             if (singletonOpenGenericBehaviour == ParentSingletonOpenGenericRegistrationsBehaviour.ThrowIfNotSupportedByContainer)
             {
                 ThrowUnsupportedDescriptors(unsupportedDescriptors);

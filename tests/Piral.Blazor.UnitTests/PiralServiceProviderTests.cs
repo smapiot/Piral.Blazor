@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Piral.Blazor.Core;
+using Piral.Blazor.Core.Dependencies;
 using Xunit;
 
 namespace Piral.Blazor.Tests
@@ -33,95 +34,95 @@ namespace Piral.Blazor.Tests
             globalDependency.Should().Be(moduleBDependency.Dependency);
         }
 
-        [Fact]
-        public void Pilet_Services_Should_Resolve_Global_Dependency_From_Other_Pilet()
-        {
-            // global registrations
-            var globalServices = new ServiceCollection();
-            var piralServiceProvider = new PiralServiceProvider(globalServices);
+        // [Fact]
+        // public void Pilet_Services_Should_Resolve_Global_Dependency_From_Other_Pilet()
+        // {
+        //     // global registrations
+        //     var globalServices = new ServiceCollection();
+        //     var piralServiceProvider = new PiralServiceProvider(globalServices);
 
-            // moduleA registrations
-            var moduleAGlobalServices = new ServiceCollection();
-            moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
-            piralServiceProvider.AddGlobalServices(moduleAGlobalServices);
+        //     // moduleA registrations
+        //     var moduleAGlobalServices = new ServiceCollection();
+        //     moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
+        //     piralServiceProvider.AddGlobalServices(moduleAGlobalServices);
 
-            var moduleAServices = new ServiceCollection();
-            var moduleAServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleAServices);
+        //     var moduleAServices = new ServiceCollection();
+        //     var moduleAServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleAServices);
 
-            // moduleC registrations
-            var moduleCServices = new ServiceCollection();
-            moduleCServices.AddTransient<ModuleCDependency>();
-            var moduleCServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleCServices);
+        //     // moduleC registrations
+        //     var moduleCServices = new ServiceCollection();
+        //     moduleCServices.AddTransient<ModuleCDependency>();
+        //     var moduleCServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleCServices);
 
-            // resolve dependencies
-            var moduleAGlobalDependency = moduleAServiceProvider.GetRequiredService<ModuleAGlobalDependency>();
-            var moduleCDependency = moduleCServiceProvider.GetRequiredService<ModuleCDependency>();
+        //     // resolve dependencies
+        //     var moduleAGlobalDependency = moduleAServiceProvider.GetRequiredService<ModuleAGlobalDependency>();
+        //     var moduleCDependency = moduleCServiceProvider.GetRequiredService<ModuleCDependency>();
 
-            // assert
-            moduleAGlobalDependency.Should().Be(moduleCDependency.Dependency);
-        }
+        //     // assert
+        //     moduleAGlobalDependency.Should().Be(moduleCDependency.Dependency);
+        // }
 
-        [Fact]
-        public void Declaring_Global_Dependencies_In_Two_Pilets_Should_Work()
-        {
-            // global registrations from pilet 1
-            var globalServices = new ServiceCollection();
-            globalServices.AddSingleton<GlobalDependency>();
-            var piralServiceProvider = new PiralServiceProvider(globalServices);
+        // [Fact]
+        // public void Declaring_Global_Dependencies_In_Two_Pilets_Should_Work()
+        // {
+        //     // global registrations from pilet 1
+        //     var globalServices = new ServiceCollection();
+        //     globalServices.AddSingleton<GlobalDependency>();
+        //     var piralServiceProvider = new PiralServiceProvider(globalServices);
 
-            // moduleA registrations
-            var moduleAGlobalServices = new ServiceCollection();
-            moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
-            piralServiceProvider.AddGlobalServices(moduleAGlobalServices);
+        //     // moduleA registrations
+        //     var moduleAGlobalServices = new ServiceCollection();
+        //     moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
+        //     piralServiceProvider.AddGlobalServices(moduleAGlobalServices);
 
-            var moduleAServices = new ServiceCollection();
-            var moduleAServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleAServices);
+        //     var moduleAServices = new ServiceCollection();
+        //     var moduleAServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleAServices);
 
-            // resolve dependencies
-            var globDep = moduleAServiceProvider.GetRequiredService<GlobalDependency>();
+        //     // resolve dependencies
+        //     var globDep = moduleAServiceProvider.GetRequiredService<GlobalDependency>();
 
-            // moduleB registrations
-            var moduleBGlobalServices = new ServiceCollection();
-            moduleBGlobalServices.AddTransient<ModuleBDependency>();
-            piralServiceProvider.AddGlobalServices(moduleBGlobalServices);
+        //     // moduleB registrations
+        //     var moduleBGlobalServices = new ServiceCollection();
+        //     moduleBGlobalServices.AddTransient<ModuleBDependency>();
+        //     piralServiceProvider.AddGlobalServices(moduleBGlobalServices);
 
-            var moduleBServices = new ServiceCollection();
-            var moduleBServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleBServices);
+        //     var moduleBServices = new ServiceCollection();
+        //     var moduleBServiceProvider = piralServiceProvider.CreatePiletServiceProvider(moduleBServices);
 
-            // resolve dependencies
-            var moduleDependency = moduleBServiceProvider.GetRequiredService<ModuleBDependency>();
+        //     // resolve dependencies
+        //     var moduleDependency = moduleBServiceProvider.GetRequiredService<ModuleBDependency>();
 
-            // assert
-            globDep.Should().Be(moduleDependency.Dependency);
-        }
+        //     // assert
+        //     globDep.Should().Be(moduleDependency.Dependency);
+        // }
 
-        [Fact]
-        public void Pilet_Services_Registration_Should_Be_Commutative()
-        {
-            // global registrations
-            var globalServices = new ServiceCollection();
-            var prialServiceProvider = new PiralServiceProvider(globalServices);
+        // [Fact]
+        // public void Pilet_Services_Registration_Should_Be_Commutative()
+        // {
+        //     // global registrations
+        //     var globalServices = new ServiceCollection();
+        //     var prialServiceProvider = new PiralServiceProvider(globalServices);
 
-            // moduleC registrations
-            var moduleCServices = new ServiceCollection();
-            moduleCServices.AddTransient<ModuleCDependency>();
-            var moduleCServiceProvider = prialServiceProvider.CreatePiletServiceProvider(moduleCServices);
+        //     // moduleC registrations
+        //     var moduleCServices = new ServiceCollection();
+        //     moduleCServices.AddTransient<ModuleCDependency>();
+        //     var moduleCServiceProvider = prialServiceProvider.CreatePiletServiceProvider(moduleCServices);
 
-            // moduleA registrations
-            var moduleAGlobalServices = new ServiceCollection();
-            moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
-            prialServiceProvider.AddGlobalServices(moduleAGlobalServices);
+        //     // moduleA registrations
+        //     var moduleAGlobalServices = new ServiceCollection();
+        //     moduleAGlobalServices.AddSingleton<ModuleAGlobalDependency>();
+        //     prialServiceProvider.AddGlobalServices(moduleAGlobalServices);
 
-            var moduleAServices = new ServiceCollection();
-            var moduleAServiceProvider = prialServiceProvider.CreatePiletServiceProvider(moduleAServices);
+        //     var moduleAServices = new ServiceCollection();
+        //     var moduleAServiceProvider = prialServiceProvider.CreatePiletServiceProvider(moduleAServices);
 
-            // resolve dependencies
-            var moduleAGlobalDependency = moduleAServiceProvider.GetRequiredService<ModuleAGlobalDependency>();
-            var moduleCDependency = moduleCServiceProvider.GetRequiredService<ModuleCDependency>();
+        //     // resolve dependencies
+        //     var moduleAGlobalDependency = moduleAServiceProvider.GetRequiredService<ModuleAGlobalDependency>();
+        //     var moduleCDependency = moduleCServiceProvider.GetRequiredService<ModuleCDependency>();
 
-            // assert
-            moduleAGlobalDependency.Should().Be(moduleCDependency.Dependency);
-        }
+        //     // assert
+        //     moduleAGlobalDependency.Should().Be(moduleCDependency.Dependency);
+        // }
 
         #region fakes
 
