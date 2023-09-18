@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using System.Runtime.Loader;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Piral.Blazor.Core;
 using Piral.Blazor.Core.Dependencies;
@@ -24,11 +26,11 @@ namespace Piral.Blazor.SmokeTests
 
             var asc1 = new AssemblyLoadContext("pilet-a");
             var asc2 = AssemblyLoadContext.Default;
-            var ass1 = asc1.LoadFromStream();
-            var ass2 = asc2.LoadFromStream();
+            var ass1 = asc1.LoadFromAssemblyPath(typeof(PiletA.DependencyA).Assembly.Location);
+            var ass2 = asc2.LoadFromAssemblyPath(typeof(PiletB.DependencyB).Assembly.Location);
 
-            var DependencyA = ass1.FindType("DependencyA");
-            var DependencyB = ass2.FindType("DependencyB");
+            var DependencyA = ass1.ExportedTypes.First(m => m.Name == "DependencyA");
+            var DependencyB = ass2.ExportedTypes.First(m => m.Name == "DependencyB");
 
             // Act
             moduleContainerService.ConfigureModule(ass2, piletService);
@@ -41,7 +43,9 @@ namespace Piral.Blazor.SmokeTests
             var dependencyA = spA.GetRequiredService(DependencyA);
             var dependencyB = spB.GetRequiredService(DependencyB);
 
-            dependencyB.Should().Be(dependencyA.Dependency);
+            var depBofA = DependencyA.GetProperty("Dependency").GetValue(dependencyA);
+
+            dependencyB.Should().NotBe(depBofA);
         }
     }
 }

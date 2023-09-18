@@ -8,6 +8,7 @@ namespace Piral.Blazor.SmokeTests.PiletA
         public static void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<DependencyA>();
+            services.AddTransient<DependencyB>();
         }
     }
 

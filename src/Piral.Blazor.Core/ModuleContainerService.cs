@@ -17,6 +17,7 @@ public class ModuleContainerService : IModuleContainerService
     public ModuleContainerService(IPiralServiceProvider provider)
     {
         _provider = provider;
+        _providers.Add(AssemblyLoadContext.Default, _provider);
     }
 
     public void ConfigureModule(Assembly assembly, IPiletService pilet)
@@ -28,7 +29,7 @@ public class ModuleContainerService : IModuleContainerService
         ConfigureLocalServices(services, assembly, pilet);
         ConfigureDefaultServices(services, assembly, pilet);
 
-        _providers.Add(alc, _provider.CreatePiletServiceProvider(services));
+        _providers[alc] = _provider.CreatePiletServiceProvider(services);
     }
 
     private static void ConfigureDefaultServices(ServiceCollection services, Assembly assembly, IPiletService pilet)

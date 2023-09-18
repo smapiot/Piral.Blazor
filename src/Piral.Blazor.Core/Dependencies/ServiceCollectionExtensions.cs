@@ -45,7 +45,6 @@ internal static class ServiceCollectionExtensions
         }
 
         var childSp = reWrittenServiceCollection.BuildServiceProvider();
-        var innerSp = childSp;
 
         // Make sure we dispose any parent sp scope that we have leased, when the IServiceProvider is disposed.
         void onDispose()
@@ -62,7 +61,7 @@ internal static class ServiceCollectionExtensions
             await DisposeHelper.DisposeAsyncIfImplemented(parentScope);
         }
 
-        var disposableSp = new DisposableServiceProvider(innerSp, onDispose, onDisposeAsync);
+        var disposableSp = new DisposableServiceProvider(childSp, onDispose, onDisposeAsync);
         return disposableSp;
     }
 
