@@ -138,23 +138,8 @@ public static class JSBridge
             var pdb = pilet.PdbUrl is not null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
             var context = core ? AssemblyLoadContext.Default : new AssemblyLoadContext(id, true);
 
-            foreach (var url in pilet.Dependencies)
-            {
-                var name = url.Split('/').Last();
-                var shouldLoad = core || !_coreDependencies.Contains(name);
-
-                if (shouldLoad)
-                {
-                    var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
-                    var pdbUrl = (pilet.DependencySymbols?.Contains(symbols) ?? false) ? symbols : null;
-                    await LoadAssemblyInContext(client, context, url, pdbUrl);
-                }
-
-                if (core)
-                {
-                    _coreDependencies.Add(name);
-                }
-            }
+            await AddDependencies(client, AssemblyLoadContext.Default, pilet.SharedDependencies, pilet.DependencySymbols);
+            await AddDependencies(client, context, pilet.Dependencies, pilet.DependencySymbols);
 
             var library = await LoadAssemblyInContext(client, context, pilet.DllUrl, pilet.PdbUrl);
             var service = new PiletService(js, client, core, pilet);
@@ -260,6 +245,30 @@ public static class JSBridge
         {
             var dll = await client.GetStreamAsync(dllUrl);
             return context.LoadFromStream(dll);
+        }
+    }
+    
+    private static async Task AddDependencies(HttpClient client, AssemblyLoadContext context, IEnumerable<string> dependencies, IEnumerable<string> dependencySymbols)
+    {
+        if (dependencies is not null)
+        {
+            foreach (var url in dependencies)
+            {
+                var name = url.Split('/').Last();
+                var available = _coreDependencies.Contains(name);
+
+                if (!available)
+                {
+                    var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
+                    var pdbUrl = (dependencySymbols?.Contains(symbols) ?? false) ? symbols : null;
+                    await LoadAssemblyInContext(client, context, url, pdbUrl);
+                }
+
+                if (!available && (context == AssemblyLoadContext.Default))
+                {
+                    _coreDependencies.Add(name);
+                }
+            }
         }
     }
 

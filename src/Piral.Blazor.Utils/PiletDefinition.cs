@@ -29,6 +29,9 @@ namespace Piral.Blazor.Utils;
     [JsonPropertyName("dependencies")]
     public List<string> Dependencies { get; set; }
 
+    [JsonPropertyName("sharedDependencies")]
+    public List<string> SharedDependencies { get; set; }
+
     [JsonPropertyName("dependencySymbols")]
     public List<string> DependencySymbols { get; set; }
 

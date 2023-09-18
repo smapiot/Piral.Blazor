@@ -11,51 +11,30 @@ namespace Piral.Blazor.Core.Dependencies;
 
 internal static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Creates a service collection that contains a read-only view of all the services from the parent <see cref="IServiceCollection"/> but lets you add and remove additional <see cref="ServiceDescriptor"'s that can be used for configuring a child container.
-    /// </summary>
-    /// <typeparam name="TService"></typeparam>
-    /// <param name="services"></param>
-    /// <returns></returns>
-    public static IChildServiceCollection CreateChildServiceCollection(this IServiceCollection services)
+    public static IServiceProvider CreateChildServiceProvider(this IServiceProvider parentServiceProvider, IServiceCollection parentServices, Action<IChildServiceCollection> configureChildServices)
     {
-        var childServiceCollection = new ChildServiceCollection(services.ToImmutableList());
-        return childServiceCollection;
-    }
-
-    public static IServiceProvider CreateChildServiceProvider(this IServiceProvider parentServiceProvider, IServiceCollection parentServices, Action<IChildServiceCollection> configureChildServices, Func<IServiceCollection, IServiceProvider> buildChildServiceProvider, ParentSingletonOpenGenericRegistrationsBehaviour behaviour = ParentSingletonOpenGenericRegistrationsBehaviour.ThrowIfNotSupportedByContainer)
-    {
-        var childServices = parentServices.CreateChildServiceCollection();
+        var childServices = new ChildServiceCollection(parentServices.ToImmutableList());
         configureChildServices?.Invoke(childServices);
-        var childContainer = childServices.BuildChildServiceProvider(parentServiceProvider, s => buildChildServiceProvider(s), behaviour);
+        var childContainer = childServices.BuildChildServiceProvider(parentServiceProvider);
         return childContainer;
     }
 
-    public static IServiceProvider BuildChildServiceProvider(this IChildServiceCollection childServiceCollection, IServiceProvider parentServiceProvider, Func<IServiceCollection, IServiceProvider> buildSp, ParentSingletonOpenGenericRegistrationsBehaviour singletonOpenGenericBehaviour = ParentSingletonOpenGenericRegistrationsBehaviour.Delegate)
+    public static IServiceProvider BuildChildServiceProvider(this IChildServiceCollection childServiceCollection, IServiceProvider parentServiceProvider)
     {
         // add all the same registrations that are in the parent to the child,
         // but rewrite them to resolve from the parent IServiceProvider.
-
         var parentRegistrations = childServiceCollection.ParentDescriptors;
         var reWrittenServiceCollection = new ServiceCollection();
-        var unsupportedDescriptors = new List<ServiceDescriptor>(); // we can't honor singleton open generic registrations (child container would get different instance)
-        var parentScope = parentServiceProvider.CreateScope(); // obtain a new scope from the parent that can be safely used by the child for the lifetime of the child.
+        // obtain a new scope from the parent that can be safely used by the child for the lifetime of the child.
+        var parentScope = parentServiceProvider.CreateScope();
 
         foreach (var item in parentRegistrations)
         {
-            var rewrittenDescriptor = CreateChildDescriptorForExternalService(item, parentScope.ServiceProvider, unsupportedDescriptors, singletonOpenGenericBehaviour);
+            var rewrittenDescriptor = CreateChildDescriptorForExternalService(item, parentScope.ServiceProvider);
 
             if (rewrittenDescriptor != null)
             {
                 reWrittenServiceCollection.Add(rewrittenDescriptor);
-            }
-        }
-
-        if (unsupportedDescriptors.Any())
-        {
-            if (singletonOpenGenericBehaviour == ParentSingletonOpenGenericRegistrationsBehaviour.ThrowIfNotSupportedByContainer)
-            {
-                ThrowUnsupportedDescriptors(unsupportedDescriptors);
             }
         }
 
@@ -65,21 +44,8 @@ internal static class ServiceCollectionExtensions
             reWrittenServiceCollection.Add(item);
         }
 
-        IServiceProvider innerSp = null;
-        IServiceProvider childSp = null;
-
-        if (singletonOpenGenericBehaviour == ParentSingletonOpenGenericRegistrationsBehaviour.Delegate)
-        {
-            childSp = buildSp(reWrittenServiceCollection);
-            var routingSp = new ReRoutingServiceProvider(childSp);
-            routingSp.ReRoute(parentScope.ServiceProvider, unsupportedDescriptors.Select(a => a.ServiceType));
-            innerSp = routingSp;
-        }
-        else
-        {
-            childSp = buildSp(reWrittenServiceCollection);
-            innerSp = childSp;
-        }
+        var childSp = reWrittenServiceCollection.BuildServiceProvider();
+        var innerSp = childSp;
 
         // Make sure we dispose any parent sp scope that we have leased, when the IServiceProvider is disposed.
         void onDispose()
@@ -97,24 +63,10 @@ internal static class ServiceCollectionExtensions
         }
 
         var disposableSp = new DisposableServiceProvider(innerSp, onDispose, onDisposeAsync);
-
         return disposableSp;
     }
 
-    private static void ThrowUnsupportedDescriptors(IEnumerable<ServiceDescriptor> unsupportedDescriptors)
-    {
-        var typesMessageBuilder = new StringBuilder();
-
-        foreach (var item in unsupportedDescriptors)
-        {
-            typesMessageBuilder.AppendLine($"ServiceType: {item.ServiceType.FullName}, ImplementationType: {item.ImplementationType?.FullName ?? " "}");
-        }
-
-        throw new NotSupportedException("Open generic types registered as singletons in the parent container are not supported when using microsoft service provider for child containers: " + Environment.NewLine + typesMessageBuilder.ToString());
-    }
-
-
-    private static ServiceDescriptor CreateChildDescriptorForExternalService(ServiceDescriptor item, IServiceProvider parentServiceProvider, List<ServiceDescriptor> unsupportedDescriptors, ParentSingletonOpenGenericRegistrationsBehaviour singletonOpenGenericBehaviour)
+    private static ServiceDescriptor CreateChildDescriptorForExternalService(ServiceDescriptor item, IServiceProvider parentServiceProvider)
     {
         // For any services that implement IDisposable, they they will be tracked by Microsofts `ServiceProvider` when it creates them.
         // For a child container, we want the child container to be responsible for the objects lifetime, not the parent container.
@@ -147,19 +99,7 @@ internal static class ServiceCollectionExtensions
             return serviceDescriptor;
         }
 
-        if (singletonOpenGenericBehaviour == ParentSingletonOpenGenericRegistrationsBehaviour.DuplicateSingletons)
-        {
-            // allow the open generic singleton registration to be added again to this child again resulting in additional singleton instance at child scope.
-            return item;
-        }
-
-        if (singletonOpenGenericBehaviour == ParentSingletonOpenGenericRegistrationsBehaviour.Omit)
-        {
-            // exclude this service from the child container. It won't be able to be resolved from child container.
-            return null;
-        }
-
-        unsupportedDescriptors.Add(item);
-        return null;
+        // allow the open generic singleton registration to be added again to this child again resulting in additional singleton instance at child scope.
+        return item;
     }
 }
