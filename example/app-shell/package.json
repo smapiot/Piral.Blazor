@@ -22,7 +22,7 @@
     "postUpgrade": ""
   },
   "dependencies": {
-    "blazor": "7.0.9",
+    "blazor": "7.0.9-pre.20230918.3",
     "piral": "1.2.0",
     "piral-blazor": "1.2.0"
   },
@@ -34,7 +34,7 @@
     "@types/react-router-dom": "^5.0.0",
     "path-to-regexp": "6.2.1",
     "piral-cli": "1.2.0",
-    "piral-cli-esbuild": "1.2.0",
+    "piral-cli-esbuild": "latest",
     "sass": "^1.49.9",
     "typescript": "^4.6.2"
   }

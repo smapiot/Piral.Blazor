@@ -1,6 +1,6 @@
 import * as React from "react";
 import { render } from "react-dom";
-import { Piral, createInstance } from "piral";
+import { Piral, createInstance, createStandardApi } from "piral";
 import { createBlazorApi } from "piral-blazor";
 import { layout, errors } from "./layout";
 
@@ -12,7 +12,7 @@ const instance = createInstance({
     components: layout,
     errorComponents: errors,
   },
-  plugins: [createBlazorApi()],
+  plugins: [...createStandardApi(), createBlazorApi()],
   requestPilets() {
     return fetch(feedUrl)
       .then((res) => res.json())
