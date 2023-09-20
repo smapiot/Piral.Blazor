@@ -60,6 +60,19 @@ module.exports = async function () {
   }
 
   const getPiralBlazorApiCode = `export function initPiralBlazorApi(app) {
+    const handler = async (ev) => {
+      const { responseTo, fn, args } = ev;
+      let result = null;
+
+      if (typeof app[fn] === 'function') {
+        result = await app[fn](...args);
+      }
+
+      app.emit(responseTo, result);
+    };
+    const interopEvent = \`blazor-interop-\${app.meta.name}@\${app.meta.version}\`;
+    app.on(interopEvent, handler);
+    app.unwire = () => app.off(interopEvent, handler);
     ${standalone ? standaloneRemapCode : ""}
   }`;
 
@@ -133,6 +146,7 @@ module.exports = async function () {
   }
 
   const teardownPiletCode = `export function teardownPilet(api) {
+    api.unwire();
     ${cssLinks.map((href) => `withoutCss(${JSON.stringify(href)});`).join("\n")}
     ${teardownFileExists ? "projectTeardown(api);" : ""}
 

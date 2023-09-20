@@ -158,6 +158,7 @@ public sealed class PiletService : IPiletService, IDisposable
         DispatchEvent($"blazor-interop-{Name}@{Version}", new
         {
             responseTo,
+            fn,
             args,
         });
         var result = await tcs.Task;
