@@ -26,6 +26,9 @@ namespace Piral.Blazor.Utils;
     [JsonPropertyName("baseUrl")]
     public string BaseUrl { get; set; }
 
+    [JsonPropertyName("kind")]
+    public string Kind { get; set; }
+
     [JsonPropertyName("dependencies")]
     public List<string> Dependencies { get; set; }
 

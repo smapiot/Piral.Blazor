@@ -17,11 +17,9 @@ namespace Piral.Blazor.Core;
 
 public static class JSBridge
 {
-    const string CORE_PILET_ID = "@default";
-
     private static Dictionary<string, Assembly> _assemblies = new();
     private static Dictionary<string, PiletData> _pilets = new();
-    private static List<string> _coreDependencies = new();
+    private static List<string> _sharedDependencies = new();
     private static string[] _capabilities = new[] {
         "load", // enables using "LoadPilet" / "UnloadPilet" instead of "LoadComponentsFromLibrary" etc.
         "custom-element", // enables using "CreateElement" etc. intead of "Activate" etc.
@@ -120,9 +118,6 @@ public static class JSBridge
 
     [JSInvokable]
     public static Task<string[]> GetCapabilities() => Task.FromResult(_capabilities);
-    
-    [JSInvokable]
-    public static Task LoadCorePilet(PiletDefinition pilet) => LoadPilet(CORE_PILET_ID, pilet);
 
     [JSInvokable]
     public static async Task LoadPilet(string id, PiletDefinition pilet)
@@ -131,7 +126,7 @@ public static class JSBridge
 
         if (_pilets.TryAdd(id, data))
         {
-            var core = id == CORE_PILET_ID;
+            var core = pilet.Kind == "global";
             var client = Host.Services.GetRequiredService<HttpClient>();
             var js = Host.Services.GetService<IJSRuntime>();
             var dll = await client.GetStreamAsync(pilet.DllUrl);
@@ -254,7 +249,7 @@ public static class JSBridge
             foreach (var url in dependencies)
             {
                 var name = url.Split('/').Last();
-                var available = _coreDependencies.Contains(name);
+                var available = _sharedDependencies.Contains(name);
 
                 if (!available)
                 {
@@ -265,7 +260,7 @@ public static class JSBridge
 
                 if (!available && (context == AssemblyLoadContext.Default))
                 {
-                    _coreDependencies.Add(name);
+                    _sharedDependencies.Add(name);
                 }
             }
         }
