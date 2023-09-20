@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Piral.Blazor.Core;
 
-public sealed class PiletService : IPiletService
+public sealed class PiletService : IPiletService, IDisposable
 {
     private readonly Uri _baseUrl;
     private readonly IConfiguration _config;
@@ -21,22 +21,24 @@ public sealed class PiletService : IPiletService
     private readonly IJSRuntime _js;
     private readonly HttpClient _client;
     private readonly bool _core;
+    private readonly AssemblyLoadContext _context;
     private readonly List<EventListener> _listeners;
     private readonly List<string> _loadedLanguages;
     private readonly Dictionary<string, List<string>> _satellites;
 
     public event EventHandler LanguageChanged;
 
-    private PiletService(IJSRuntime js, HttpClient client, bool core)
+    private PiletService(IJSRuntime js, HttpClient client, bool core, AssemblyLoadContext context)
     {
         _js = js;
         _listeners = new List<EventListener>();
         _client = client;
         _core = core;
+        _context = context;
         _loadedLanguages = new List<string>();
     }
 
-    public PiletService(IJSRuntime js, HttpClient client, string baseUrl) : this(js, client, false)
+    public PiletService(IJSRuntime js, HttpClient client, string baseUrl) : this(js, client, false, AssemblyLoadContext.Default)
     {
         _name = "(unknown)";
         _version = "0.0.0";
@@ -47,7 +49,7 @@ public sealed class PiletService : IPiletService
         _config = new ConfigurationBuilder().AddJsonStream(GetStream("{}")).Build();
     }
 
-    public PiletService(IJSRuntime js, HttpClient client, bool core, PiletDefinition pilet) : this(js, client, core)
+    public PiletService(IJSRuntime js, HttpClient client, AssemblyLoadContext context, PiletDefinition pilet) : this(js, client, context == AssemblyLoadContext.Default, context)
     {
         _name = pilet.Name;
         _version = pilet.Version;
@@ -92,7 +94,7 @@ public sealed class PiletService : IPiletService
                 {
                     var url = GetUrl(satellite);
                     var dep = await _client.GetStreamAsync(url);
-                    AssemblyLoadContext.Default.LoadFromStream(dep);
+                    _context.LoadFromStream(dep);
                 }
             }
 
@@ -146,7 +148,33 @@ public sealed class PiletService : IPiletService
         }
     }
 
+    public async Task<T> Call<T>(string fn, params object[] args)
+    {
+        var id = Guid.NewGuid();
+        var responseTo = $"blazor-interop-response-{id}";
+        var tcs = new TaskCompletionSource<T>();
+        var handler = tcs.SetResult;
+        AddEventListener(responseTo, handler);
+        DispatchEvent($"blazor-interop-{Name}@{Version}", new
+        {
+            responseTo,
+            args,
+        });
+        var result = await tcs.Task;
+        RemoveEventListener(responseTo, handler);
+        return result;
+        
+    }
+
     private static Stream GetStream(string s) => new MemoryStream(Encoding.UTF8.GetBytes(s));
+
+    public void Dispose()
+    {
+        if (_context != AssemblyLoadContext.Default)
+        {
+            _context.Unload();
+        }
+    }
 
     struct EventListener
     {

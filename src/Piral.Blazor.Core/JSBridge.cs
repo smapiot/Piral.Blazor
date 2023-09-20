@@ -142,11 +142,10 @@ public static class JSBridge
             await AddDependencies(client, context, pilet.Dependencies, pilet.DependencySymbols);
 
             var library = await LoadAssemblyInContext(client, context, pilet.DllUrl, pilet.PdbUrl);
-            var service = new PiletService(js, client, core, pilet);
+            var service = new PiletService(js, client, context, pilet);
 
             data.Library = library;
             data.Service = service;
-            data.Context = context;
             data.LanguageHandler = async (s, e) =>
             {
                 await data.Service.LoadLanguage(Localization.Language);
@@ -165,7 +164,7 @@ public static class JSBridge
         {
             Localization.LanguageChanged -= data.LanguageHandler;
             ActivationService?.UnloadComponentsFromAssembly(data.Library);
-            data.Context.Unload();
+            data.Service.Dispose();
         }
 
         return Task.CompletedTask;
@@ -279,8 +278,6 @@ public static class JSBridge
         public PiletService Service { get; set; }
 
         public EventHandler LanguageHandler { get; set; }
-
-        public AssemblyLoadContext Context { get; set; }
     }
 
     #endregion

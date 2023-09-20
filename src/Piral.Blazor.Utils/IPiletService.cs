@@ -57,4 +57,9 @@ public interface IPiletService
     /// Removes the provided event listener.
     /// </summary>
     void RemoveEventListener<T>(string type, Action<T> handler);
+
+    /// <summary>
+    /// Calls the specified method on the pilet's pilet API object.
+    /// </summary>
+    Task<T> Call<T>(string fn, params object[] args);
 }
