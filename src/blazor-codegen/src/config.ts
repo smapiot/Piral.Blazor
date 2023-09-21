@@ -35,7 +35,25 @@ function getPriority(Project: any): string {
   return "undefined";
 }
 
-function getTargetFramework(Project: any, reject: (err: Error) => void): string {
+function getKind(Project: any): string {
+  if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
+    const propertyGroups = Array.isArray(Project.PropertyGroup)
+      ? Project.PropertyGroup
+      : [Project.PropertyGroup];
+    const propertyGroup = propertyGroups.find((p) => p.PiletKind);
+
+    if (propertyGroup) {
+      return propertyGroup.PiletKind;
+    }
+  }
+
+  return "local";
+}
+
+function getTargetFramework(
+  Project: any,
+  reject: (err: Error) => void
+): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
@@ -112,6 +130,7 @@ export function getProjectConfig(projectDir: string) {
             ),
             targetFramework,
             priority: getPriority(Project),
+            kind: getKind(Project),
             projectName: getProjectName(Project, defaultAssetName),
           });
         }

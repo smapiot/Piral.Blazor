@@ -24,6 +24,7 @@ export interface ProjectConfig {
   objectsDir: string;
   projectDir: string;
   projectName: string;
+  kind: string;
   priority: string;
 }
 

@@ -109,6 +109,7 @@ Besides these two options (required `PiralInstance` and optional `NpmRegistry`) 
 - `OutputFolder`: Sets the temporary output folder for the generated pilet (default: `..\piral~`).
 - `ConfigFolder`: Sets the folder where the config files are stored (default: *empty*, i.e., current project folder).
 - `MocksFolder`: Sets the folder where the Kras mock files are stored (default: `.\mocks`).
+- `PiletKind`: Sets the pilet kind (values: `global`, `local`; default: `local`).
 - `PiletPriority`: Sets the optional priority of the pilet when loading (any representable positive number). DLLs of Blazor pilets with higher numbers will *always* be loaded before the current DLLs (default: *none*).
 - `PublishFeedUrl`: Sets the URL to be used for publishing the pilet. If this is left free then using "Publish" in Visual Studio will not trigger a publish of the pilet.
 - `PublishFeedApiKey`: Sets the API Key to be used when publishing the pilet. If this is left free then the interactive upload is used, which will open a web browser for logging into the feed service.
