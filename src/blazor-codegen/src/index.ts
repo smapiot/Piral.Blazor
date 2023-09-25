@@ -101,7 +101,7 @@ module.exports = async function () {
   const registerDependenciesCode = `export function registerDependencies(app) {
     const references = ${JSON.stringify(files)}.map((file) => path + file);
     const satellites = ${JSON.stringify(satellites) || "undefined"};
-    app.defineBlazorReferences(references, satellites, ${config.priority}, ${config.kind});
+    app.defineBlazorReferences(references, satellites, ${config.priority}, ${config.kind}, ${config.sharedDependencies});
   }`;
 
   //Options
@@ -121,16 +121,21 @@ module.exports = async function () {
     const promises = [];
     const addScript = (href, attrs = {}) => {
       promises.push(new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        Object.entries(attrs).forEach(([name, value]) => script.setAttribute(name, value));
-        script.src = path + href;
-        script.onerror = () => reject(new Error('Loading the script failed:' + href));
-        script.onload = () => resolve();
-        document.body.appendChild(script);
+        const src = path + href;
+        const exists = document.querySelector('script[src="' + src + '"]');
+
+        if (!exists) {
+          const script = document.createElement('script');
+          Object.entries(attrs).forEach(([name, value]) => script.setAttribute(name, value));
+          script.src = src;
+          script.onerror = () => reject(new Error('Loading the script failed:' + href));
+          script.onload = () => resolve();
+          document.body.appendChild(script);
+        }
       }));
     };
     ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
-    ${setupFileExists ? "projectSetup(api, addScript);" : ""}
+    ${setupFileExists ? "projectSetup(api, addScript, withCss);" : ""}
     return Promise.all(promises);
   }`;
 

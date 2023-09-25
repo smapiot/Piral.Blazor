@@ -124,7 +124,7 @@ A more extensive example:
     <Version>1.2.3</Version>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
     <PiralCliVersion>next</PiralCliVersion>
-    <PiralBundlerVersion>0.15.0</PiralBundlerVersion>
+    <PiralBundlerVersion>1.1.0</PiralBundlerVersion>
     <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
     <Bundler>esbuild</Bundler>
     <Monorepo>disable</Monorepo>
@@ -137,6 +137,26 @@ A more extensive example:
   </PropertyGroup>
 
   <!-- ... -->
+</Project>
+```
+
+While pilets that define `PiletKind` to be `global` only have *shared dependencies*, the default for `local` pilets is to have *integrated dependencies*. If certain dependencies of `local` pilets should also be loaded into the global context (effectively sharing the dependency between all pilets - independent of the version) then you need to put those dependencies into a dedicated `ItemGroup` using the `Label` `shared`:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <!-- ... -->
+
+  <ItemGroup Label="shared">
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ... -->
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.1" PrivateAssets="all" />
+  </ItemGroup>
+
 </Project>
 ```
 
@@ -191,8 +211,9 @@ This file may then, for example to register a tile, look like this:
 import { PiletApi } from '../piral~/<project_name>/node_modules/<piral_instance>';
 
 type AddScript = (path: string, attrs?: Record<string, string>) => void;
+type AddStyles = (path: string) => void;
 
-export default (app: PiletApi, addScript: AddScript) => {
+export default (app: PiletApi, addScript: AddScript, addStyles: AddStyles) => {
 	//for a component marked with[PiralComponent("my-tile")]
 	app.registerTile(app.fromBlazor('my-tile'));
 };
@@ -201,12 +222,20 @@ export default (app: PiletApi, addScript: AddScript) => {
 The `addScript` function can be used to actually add more scripts, e.g.:
 
 ```tsx
-export default (app: PiletApi, addScript: AddScript) => {
+export default (app: PiletApi, addScript: AddScript, addStyles: AddStyles) => {
 	addScript("_content/Microsoft.Authentication.WebAssembly.Msal/AuthenticationService.js");
 };
 ```
 
 The first argument is the (relative) path to the RCL script, while the optional second argument provides additional attributes for the script to be added to the DOM.
+
+The `addStyles` function can be used to add more style sheets, e.g.:
+
+```tsx
+export default (app: PiletApi, addScript: AddScript, addStyles: AddStyles) => {
+  addStyles("_content/MudBlazor/MudBlazor.min.css");
+};
+```
 
 **Important**: Non-abstract / exposed components with `PiralComponent` cannot have a type parameter. As these are directly instantiated from JavaScript there is no way to define the type to be used. As such, you cannot mark components as `@[PiralComponent]` and `@typeparam`. If you want to use a generic component, then wrap it (i.e., use a second component declared as a `PiralComponent`, which only mounts / renders the first component with the desired generic type).
 

@@ -87,6 +87,36 @@ function getConfigFolderName(Project: any): string {
   return "";
 }
 
+function getSharedDependencies(Project: any): Array<string> {
+  const sharedDependencies = [];
+
+  if (typeof Project.ItemGroup === "object" && Project.ItemGroup) {
+    const itemGroups = Array.isArray(Project.ItemGroup)
+      ? Project.ItemGroup
+      : [Project.ItemGroup];
+
+    const sharedGroups = itemGroups.filter(group => group['@_Label'] === 'shared');
+
+    for (const group of sharedGroups) {
+      if (group.PackageReference) {
+        const references = Array.isArray(group.PackageReference)
+          ? group.PackageReference
+          : [group.PackageReference];
+
+        for (const reference of references) {
+          const name = reference['@_Name'];
+
+          if (typeof name === 'string') {
+            sharedDependencies.push(name);
+          }
+        }
+      }
+    }
+  }
+
+  return sharedDependencies;
+}
+
 export function getProjectConfig(projectDir: string) {
   return new Promise<ProjectConfig>((resolvePromise, rejectPromise) => {
     glob(`${projectDir}/*.csproj`, (err, matches) => {
@@ -128,6 +158,7 @@ export function getProjectConfig(projectDir: string) {
               targetFramework,
               swajson
             ),
+            sharedDependencies: getSharedDependencies(Project),
             targetFramework,
             priority: getPriority(Project),
             kind: getKind(Project),

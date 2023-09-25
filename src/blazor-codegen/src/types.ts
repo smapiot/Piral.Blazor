@@ -25,6 +25,7 @@ export interface ProjectConfig {
   projectDir: string;
   projectName: string;
   kind: string;
+  sharedDependencies: Array<string>;
   priority: string;
 }
 

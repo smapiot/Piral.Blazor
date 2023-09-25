@@ -19,11 +19,15 @@ const path = computePath();
 `;
 
 export const handleCssCode = `function withCss(href) {
-  const link = document.createElement('link');
-  link.dataset.src = href;
-  link.rel = 'stylesheet';
-  link.href = path + href;
-  document.head.appendChild(link);
+  const exists = document.querySelector('script[data-src="' + href + '"]');
+
+  if (!exists) {
+    const link = document.createElement('link');
+    link.dataset.src = href;
+    link.rel = 'stylesheet';
+    link.href = path + href;
+    document.head.appendChild(link);
+  }
 }
 function withoutCss(href) {
   const item = document.head.querySelector(\`link[data-src="\${href}"]\`);
