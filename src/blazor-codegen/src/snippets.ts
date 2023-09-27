@@ -18,20 +18,39 @@ export const definePathCode = `function computePath() {
 const path = computePath();
 `;
 
-export const handleCssCode = `function withCss(href) {
-  const exists = document.querySelector('script[data-src="' + href + '"]');
+export const handleCssCode = `const styles = [];
+
+function addStyle(href, pos) {
+  const exists = document.querySelector('link[data-src="' + href + '"]');
 
   if (!exists) {
     const link = document.createElement('link');
     link.dataset.src = href;
     link.rel = 'stylesheet';
     link.href = path + href;
-    document.head.appendChild(link);
+    styles.push(link);
+
+    switch (pos) {
+      case 'first':
+        document.head.insertBefore(link, document.head.firstChild);
+        break;
+      case 'before':
+        document.head.insertBefore(link, styles[0]);
+        break;
+      case 'after':
+      case 'last':
+      default:
+        document.head.appendChild(link);
+        break;
+    }
   }
 }
-function withoutCss(href) {
-  const item = document.head.querySelector(\`link[data-src="\${href}"]\`);
-  item && item.remove();
+
+function removeStyles() {
+  for (let i = styles.length; i--; ) {
+    styles[i].remove();
+    styles.splice(i, 1);
+  }
 }`;
 
 export const standaloneRemapCode = `

@@ -211,7 +211,7 @@ This file may then, for example to register a tile, look like this:
 import { PiletApi } from '../piral~/<project_name>/node_modules/<piral_instance>';
 
 type AddScript = (path: string, attrs?: Record<string, string>) => void;
-type AddStyles = (path: string) => void;
+type AddStyles = (path: string, pos?: 'first' | 'last' | 'before' | ' after') => void;
 
 export default (app: PiletApi, addScript: AddScript, addStyles: AddStyles) => {
 	//for a component marked with[PiralComponent("my-tile")]

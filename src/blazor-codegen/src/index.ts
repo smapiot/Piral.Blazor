@@ -134,8 +134,8 @@ module.exports = async function () {
         }
       }));
     };
-    ${cssLinks.map((href) => `withCss(${JSON.stringify(href)});`).join("\n")}
-    ${setupFileExists ? "projectSetup(api, addScript, withCss);" : ""}
+    ${cssLinks.map((href) => `addStyle(${JSON.stringify(href)});`).join("\n")}
+    ${setupFileExists ? "projectSetup(api, addScript, addStyle);" : ""}
     return Promise.all(promises);
   }`;
 
@@ -152,7 +152,7 @@ module.exports = async function () {
 
   const teardownPiletCode = `export function teardownPilet(api) {
     api.unwire();
-    ${cssLinks.map((href) => `withoutCss(${JSON.stringify(href)});`).join("\n")}
+    removeStyles();
     ${teardownFileExists ? "projectTeardown(api);" : ""}
 
     if (typeof api.releaseBlazorReferences === 'function') {
