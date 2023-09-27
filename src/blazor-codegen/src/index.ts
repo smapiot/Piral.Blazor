@@ -101,7 +101,7 @@ module.exports = async function () {
   const registerDependenciesCode = `export function registerDependencies(app) {
     const references = ${JSON.stringify(files)}.map((file) => path + file);
     const satellites = ${JSON.stringify(satellites) || "undefined"};
-    app.defineBlazorReferences(references, satellites, ${config.priority}, ${config.kind}, ${config.sharedDependencies});
+    app.defineBlazorReferences(references, satellites, ${config.priority}, ${JSON.stringify(config.kind)}, ${JSON.stringify(config.sharedDependencies)});
   }`;
 
   //Options
