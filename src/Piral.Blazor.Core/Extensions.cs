@@ -97,9 +97,13 @@ static class Extensions
                 return result;
             }
         }
-        else if (obj.TryGetValue(property.OriginalName, out var result))
+        else if (obj.TryGetValue(property.OriginalName, out var item))
         {
-            return result;
+            return item;
+        }
+        else if (property.OriginalName == "ChildContent" && obj.TryGetValue("children", out var children))
+        {
+            return children;
         }
 
         return JsonNull;
@@ -180,6 +184,22 @@ static class Extensions
         else if (value.GetType() == propType)
         {
             return value;
+        }
+        else if (typeof(RenderFragment) == propType)
+        {
+            var cid = Guid.NewGuid().ToString();
+
+            RenderFragment result = builder =>
+            {
+                builder.OpenElement(1, "piral-content");
+                builder.AddAttribute(2, "cid", cid);
+                builder.AddElementReferenceCapture(3, _ => {
+                    JSBridge.RenderContent(cid, value);
+                });
+                builder.CloseElement();
+            };
+
+            return result;
         }
         else
         {

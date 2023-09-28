@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -218,6 +219,12 @@ public static class JSBridge
     }
 
     #endregion
+
+    internal static void RenderContent(string contentId, JsonElement content)
+    {
+        var js = Host.Services.GetService<IJSRuntime>();
+        js.InvokeVoidAsync("assignContent", contentId, content);
+    }
 
     #region Helpers
 
