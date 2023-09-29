@@ -2206,7 +2206,7 @@ module.exports = async function() {
   const projectAssets = require(config.paFile);
   const staticAssets = require(config.swaFile);
   const { standalone, manifest, dlls, pdbs, satellites, watchPaths } = await prepare(targetDir, staticAssets);
-  [config.swaFile, config.paFile, manifest, ...watchPaths].forEach((path) => this.addDependency(path));
+  [config.swaFile, config.paFile, manifest, ...watchPaths].filter((m) => m.indexOf(`/${config.projectName}.`) !== -1).forEach((path) => this.addDependency(path));
   if (standalone) {
     allImports.push(`import * as pbc from 'piral-blazor/convert';`);
   }

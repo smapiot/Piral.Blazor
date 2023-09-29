@@ -50,9 +50,9 @@ module.exports = async function () {
   const { standalone, manifest, dlls, pdbs, satellites, watchPaths } =
     await prepare(targetDir, staticAssets);
 
-  [config.swaFile, config.paFile, manifest, ...watchPaths].forEach((path) =>
-    this.addDependency(path)
-  );
+  [config.swaFile, config.paFile, manifest, ...watchPaths]
+    .filter((m) => m.indexOf(`/${config.projectName}.`) !== -1)
+    .forEach((path) => this.addDependency(path));
 
   if (standalone) {
     // Integrate API usually provided by piral-blazor
@@ -101,7 +101,11 @@ module.exports = async function () {
   const registerDependenciesCode = `export function registerDependencies(app) {
     const references = ${JSON.stringify(files)}.map((file) => path + file);
     const satellites = ${JSON.stringify(satellites) || "undefined"};
-    app.defineBlazorReferences(references, satellites, ${config.priority}, ${JSON.stringify(config.kind)}, ${JSON.stringify(config.sharedDependencies)});
+    app.defineBlazorReferences(references, satellites, ${
+      config.priority
+    }, ${JSON.stringify(config.kind)}, ${JSON.stringify(
+    config.sharedDependencies
+  )});
   }`;
 
   //Options
