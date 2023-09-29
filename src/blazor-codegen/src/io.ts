@@ -1,6 +1,19 @@
 import { copyFileSync, mkdirSync } from "fs";
 import { basename, dirname, resolve } from "path";
 import { StaticAsset, StaticAssets } from "./types";
+import { ignoredAssets } from "./constants";
+
+function isIgnored(path: string) {
+  const name = basename(path);
+
+  for (const asset of ignoredAssets) {
+    if (asset.test(name)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 function copyFiles(assets: Array<StaticAsset>, target: string) {
   const watchPaths: Array<string> = [];
@@ -10,7 +23,7 @@ function copyFiles(assets: Array<StaticAsset>, target: string) {
     const toPath = resolve(target, getAssetPath(asset));
 
     // do not copy unnecessary files ...
-    if (!isCompressFile(toPath)) {
+    if (!isCompressFile(toPath) && !isIgnored(toPath)) {
       const toDir = dirname(toPath);
 
       mkdirSync(toDir, { recursive: true });
@@ -23,7 +36,7 @@ function copyFiles(assets: Array<StaticAsset>, target: string) {
 }
 
 export function isCompressFile(path: string) {
-  return path.endsWith('.gz') || path.endsWith('.br');
+  return path.endsWith(".gz") || path.endsWith(".br");
 }
 
 export function isAsset(asset: StaticAsset, name: string) {

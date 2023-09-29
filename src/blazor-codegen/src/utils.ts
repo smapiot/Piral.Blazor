@@ -1,4 +1,5 @@
 import { existsSync } from "fs";
+import { ignoredDlls } from "./constants";
 import {
   BlazorManifest,
   BlazorResourceType,
@@ -17,7 +18,9 @@ function getUniqueKeys(
 ) {
   const original = getAllKeys(originalManifest, type);
   const dedicated = getAllKeys(piletManifest, type);
-  return dedicated.filter((m) => !original.includes(m));
+  return dedicated.filter(
+    (m) => !original.includes(m) && !ignoredDlls.includes(m)
+  );
 }
 
 export function rebuildNeeded(config: ProjectConfig) {
