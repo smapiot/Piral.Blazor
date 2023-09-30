@@ -176,9 +176,15 @@ namespace Piral.Blazor.Tools
         {
             Log.LogMessage($"Checking the pilet infrastructure (Version={ToolsVersion}, Framework={Framework})...");
 
+            var isRunning = Environment.GetVariable("PIRAL_BLAZOR_RUNNING") == "yes";
+
             try
             {
-                RunPublish();
+                if (!isRunning)
+                {
+                    RunPublish();
+                }
+
                 return true;
             }
             catch (Exception e)
