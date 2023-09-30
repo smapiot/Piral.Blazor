@@ -1613,11 +1613,8 @@ var swajson = `staticwebassets.${action}.json`;
 var ignoredDlls = [
   "Microsoft.Build.Framework.dll",
   "Microsoft.Build.Utilities.Core.dll",
-  "Microsoft.Extensions.Localization.Abstractions.dll",
-  "Microsoft.Extensions.Localization.dll",
   "Microsoft.NET.StringTools.dll",
   "Microsoft.Win32.SystemEvents.dll",
-  "Newtonsoft.Json.dll",
   "Piral.Blazor.Tools.dll",
   "System.Configuration.ConfigurationManager.dll",
   "System.Drawing.Common.dll",

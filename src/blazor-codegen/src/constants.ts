@@ -20,17 +20,14 @@ export const swajson = `staticwebassets.${action}.json`;
 export const ignoredDlls = [
   "Microsoft.Build.Framework.dll",
   "Microsoft.Build.Utilities.Core.dll",
-  "Microsoft.Extensions.Localization.Abstractions.dll",
-  "Microsoft.Extensions.Localization.dll",
   "Microsoft.NET.StringTools.dll",
   "Microsoft.Win32.SystemEvents.dll",
-  "Newtonsoft.Json.dll",
   "Piral.Blazor.Tools.dll",
   "System.Configuration.ConfigurationManager.dll",
   "System.Drawing.Common.dll",
   "System.Security.Cryptography.ProtectedData.dll",
   "System.Security.Permissions.dll",
-  "System.Windows.Extensions.dll",
+  "System.Windows.Extensions.dll"
 ];
 
 export const ignoredAssets = [/^dotnet\..*\.js$/];
