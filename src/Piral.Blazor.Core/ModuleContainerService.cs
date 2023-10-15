@@ -29,7 +29,14 @@ public class ModuleContainerService : IModuleContainerService
         ConfigureLocalServices(services, assembly, pilet);
         ConfigureDefaultServices(services, assembly, pilet);
 
-        _providers[alc] = _provider.CreatePiletServiceProvider(services);
+        if (alc == AssemblyLoadContext.Default)
+        {
+            _providers[alc] = _provider.ExtendGlobalServiceProvider(services);
+        }
+        else
+        {
+            _providers[alc] = _provider.CreatePiletServiceProvider(services);
+        }
     }
 
     private static void ConfigureDefaultServices(ServiceCollection services, Assembly assembly, IPiletService pilet)

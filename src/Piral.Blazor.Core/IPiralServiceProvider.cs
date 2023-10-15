@@ -10,8 +10,13 @@ public interface IPiralServiceProvider : IServiceProvider
 {
     /// <summary>
     /// Creates a new <see cref="IServiceProvider"/> used by the pilet. 
-    /// This <see cref="IServiceProvider"/> will be rebuilt if another module registers global dependencies.
     /// </summary>
     /// <returns>A child service provider.</returns>
     IServiceProvider CreatePiletServiceProvider(IServiceCollection piletServices);
+    
+    /// <summary>
+    /// Creates a new <see cref="IServiceProvider"/> by extending the previous one. 
+    /// </summary>
+    /// <returns>A global service provider.</returns>
+    IServiceProvider ExtendGlobalServiceProvider(IServiceCollection piletServices);
 }
