@@ -358,46 +358,15 @@ public class Module
     public static void ConfigureServices(IServiceCollection services)
     {
         // configure dependency injection for the components in the pilet here
-        // -> use this for pilet-exclusive deps here
-        // -> the method is optional; you can remove it if not needed
-    }
-
-    public static void ConfigureShared(IServiceCollection services)
-    {
-        // configure dependency injection for the whole application here
-        // -> use this for third-party libraries or if you want to share deps with other pilets
-        // -> the method is optional; you can remove it if not needed
-        //
-        // IMPORTANT: The Blazor library (dll) is only loaded when a component from the library
-        //            is used => the shared dependencies are only available when the library is
-        //            loaded. Therefore, only use this to share dependencies when you are sure
-        //            that the library is loaded first / before another one.
-        //            Recommendation is to use ConfigureServices as much as possible, or bring
-        //            the shared dependency definition to all pilets relying on it.
     }
 }
 ```
 
-The `ConfigureServices` and `ConfigureShared` methods are optional. If you want to configure dependency injection in your pilet then use this. Our recommendation is to use `ConfigureServices` is much as possible, however, for using third-party libraries you might want to use `ConfigureShared`.
+The `ConfigureServices` method is optional. If you want to configure dependency injection in your pilet then use this.
 
-Third-party libraries require globally shared dependencies, as the third-party libraries are also globally shared (i.e., if two pilets depend on the same assembly it would only be loaded once, making it implicitly shared, however, this one only works if the pilet defining the shared dependency is loaded before the other one).
+If a third-party library requires globally shared dependencies (or global injected DI) then add it to a global pilet (setting the `PiletKind` to `global` in the csproj / build configuration).
 
-One way to mitigate the sharing issue with `ConfigureShared` is to use the same initialization on all pilets relying on the shared dependency. This way, independent which pilets are available and loaded first, the dependency sharing always works.
-
-**Note**: While `ConfigureShared` applies to *all* components, `ConfigureServices` only works for components defined *in the scope* of a pilet. This has to be the case, as components from shared libraries might be loaded from any pilet first - making it unclear where the component should be assigned to (usually it's either no or all pilets, but at the time of rendering this is completely unclear). To bring a component into the scope of a pilet (even if its in the same library) you need to have it declare as `@attribute [PiralComponent]`, e.g.,
-
-```razor
-// bring it in scope of the current pilet
-@attribute [PiralComponent]
-// now you can inject services defined in ConfigureServices
-@inject IMyLocalService myLocalService
-
-<div>
-  @myLocalService.Title
-</div>
-```
-
-Additionally, the two methods support another argument providing the configuration of the pilet, i.e., the `IConfiguration` object. So, the example above could be rewritten to be:
+Additionally, the `ConfigureServices` method supports another argument providing the configuration of the pilet, i.e., the `IConfiguration` object. So, the example above could be rewritten to be:
 
 ```cs
 public class Module
@@ -408,10 +377,6 @@ public class Module
     }
 
     public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
-    {
-    }
-
-    public static void ConfigureShared(IServiceCollection services, IConfiguration configuration)
     {
     }
 }
@@ -484,6 +449,44 @@ Example:
 
 Another component can now trigger this by using `ps.DispatchEvent("toggle-sidebar", false);` with an injected `@inject IPiletService ps`.
 
+#### Pilet Data and API Access
+
+You can use the `IPiletService` service to call methods living on the pilet API. This makes mostly sense for APIs that are quite primitive, e.g., accepting and returning only strings, booleans, and integers.
+
+In general this is working via the `Call` API. An example would be:
+
+```razor
+@attribute [PiralComponent]
+@inject IPiletService ps
+
+<button @onclick=@LogValue>Log current value</button>
+
+@code {
+    public async void LogValue()
+    {
+      var value = await ps.Call<string>("getData", "myValue");
+      Console.WriteLine("Currently stored value is: {0}", value);
+    }
+}
+```
+
+For some more common pilet API functions extension methods exist. The call beforehand to the `getData` function could be simplified with the `GetDataValue` extension:
+
+```razor
+@attribute [PiralComponent]
+@inject IPiletService ps
+
+<button @onclick=@LogValue>Log current value</button>
+
+@code {
+    public async void LogValue()
+    {
+      var value = await ps.GetDataValue<string>("myValue");
+      Console.WriteLine("Currently stored value is: {0}", value);
+    }
+}
+```
+
 ### Localization
 
 Localization works almost exactly as with standard Blazor, except that the language can be changed at runtime directly rather then requiring a full reload of the page.
@@ -546,6 +549,8 @@ You can also provide your own providers here (or nest them as you want):
 ```
 
 **Note**: There is always just one `PiralAppRoot` component. If you did not supply one then the default `PiralAppRoot` will be used. If you already provided one, no other `PiralAppRoot` can be used.
+
+It is critical to understand that each attached pilet component starts its own Blazor rendering tree. Therefore, while there is just a single `PiralAppRoot` component there might be multiple instances active at a given point in time.
 
 ## Running and Debugging the Pilet :rocket:
 
