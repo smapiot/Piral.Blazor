@@ -130,8 +130,6 @@ public static class JSBridge
             var core = pilet.Kind == "global";
             var client = Host.Services.GetRequiredService<HttpClient>();
             var js = Host.Services.GetService<IJSRuntime>();
-            var dll = await client.GetStreamAsync(pilet.DllUrl);
-            var pdb = pilet.PdbUrl is not null ? await client.GetStreamAsync(pilet.PdbUrl) : null;
             var context = core ? AssemblyLoadContext.Default : new AssemblyLoadContext(id, true);
 
             await AddDependencies(client, AssemblyLoadContext.Default, pilet.SharedDependencies, pilet.DependencySymbols);
