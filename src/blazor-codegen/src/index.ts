@@ -18,6 +18,7 @@ import {
   blazorprojectfolder,
   isRelease,
   teardownfile,
+  scopedCssTraitNames,
 } from "./constants";
 
 const bv = "PIRAL_BLAZOR_LAST_BUILD";
@@ -89,7 +90,7 @@ module.exports = async function () {
 
   // Get the CSS files for the project
   const cssLinks = bundleFiles
-    .filter((m) => m.AssetTraitName === "ScopedCss")
+    .filter((m) => scopedCssTraitNames.includes(m.AssetTraitName))
     .map(getAssetPath);
 
   // Dervice files

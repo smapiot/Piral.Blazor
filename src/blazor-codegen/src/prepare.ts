@@ -12,6 +12,7 @@ import {
   swajson,
   packageJsonFilename,
   piletJsonFilename,
+  wasmResourceTraitNames,
   variant,
   blazorrc,
 } from "./constants";
@@ -83,7 +84,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
 
   const manifestSource = staticAssets.Assets.find(
     (m) =>
-      m.AssetTraitName === "BlazorWebAssemblyResource" &&
+      wasmResourceTraitNames.includes(m.AssetTraitName) &&
       m.AssetTraitValue === "manifest" &&
       m.RelativePath.endsWith(bbjson)
   );

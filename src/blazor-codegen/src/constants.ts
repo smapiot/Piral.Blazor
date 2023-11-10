@@ -30,5 +30,7 @@ export const ignoredDlls = [
   "System.Windows.Extensions.dll"
 ];
 
+export const wasmResourceTraitNames = ["BlazorWebAssemblyResource", "WasmResource"];
+export const scopedCssTraitNames = ["ScopedCss"];
 export const ignoredAssets = [/^dotnet\..*\.js$/];
 export const alwaysIgnored = ["index.html", "favicon.ico", "icon-192.png"];

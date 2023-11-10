@@ -1622,6 +1622,8 @@ var ignoredDlls = [
   "System.Security.Permissions.dll",
   "System.Windows.Extensions.dll"
 ];
+var wasmResourceTraitNames = ["BlazorWebAssemblyResource", "WasmResource"];
+var scopedCssTraitNames = ["ScopedCss"];
 var ignoredAssets = [/^dotnet\..*\.js$/];
 var alwaysIgnored = ["index.html", "favicon.ico", "icon-192.png"];
 
@@ -1918,7 +1920,7 @@ async function prepare(targetDir, staticAssets) {
   const piralPiletFolder = (0, import_path3.resolve)(__dirname, "..");
   const instanceName = findInstanceName(piralPiletFolder);
   const appdir = findAppDir(piralPiletFolder, instanceName);
-  const manifestSource = staticAssets.Assets.find((m) => m.AssetTraitName === "BlazorWebAssemblyResource" && m.AssetTraitValue === "manifest" && m.RelativePath.endsWith(bbjson));
+  const manifestSource = staticAssets.Assets.find((m) => wasmResourceTraitNames.includes(m.AssetTraitName) && m.AssetTraitValue === "manifest" && m.RelativePath.endsWith(bbjson));
   if (!manifestSource) {
     throw new Error(`Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`);
   }
@@ -2226,7 +2228,7 @@ module.exports = async function() {
   const uniqueDependencies = dlls.map((f) => f.replace(".dll", ""));
   const traitValue = (_b = (_a = staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")) == null ? void 0 : _a.AssetTraitValue) != null ? _b : "ProjectBundle";
   const bundleFiles = staticAssets.Assets.filter((m) => m.AssetTraitValue === traitValue);
-  const cssLinks = bundleFiles.filter((m) => m.AssetTraitName === "ScopedCss").map(getAssetPath);
+  const cssLinks = bundleFiles.filter((m) => scopedCssTraitNames.includes(m.AssetTraitName)).map(getAssetPath);
   const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);
   const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) => getFilePath(staticAssets, name));
   const registerDependenciesCode = `export function registerDependencies(app) {
