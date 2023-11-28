@@ -2,27 +2,27 @@
 
   <PropertyGroup>
     <PackageId>Piral.Blazor.Core</PackageId>
-    <VersionPrefix>7.0.10</VersionPrefix>
+    <VersionPrefix>8.0.10</VersionPrefix>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageDescription>The shared orchestration layer for Blazor pilets.</PackageDescription>
-    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-7.0/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-8.0/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <BlazorEnableCompression>false</BlazorEnableCompression>
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.10" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.CustomElements" Version="7.0.10" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.10" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="7.0.0" />
-    <PackageReference Include="System.Net.Http.Json" Version="7.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.CustomElements" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

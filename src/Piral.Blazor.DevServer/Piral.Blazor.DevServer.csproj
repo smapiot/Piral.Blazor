@@ -2,7 +2,7 @@
     <PropertyGroup>
         <PackageId>Piral.Blazor.DevServer</PackageId>
         <AssemblyName>piral-blazor-devserver</AssemblyName>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
@@ -10,7 +10,7 @@
         <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
         <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
         <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
-        <VersionPrefix>7.0.10</VersionPrefix>
+        <VersionPrefix>8.0.10</VersionPrefix>
         <Description>Blazor Dev Server for Blazor pilets.</Description>
         <Authors>Florian Rappl</Authors>
         <Company>smapiot</Company>
@@ -19,7 +19,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.10" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
     </ItemGroup>
 
     <PropertyGroup>

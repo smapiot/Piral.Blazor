@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Piral.Blazor.Tools</PackageId>
-    <VersionPrefix>7.0.10</VersionPrefix>
+    <VersionPrefix>8.0.10</VersionPrefix>
     <Authors>Florian Rappl</Authors>
     <LangVersion>9</LangVersion>
     <Company>smapiot</Company>
@@ -10,7 +10,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageDescription>The tools for building Blazor pilets.</PackageDescription>
-    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-7.0/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-8.0/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
     <TargetFramework>netstandard2.0</TargetFramework>

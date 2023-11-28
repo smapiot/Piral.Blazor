@@ -1,6 +1,6 @@
 [![Piral Logo](https://github.com/smapiot/piral/raw/main/docs/assets/logo.png)](https://piral.io)
 
-# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/blazor-7.0/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-7.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-7.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/blazor) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
+# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/blazor-8.0/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-8.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-8.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/blazor) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
 
 All .NET things to make <a href="https://blazor.net" rel="nofollow"><img
 src="https://devblogs.microsoft.com/aspnet/wp-content/uploads/sites/16/2019/04/BrandBlazor_nohalo_1000x.png"
@@ -9,7 +9,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 <img src="https://piral.io/logo-simple.f8667084.png" height="10">
 &nbsp;Piral</a>.
 
-> This is the branch for Blazor 7.0 with .NET 7.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2), [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0), or [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch. For the most recent version see the [`blazor-8.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-8.0) branch.
+> This is the branch for Blazor 8.0 with .NET 8.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2), [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0), [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0), or[`blazor-7.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-7.0) branch.
 
 ## Getting Started
 
@@ -33,14 +33,14 @@ In this case, follow these steps:
 
    ```xml
    <PropertyGroup>
-       <TargetFramework>net7.0</TargetFramework>
+       <TargetFramework>net8.0</TargetFramework>
        <PiralInstance>my-piral-instance</PiralInstance>
    </PropertyGroup>
    ```
 
    (You can optionally also specify an `NpmRegistry` property. The default for this is set to `https://registry.npmjs.org/`)
 
-2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages, make sure they both have a version number of format `7.0.x`
+2. Install the `Piral.Blazor.Tools` and `Piral.Blazor.Utils` packages, make sure they both have a version number of format `8.0.x`
 3. Remove the `Microsoft.AspNetCore.Components.WebAssembly.DevServer` package and install the `Piral.Blazor.DevServer` package (using the same version as the packages from (2))
 4. Rename `Program.cs` to `Module.cs`, and make sure to make the `Main` method an empty method.
 5. Build the project. The first time you do this, this can take some time as it will fully scaffold the pilet.
@@ -59,7 +59,7 @@ Here is a minimal example configuration:
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <PiralInstance>../../app-shell/dist/emulator/app-shell-1.0.0.tgz</PiralInstance>
   </PropertyGroup>
 
@@ -73,7 +73,7 @@ This one gets the app shell from a local directory. Realistically, you'd have yo
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
   </PropertyGroup>
 
@@ -87,7 +87,7 @@ but realistically you'd publish the app shell to a private registry on a differe
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
     <NpmRegistry>https://registry.mycompany.com/</NpmRegistry>
   </PropertyGroup>
@@ -120,7 +120,7 @@ A more extensive example:
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Version>1.2.3</Version>
     <PiralInstance>@mycompany/app-shell</PiralInstance>
     <PiralCliVersion>next</PiralCliVersion>
@@ -153,8 +153,8 @@ While pilets that define `PiletKind` to be `global` only have *shared dependenci
 
   <ItemGroup>
     <!-- ... -->
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
