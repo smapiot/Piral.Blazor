@@ -139,7 +139,9 @@ public sealed class PiletService : IPiletService, IDisposable
 
     public void CallEventListeners(string type, JsonElement args)
     {
-        foreach (var listener in _listeners)
+        var originalListeners = _listeners.ToList();
+
+        foreach (var listener in originalListeners)
         {
             if (listener.Type == type)
             {

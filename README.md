@@ -9,7 +9,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 <img src="https://piral.io/logo-simple.f8667084.png" height="10">
 &nbsp;Piral</a>.
 
-> This is the branch for Blazor 7.0 with .NET 7.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2), [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0), or [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch.
+> This is the branch for Blazor 7.0 with .NET 7.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2), [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0), or [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0) branch. For the most recent version see the [`blazor-8.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-8.0) branch.
 
 ## Getting Started
 
@@ -383,6 +383,8 @@ public class Module
 ```
 
 The configuration uses the `meta.config` of the Pilet API provided by the pilet.
+
+**Important**: There is no support for the *appsettings...json* file as the configuration is assumed to be distributed. Use the `meta.config` approach described below for local development and a proper feed service with configuration support for production purposes.
 
 ### Standard Pilet Service
 
