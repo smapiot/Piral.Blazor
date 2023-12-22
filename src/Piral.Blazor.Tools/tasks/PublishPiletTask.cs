@@ -109,7 +109,9 @@ namespace Piral.Blazor.Tools
                 RunPiralCli(target, $"pilet build");
 
                 // Replace with files from publish
-                CompareAndReplace(outdir, root);
+                // -- ignored for now as published artifacts might behave weird:
+                // -- https://github.com/smapiot/Piral.Blazor/issues/128
+                // CompareAndReplace(outdir, root);
 
                 // Pack and publish
                 RunPiralCli(target, $"pilet pack");
