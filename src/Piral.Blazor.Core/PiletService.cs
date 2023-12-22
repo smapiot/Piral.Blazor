@@ -135,7 +135,7 @@ public sealed class PiletService : IPiletService, IDisposable
 
     public void RemoveEventListener<T>(string type, Action<T> handler)
     {
-        _listeners.RemoveAll(listener => listener.Type == type && Object.ReferenceEquals(listener.Reference, handler));
+        _listeners.RemoveAll(listener => listener.Type == type && listener.Reference == handler);
     }
 
     public void CallEventListeners(string type, JsonElement args)
