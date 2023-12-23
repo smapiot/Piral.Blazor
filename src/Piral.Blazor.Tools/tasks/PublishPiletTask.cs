@@ -105,33 +105,9 @@ namespace Piral.Blazor.Tools
                     Directory.Delete(outdir, true);
                 }
 
-                // Build the pilet
-                RunPiralCli(target, $"pilet build");
-
-                // Replace with files from publish
-                // -- ignored for now as published artifacts might behave weird:
-                // -- https://github.com/smapiot/Piral.Blazor/issues/128
-                // CompareAndReplace(outdir, root);
-
-                // Pack and publish
-                RunPiralCli(target, $"pilet pack");
-                RunPiralCli(target, $"pilet publish --url {FeedUrl} {auth}");
-            }
-        }
-
-        private void CompareAndReplace(string outdir, string root)
-        {
-            var files = Directory.GetFiles(outdir, "*", SearchOption.AllDirectories);
-
-            foreach (var file in files)
-            {
-                var relName = file.Replace(outdir, "");
-                var newName = root + relName;
-
-                if (File.Exists(newName))
-                {
-                    File.Copy(newName, file, true);
-                }
+                // Publish with a fresh build to prevent weird behavior as in
+                // https://github.com/smapiot/Piral.Blazor/issues/128
+                RunPiralCli(target, $"pilet publish --fresh --url {FeedUrl} {auth}");
             }
         }
 
@@ -149,9 +125,6 @@ namespace Piral.Blazor.Tools
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
             };
-
-            // Prevents running dotnet build unnecessarily
-            startInfo.EnvironmentVariables["PIRAL_BLAZOR_LAST_BUILD"] = "1";
 
             var proc = new Process
             {
