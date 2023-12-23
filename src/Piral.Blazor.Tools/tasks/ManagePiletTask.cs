@@ -544,6 +544,7 @@ namespace Piral.Blazor.Tools
         private void MergeJsons(string originalJsonFile, string overwritesJsonFile)
         {
             var source = Path.GetFileName(originalJsonFile);
+            var backup = originalJsonFile + ".original";
             var target = Path.GetFileName(overwritesJsonFile);
 
             if (!File.Exists(originalJsonFile))
@@ -557,22 +558,20 @@ namespace Piral.Blazor.Tools
                 return;
             }
 
+            if (!File.Exists(backup))
+            {
+                File.Copy(originalJsonFile, backup);
+            }
+
             var result = new JObject();
-            var originalJson = JObject.Parse(File.ReadAllText(originalJsonFile)); 
+            var originalJson = JObject.Parse(File.ReadAllText(backup)); 
             var overwritesJson = JObject.Parse(File.ReadAllText(overwritesJsonFile)); 
 
             result.Merge(originalJson); 
             result.Merge(overwritesJson);
 
-            if (JToken.DeepEquals(result, originalJson))
-            {
-                Log.LogMessage($"The file '{target}' had nothing to merge into '{source}'.");
-            }
-            else
-            {
-                File.WriteAllText(originalJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
-                Log.LogMessage($"Successfully merged '{target}' with '{source}'.");
-            }
+            File.WriteAllText(originalJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
+            Log.LogMessage($"Successfully merged '{target}' with '{source}'.");
         }
 
         private void ExtendJson(string jsonPath, string newJsonContent)
