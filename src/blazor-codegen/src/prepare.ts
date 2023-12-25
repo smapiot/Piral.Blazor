@@ -156,6 +156,9 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
       ...Object.keys(originalManifest.resources.assembly || {}),
       ...Object.keys(originalManifest.resources.pdb || {}),
       ...Object.keys(originalManifest.resources.runtime || {}),
+      ...Object.keys(originalManifest.resources.jsModuleRuntime || {}),
+      ...Object.keys(originalManifest.resources.jsModuleNative || {}),
+      ...Object.keys(originalManifest.resources.wasmNative || {}),
     ]);
     const ignored = [...alwaysIgnored, ...frameworkFiles];
 

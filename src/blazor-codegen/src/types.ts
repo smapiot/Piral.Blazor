@@ -8,7 +8,10 @@ export interface BlazorManifest {
   resources: {
     assembly: Record<string, string>;
     pdb: Record<string, string>;
-    runtime: Record<string, string>;
+    runtime?: Record<string, string>;
+    jsModuleNative?: Record<string, string>;
+    jsModuleRuntime?: Record<string, string>;
+    wasmNative?: Record<string, string>;
     extensions: any;
     lazyAssembly: any;
     libraryInitializers: any;

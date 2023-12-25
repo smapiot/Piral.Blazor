@@ -93,11 +93,23 @@ namespace Piral.Blazor.Tools
 
         private string Emulator => IsPiralInstanceFile ? PiralInstanceFile : PiralInstance;
 
-        private string ToolsVersion => typeof(ManagePiletTask).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+        private string ToolsVersion => NormalizeVersion(typeof(ManagePiletTask).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
         #endregion
 
         #region Utils
+
+        private static string NormalizeVersion(string infoVersion)
+        {
+            var idx = infoVersion.IndexOf('+');
+
+            if (idx != -1)
+            {
+                return infoVersion.Substring(0, idx);
+            }
+
+            return infoVersion;
+        }
 
         private static string GetRelativePath(string relativeTo, string path)
         {
