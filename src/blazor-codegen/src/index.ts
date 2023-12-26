@@ -1,7 +1,7 @@
 import { join } from "path";
 import { existsSync } from "fs";
 import { getAssetPath, getFilePath } from "./io";
-import { rebuildNeeded } from "./utils";
+import { rebuildNeeded, getRef } from "./utils";
 import { createAllTargetRefs } from "./targets";
 import { prepare } from "./prepare";
 import { analyzeProject, buildSolution } from "./project";
@@ -78,7 +78,7 @@ module.exports = async function () {
   }`;
 
   // Refs
-  const uniqueDependencies = dlls.map((f) => f.replace(".dll", ""));
+  const uniqueDependencies = dlls.map((f) => f.replace(/\.(dll|wasm)$/, ""));
 
   // Find out if there are ApplicationBundle files, otherwise take ProjectBundle files
   const traitValue =
@@ -95,7 +95,7 @@ module.exports = async function () {
 
   // Dervice files
   const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);
-  const files = [...refs.map((ref) => `${ref}.dll`), ...pdbs].map((name) =>
+  const files = [...refs.map((ref) => getRef(dlls, ref)), ...pdbs].map((name) =>
     getFilePath(staticAssets, name)
   );
 

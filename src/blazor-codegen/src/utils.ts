@@ -23,6 +23,22 @@ function getUniqueKeys(
   );
 }
 
+export function getRef(dlls: Array<string>, name: string) {
+  const dllName = `${name}.dll`;
+
+  if (dlls.includes(dllName)) {
+    return dllName;
+  }
+
+  const wasmName = `${name}.wasm`;
+
+  if (dlls.includes(wasmName)) {
+    return wasmName;
+  }
+
+  return name;
+}
+
 export function rebuildNeeded(config: ProjectConfig) {
   if (existsSync(config.paFile) && existsSync(config.swaFile)) {
     const staticAssets: StaticAssets = require(config.swaFile);

@@ -64,7 +64,7 @@ function defineTargets(
     }
 
     return ((Object.keys(compile)?.[0] ?? "").split("/").pop() ?? "").replace(
-      ".dll",
+      /\.(dll|wasm)$/,
       ""
     );
   };
