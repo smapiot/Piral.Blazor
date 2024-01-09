@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.SmokeTests.Pil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Piral.Blazor.SmokeTests.PiletB", "Piral.Blazor.SmokeTests.PiletB\Piral.Blazor.SmokeTests.PiletB.csproj", "{EE84FF14-E742-475A-AA87-C800CFEDDDFF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Piral.Blazor.Utils", "..\src\Piral.Blazor.Utils\Piral.Blazor.Utils.csproj", "{003F947A-B6A2-49AF-BCF9-05697CC1E030}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{EE84FF14-E742-475A-AA87-C800CFEDDDFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE84FF14-E742-475A-AA87-C800CFEDDDFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE84FF14-E742-475A-AA87-C800CFEDDDFF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{003F947A-B6A2-49AF-BCF9-05697CC1E030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{003F947A-B6A2-49AF-BCF9-05697CC1E030}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{003F947A-B6A2-49AF-BCF9-05697CC1E030}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{003F947A-B6A2-49AF-BCF9-05697CC1E030}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
