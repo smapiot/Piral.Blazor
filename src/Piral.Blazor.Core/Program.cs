@@ -24,7 +24,8 @@ public class Program
             .AddSingleton(new HttpClient { BaseAddress = baseAddress })
             .AddSingleton<IComponentActivator, PiletComponentActivator>()
             .AddSingleton<IComponentActivationService, ComponentActivationService>()
-            .AddSingleton<IModuleContainerService, ModuleContainerService>();
+            .AddSingleton<IModuleContainerService, ModuleContainerService>()
+            .AddSingleton<IQueryParameterValueProvider, QueryParameterValueProvider>();
 
         builder.ConfigureLogger();
         builder.ConfigureContainer(factory);

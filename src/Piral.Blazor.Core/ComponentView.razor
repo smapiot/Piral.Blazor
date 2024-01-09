@@ -1,33 +1,41 @@
 @inject IComponentActivationService Activation
+@inject IQueryParameterValueProvider QueryParameterValueProvider
 @implements IDisposable
 
 @foreach (var active in Activation.Components)
 {
     <div id="@active.ReferenceId">
         <div style="display: contents">
-            <DynamicComponent Type="@active.Component" Parameters="@active.Args" />
+            <DynamicComponent @ref="AddRef" Type="@active.Component" Parameters="@active.Args" />
         </div>
     </div>
 }
 
 @code {
-private void ComponentChanged(object sender, EventArgs e)
+
+private DynamicComponent AddRef
 {
-    this.StateHasChanged();
+    get => null;
+    set => QueryParameterValueProvider.ProvideQueryParameterValues(value.Type, value.Instance);
+}
+
+private void OnComponentsChanged(object sender, EventArgs e)
+{
+    StateHasChanged();
 }
 
 public void Dispose()
 {
-    Activation.ComponentsChanged -= ComponentChanged;
+    Activation.ComponentsChanged -= OnComponentsChanged;
 }
 
-protected override Task OnAfterRenderAsync(bool firstRender)
+protected override void OnAfterRender(bool firstRender)
 {
     if (firstRender)
     {
-        Activation.ComponentsChanged += ComponentChanged;
+        Activation.ComponentsChanged += OnComponentsChanged;
     }
 
-    return base.OnAfterRenderAsync(firstRender);
+    base.OnAfterRender(firstRender);
 }
 }
