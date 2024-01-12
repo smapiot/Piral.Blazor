@@ -22,6 +22,8 @@ public class ComponentActivationService : IComponentActivationService
     private readonly ILogger<ComponentActivationService> _logger;
 
     private readonly IModuleContainerService _container;
+    
+    private readonly NavigationManager _navigationManager;
 
     public event EventHandler ComponentsChanged;
 
@@ -39,9 +41,10 @@ public class ComponentActivationService : IComponentActivationService
         typeof(RouteAttribute),
     };
 
-    public ComponentActivationService(IModuleContainerService container, ILogger<ComponentActivationService> logger)
+    public ComponentActivationService(IModuleContainerService container, NavigationManager navigationManager, ILogger<ComponentActivationService> logger)
     {
         _container = container;
+        _navigationManager = navigationManager;
         _logger = logger;
         JSBridge.ActivationService = this;
     }
@@ -97,7 +100,7 @@ public class ComponentActivationService : IComponentActivationService
 
         try
         {
-            var element = new PiralElement(component, args);
+            var element = new PiralElement(component, _navigationManager, args);
             _elements.TryAdd(referenceId, element);
         }
         catch (ArgumentException ae)
@@ -118,7 +121,7 @@ public class ComponentActivationService : IComponentActivationService
     {
         if (_elements.TryGetValue(referenceId, out var element))
         {
-            element.UpdateArgs(args);
+            element.UpdateArgs(_navigationManager, args);
         }
     }
 
@@ -128,7 +131,7 @@ public class ComponentActivationService : IComponentActivationService
 
         try
         {
-            _active.Add(new ActiveComponent(componentName, referenceId, component, args));
+            _active.Add(new ActiveComponent(componentName, referenceId, component, _navigationManager, args));
             ComponentsChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (ArgumentException ae)
@@ -155,7 +158,7 @@ public class ComponentActivationService : IComponentActivationService
 
             if (component.ComponentName == componentName && component.ReferenceId == referenceId)
             {
-                _active[i] = new ActiveComponent(componentName, referenceId, component.Component, args);
+                _active[i] = new ActiveComponent(componentName, referenceId, component.Component, _navigationManager, args);
                 ComponentsChanged?.Invoke(this, EventArgs.Empty);
                 break;
             }
@@ -241,7 +244,7 @@ public class ComponentActivationService : IComponentActivationService
                 }
                 else
                 {
-                    _active[i] = new ActiveComponent(m.ComponentName, m.ReferenceId);
+                    _active[i] = new ActiveComponent(m.ComponentName, m.ReferenceId, _navigationManager);
                 }
 
                 removed++;

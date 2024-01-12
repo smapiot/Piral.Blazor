@@ -2,6 +2,7 @@ using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components;
 
 namespace Piral.Blazor.Core;
 
@@ -9,10 +10,10 @@ public class PiralElement
 {
     public event EventHandler Changed;
 
-    public PiralElement(Type component, IDictionary<string, JsonElement> args)
+    public PiralElement(Type component, NavigationManager navigationManager, IDictionary<string, JsonElement> args)
     {
         Component = component ?? typeof(Empty);
-        Args = Component.AdjustArguments(args);
+        Args = Component.AdjustArguments(navigationManager, args);
     }
 
     /// <summary>
@@ -28,9 +29,9 @@ public class PiralElement
     /// <summary>
     /// Updates the stored arguments and emits a change event.
     /// </summary>
-    public void UpdateArgs(IDictionary<string, JsonElement> args)
+    public void UpdateArgs(NavigationManager navigationManager, IDictionary<string, JsonElement> args)
     {
-        Args = Component.AdjustArguments(args);
+        Args = Component.AdjustArguments(navigationManager, args);
         HasChanged();
     }
 
