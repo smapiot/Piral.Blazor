@@ -341,6 +341,36 @@ Note that there is another convenience deriving from the use of `PiralRouteParam
 }
 ```
 
+In addition to route parameters you can also match the query parameters using the `PiralQueryParameter` attribute:
+
+```cs
+@page "/foo"
+
+<div>@Id</div>
+
+@code {
+    [Parameter]
+    [PiralQueryParameter]  
+    public string Id { get; set; } 
+}
+```
+
+The previous example would match `/foo?id=bar` with `Id` being set to `bar`. You could also change the name of the used query parameter:
+
+```cs
+@page "/foo"
+
+<div>@SearchQuery</div>
+
+@code {
+    [Parameter]
+    [PiralQueryParameter("q")]  
+    public string SearchQuery { get; set; } 
+}
+```
+
+This would print `hello` for `/foo?q=hello`.
+
 ### Dependency Injection
 
 You can define services for dependency injection in a `Module` class. The name of the class is arbitrary, but it shows the difference to the standard `Program` class, which should not be available, as mentioned before.
