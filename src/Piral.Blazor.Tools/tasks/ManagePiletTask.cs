@@ -421,7 +421,7 @@ namespace Piral.Blazor.Tools
             {
                 throw new Exception("At least npm version 6 is required to use Piral.Blazor.");
             }
-            else if (npmVersion > 9)
+            else if (npmVersion > 10)
             {
                 Log.LogWarning("This version of npm has not been tested yet.");
             }

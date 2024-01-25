@@ -107,7 +107,7 @@ public static class JSBridge
     {
         foreach (var pilet in _pilets.Values)
         {
-            pilet.Service.CallEventListeners(type, args);
+            pilet.Service?.CallEventListeners(type, args);
         }
 
         return Task.CompletedTask;
@@ -158,7 +158,7 @@ public static class JSBridge
         {
             Localization.LanguageChanged -= data.LanguageHandler;
             ActivationService?.UnloadComponentsFromAssembly(data.Library);
-            data.Service.Dispose();
+            data.Service?.Dispose();
         }
 
         return Task.CompletedTask;

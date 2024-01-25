@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageType>Template</PackageType>
-    <VersionPrefix>8.0.10</VersionPrefix>
+    <VersionPrefix>8.0.11</VersionPrefix>
     <PackageId>Piral.Blazor.Template</PackageId>
     <Title>Piral Blazor Pilet Template</Title>
     <Authors>Florian Rappl</Authors>

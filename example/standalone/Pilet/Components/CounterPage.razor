@@ -14,9 +14,13 @@
 <Extension Name="react-counter" />
 
 @code {
+    [Parameter]
+    [PiralQueryParameter]  
+    public string Foo { get; set; } 
+
     void IncrementCount()
     {
         ViewModel.CurrentCount++;
-        ViewModel.Name = $"new name {ViewModel.CurrentCount}";
+        ViewModel.Name = $"new name {ViewModel.CurrentCount} -- parameter: {Foo}";
     }
 }

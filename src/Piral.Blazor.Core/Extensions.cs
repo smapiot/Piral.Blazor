@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Piral.Blazor.Core;
 
@@ -15,11 +16,94 @@ static class Extensions
     private static readonly IDictionary<Type, PropertyDesc[]> allowedArgs = new Dictionary<Type, PropertyDesc[]>();
     private static readonly JsonElement JsonNull = JsonDocument.Parse("null").RootElement;
 
-    class PropertyDesc
+    abstract class PropertyDesc
     {
         public PropertyInfo Property;
         public string OriginalName;
+        public string Name => Property.Name;
+        public object Value => GetValue();
+        protected abstract object GetValue();
+    }
+
+    sealed class QueryPropertyDesc : PropertyDesc
+    {
+        private readonly NavigationManager _navigationManager;
+
+        public string QueryName;
+
+        public QueryPropertyDesc(NavigationManager navigationManager)
+        {
+            _navigationManager = navigationManager;
+        }
+
+        protected override object GetValue()
+        {
+            var queryMap = HttpUtility.ParseQueryString(new Uri(_navigationManager.Uri).Query);
+
+            if (queryMap.Count > 0)
+            {
+                var value = queryMap[QueryName];
+
+                if (value is not null)
+                {
+                    return Property.WithValue(value);
+                }
+            }
+
+            return null;
+        }
+    }
+
+    sealed class SimplePropertyDesc : PropertyDesc
+    {
+        private readonly IDictionary<string, JsonElement> _args;
+
         public string[] ParentPath;
+
+        public SimplePropertyDesc(IDictionary<string, JsonElement> args)
+        {
+            _args = args;
+        }
+
+        protected override object GetValue()
+        {
+            var value = GetValueRef();
+            return Property.WithValue(value);
+        }        
+
+        private JsonElement GetValueRef()
+        {
+            if (ParentPath.Length > 0)
+            {
+                if (!_args.TryGetValue(ParentPath[0], out var parent))
+                {
+                    return JsonNull;
+                }
+
+                for (var i = 1; i < ParentPath.Length; i++)
+                {
+                    if (!parent.TryGetProperty(ParentPath[1], out parent))
+                    {
+                        return JsonNull;
+                    }
+                }
+
+                if (parent.TryGetProperty(OriginalName, out var result))
+                {
+                    return result;
+                }
+            }
+            else if (_args.TryGetValue(OriginalName, out var item))
+            {
+                return item;
+            }
+            else if (OriginalName == "ChildContent" && _args.TryGetValue("children", out var children))
+            {
+                return children;
+            }
+
+            return JsonNull;
+        }
     }
 
     private class Match
@@ -32,7 +116,7 @@ static class Extensions
         task.ConfigureAwait(false);
     }
 
-    public static IDictionary<string, object> AdjustArguments(this Type type, IDictionary<string, JsonElement> args)
+    public static IDictionary<string, object> AdjustArguments(this Type type, NavigationManager navigationManager, IDictionary<string, JsonElement> args)
     {
         if (!allowedArgs.TryGetValue(type, out var allowed))
         {
@@ -42,71 +126,98 @@ static class Extensions
                 {
                     var parameters = m.GetCustomAttributes<PiralParameterAttribute>(true).ToArray();
 
-                    if (parameters.Length == 0)
+                    if (parameters.Length > 0)
                     {
-                        return new PropertyDesc[]
+                        return parameters.Select(p =>
                         {
-                            new PropertyDesc
+                            var segments = p.JsParameterName.Split(".");
+
+                            return new SimplePropertyDesc(args)
+                            {
+                                Property = m,
+                                OriginalName = segments.Last(),
+                                ParentPath = segments.Take(segments.Length - 1).ToArray(),
+                            };
+                        }).ToArray();
+                    }
+                    
+                    var queryParameters = m.GetCustomAttributes<PiralQueryParameterAttribute>(true).ToArray();
+
+                    if (queryParameters.Length > 0)
+                    {
+                        return queryParameters.Select(p =>
+                        {
+                            return new QueryPropertyDesc(navigationManager)
                             {
                                 Property = m,
                                 OriginalName = m.Name,
-                                ParentPath = new string[0],
-                            }
-                        };
+                                QueryName = p.QueryParameterName,
+                            };
+                        }).ToArray();
                     }
-
-                    return parameters.Select(p =>
+                    
+                    return new PropertyDesc[]
                     {
-                        var segments = p.JsParameterName.Split(".");
-
-                        return new PropertyDesc
+                        new SimplePropertyDesc(args)
                         {
                             Property = m,
-                            OriginalName = segments.Last(),
-                            ParentPath = segments.Take(segments.Length - 1).ToArray(),
-                        };
-                    }).ToArray();
+                            OriginalName = m.Name,
+                            ParentPath = Array.Empty<string>(),
+                        }
+                    };
                 })
                 .ToArray();
 
             allowedArgs.Add(type, allowed);
         }
 
-        return allowed.ToDictionary(m => m.Property.Name, m => m.Property.WithValue(args.GetValue(m)));
+        return allowed.ToDictionary(m => m.Name, m => m.Value);
     }
 
-    private static JsonElement GetValue(this IDictionary<string, JsonElement> obj, PropertyDesc property)
+    private static object WithValue(this PropertyInfo property, string value)
     {
-        if (property.ParentPath.Length > 0)
-        {
-            if (!obj.TryGetValue(property.ParentPath[0], out var parent))
-            {
-                return JsonNull;
-            }
+        var typeCode = Type.GetTypeCode(property.PropertyType);
 
-            for (var i = 1; i < property.ParentPath.Length; i++)
-            {
-                if (!parent.TryGetProperty(property.ParentPath[1], out parent))
-                {
-                    return JsonNull;
-                }
-            }
-
-            if (parent.TryGetProperty(property.OriginalName, out var result))
-            {
-                return result;
-            }
-        }
-        else if (obj.TryGetValue(property.OriginalName, out var item))
+        switch (typeCode)
         {
-            return item;
+            case TypeCode.Empty:
+            case TypeCode.DBNull:
+                return null;
+            case TypeCode.Object:
+                return value;
+            case TypeCode.Boolean:
+                return Convert.ToBoolean(value);
+            case TypeCode.Char:
+                return Convert.ToChar(value);
+            case TypeCode.SByte:
+                return Convert.ToSByte(value);
+            case TypeCode.Byte:
+                return Convert.ToByte(value);
+            case TypeCode.Int16:
+                return Convert.ToInt16(value);
+            case TypeCode.UInt16:
+                return Convert.ToUInt16(value);
+            case TypeCode.Int32:
+                return Convert.ToInt32(value);
+            case TypeCode.UInt32:
+                return Convert.ToUInt32(value);
+            case TypeCode.Int64:
+                return Convert.ToInt64(value);
+            case TypeCode.UInt64:
+                return Convert.ToUInt64(value);
+            case TypeCode.Single:
+                return Convert.ToSingle(value);
+            case TypeCode.Double:
+                return Convert.ToDouble(value);
+            case TypeCode.Decimal:
+                return Convert.ToDecimal(value);
+            case TypeCode.DateTime:
+                return Convert.ToDateTime(value);
+            case TypeCode.String:
+                return Convert.ToString(value);
+            default:
+                throw new NotSupportedException($"{property.PropertyType.FullName} is not supported! Only system built-in types are supported. Look at enumeration System.TypeCode for detail.");
         }
-        else if (property.OriginalName == "ChildContent" && obj.TryGetValue("children", out var children))
-        {
-            return children;
-        }
-
-        return JsonNull;
     }
 
     private static object WithValue(this PropertyInfo property, JsonElement value)

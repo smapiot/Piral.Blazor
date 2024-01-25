@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components;
 
 namespace Piral.Blazor.Core;
 
@@ -9,21 +10,21 @@ public readonly struct ActiveComponent
 {
     private static readonly IDictionary<string, JsonElement> emptyArgs = new Dictionary<string, JsonElement>();
 
-    public ActiveComponent(string componentName, string referenceId)
+    public ActiveComponent(string componentName, string referenceId, NavigationManager navigationManager)
     {
         ComponentName = componentName ?? string.Empty;
         ReferenceId = referenceId ?? string.Empty;
         Component = typeof(Empty);
-        Args = Component.AdjustArguments(emptyArgs);
+        Args = Component.AdjustArguments(navigationManager, emptyArgs);
         IsDeleted = true;
     }
 
-    public ActiveComponent(string componentName, string referenceId, Type component, IDictionary<string, JsonElement> args)
+    public ActiveComponent(string componentName, string referenceId, Type component, NavigationManager navigationManager, IDictionary<string, JsonElement> args)
     {
         ComponentName = componentName ?? string.Empty;
         ReferenceId = referenceId ?? string.Empty;
         Component = component ?? typeof(Empty);
-        Args = Component.AdjustArguments(args ?? emptyArgs);
+        Args = Component.AdjustArguments(navigationManager, args ?? emptyArgs);
         IsDeleted = false;
     }
 
