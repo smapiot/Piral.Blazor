@@ -41,8 +41,11 @@ export function stripVersion(x: string) {
 }
 
 export function extractDotnetVersion(manifest: BlazorManifest) {
+  const dotnetFiles =
+    manifest.resources.runtime || manifest.resources.jsModuleRuntime;
+
   return (
-    Object.keys(manifest.resources.runtime)
+    Object.keys(dotnetFiles)
       .map((x) => x.match(/^dotnet\.(.*?)\.js/))
       .find(Boolean)?.[1] || "0.0.0"
   );
