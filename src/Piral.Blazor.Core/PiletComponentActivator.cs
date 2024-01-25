@@ -1,63 +1,70 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Piral.Blazor.Core;
 
-internal class PiletComponentActivator : IComponentActivator
+internal class PiletComponentActivator(IModuleContainerService container, ICacheManipulatorService cacheManipulator) : IComponentActivator
 {
-	private readonly IModuleContainerService _container;
-	private readonly object _cachedInitializers;
-	private readonly Type _ctiType;
-	private readonly Func<Type, Action<IServiceProvider, IComponent>> _createInitializer;
+    private readonly IModuleContainerService _container = container;
+    private readonly ICacheManipulatorService _cacheManipulator = cacheManipulator;
+    private readonly HashSet<Type> _seen = [];
 
-	public PiletComponentActivator(IModuleContainerService container)
-	{
-		_container = container;
+    public IComponent CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type componentType)
+    {
+        if (!typeof(IComponent).IsAssignableFrom(componentType))
+        {
+            throw new ArgumentException($"The type {componentType.FullName} does not implement {nameof(IComponent)}.", nameof(componentType));
+        }
+        
+        if (_seen.Add(componentType))
+        {
+            var origin = componentType.Assembly;
+            var provider = _container.GetProvider(origin);
 
-		var cf = typeof(Renderer).Assembly.GetType("Microsoft.AspNetCore.Components.ComponentFactory")!;
-		_cachedInitializers = cf.GetField("_cachedComponentTypeInfo", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-		_ctiType = cf.GetNestedType("ComponentTypeInfoCacheEntry", BindingFlags.NonPublic)!;
-		_createInitializer = cf.GetMethod("CreatePropertyInjector", BindingFlags.NonPublic | BindingFlags.Static)!.CreateDelegate<Func<Type, Action<IServiceProvider, IComponent>>>();
-	}
+            // local DI has been found - use it
+            if (provider is not null)
+            {
+                // create wrapper; for the reason see below
+                var type = typeof(WrapperComponent<>).MakeGenericType(componentType);
+                _cacheManipulator.UpdateComponentCache(componentType, provider);
+                componentType = type;
+            }
+        }
 
-	public IComponent CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type componentType)
-	{
-		if (!typeof(IComponent).IsAssignableFrom(componentType))
-		{
-			throw new ArgumentException($"The type {componentType.FullName} does not implement {nameof(IComponent)}.", nameof(componentType));
-		}
+        return (IComponent)Activator.CreateInstance(componentType)!;
+    }
 
-		var child = (IComponent)Activator.CreateInstance(componentType)!;
+    /// <summary>
+    /// This is just an ugly hack to tell Blazor that the
+    /// actual component is a different component - forcing
+    /// a cache re-validation, which allows us to place the
+    /// actual provider in the updated cache, which otherwise
+    /// would have been taken out / prepared for us already.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    sealed class WrapperComponent<T> : IComponent
+    {
+        private RenderHandle _renderHandle;
 
-		if (!CacheContainsKey(componentType))
-		{
-			var origin = componentType.Assembly;
-			var provider = _container.GetProvider(origin);
-			var initializer = _createInitializer(componentType);
+        public void Attach(RenderHandle renderHandle)
+        {
+            _renderHandle = renderHandle;
+        }
 
-			// local DI has been found - use it
-			if (provider is not null)
-			{
-				AddInitializerToCache(componentType, provider, initializer);
-			}
-		}
-
-		return child;
-	}
-
-	private bool CacheContainsKey(Type componentType)
-	{
-		return (bool)_cachedInitializers.GetType().GetMethod("ContainsKey").Invoke(_cachedInitializers, new object[]{componentType});
-	}
-
-	private void AddInitializerToCache(Type componentType, IServiceProvider provider, Action<IServiceProvider, IComponent> initializer)
-	{
-		Action<IServiceProvider, IComponent> propInjection = (_, cmp) => initializer(provider, cmp);
-		var cti = Activator.CreateInstance(_ctiType, null, propInjection);
-		_cachedInitializers.GetType().GetMethod("TryAdd").Invoke(_cachedInitializers, new object[]{componentType, cti});
-	}
+        public Task SetParametersAsync(ParameterView parameters)
+        {
+            var ps = parameters.ToDictionary();
+            _renderHandle.Render(builder =>
+            {
+                builder.OpenComponent(0, typeof(T));
+                builder.AddMultipleAttributes(1, ps!);
+                builder.CloseComponent();
+            });
+            return Task.CompletedTask;
+        }
+    }
 }

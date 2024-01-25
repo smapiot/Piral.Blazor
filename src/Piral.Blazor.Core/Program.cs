@@ -23,6 +23,7 @@ public class Program
         builder.Services
             .AddSingleton(new HttpClient { BaseAddress = baseAddress })
             .AddSingleton<IComponentActivator, PiletComponentActivator>()
+            .AddSingleton<ICacheManipulatorService, CacheManipulatorService>()
             .AddSingleton<IComponentActivationService, ComponentActivationService>()
             .AddSingleton<IModuleContainerService, ModuleContainerService>();
 
