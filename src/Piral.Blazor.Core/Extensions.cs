@@ -24,11 +24,17 @@ static class Extensions
         public abstract object GetValue(RenderArgs args);
     }
 
-    sealed class RenderArgs(NavigationManager navigationManager, IDictionary<string, JsonElement> providedArgs)
+    sealed class RenderArgs
     {
-        public NavigationManager Navigation { get; } = navigationManager;
+        public RenderArgs(NavigationManager navigationManager, IDictionary<string, JsonElement> providedArgs)
+        {
+            Navigation = navigationManager;
+            Arguments = providedArgs;
+        }
 
-        public IDictionary<string, JsonElement> Arguments { get; } = providedArgs;
+        public NavigationManager Navigation { get; }
+
+        public IDictionary<string, JsonElement> Arguments { get; }
     }
 
     sealed class QueryPropertyDesc : PropertyDesc
