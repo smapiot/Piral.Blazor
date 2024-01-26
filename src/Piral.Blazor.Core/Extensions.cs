@@ -21,24 +21,24 @@ static class Extensions
         public PropertyInfo Property;
         public string OriginalName;
         public string Name => Property.Name;
-        public object Value => GetValue();
-        protected abstract object GetValue();
+        public abstract object GetValue(RenderArgs args);
+    }
+
+    sealed class RenderArgs(NavigationManager navigationManager, IDictionary<string, JsonElement> providedArgs)
+    {
+        public NavigationManager Navigation { get; } = navigationManager;
+
+        public IDictionary<string, JsonElement> Arguments { get; } = providedArgs;
     }
 
     sealed class QueryPropertyDesc : PropertyDesc
     {
-        private readonly NavigationManager _navigationManager;
-
         public string QueryName;
 
-        public QueryPropertyDesc(NavigationManager navigationManager)
+        public override object GetValue(RenderArgs args)
         {
-            _navigationManager = navigationManager;
-        }
-
-        protected override object GetValue()
-        {
-            var queryMap = HttpUtility.ParseQueryString(new Uri(_navigationManager.Uri).Query);
+            var navManager = args.Navigation;
+            var queryMap = HttpUtility.ParseQueryString(new Uri(navManager.Uri).Query);
 
             if (queryMap.Count > 0)
             {
@@ -56,26 +56,19 @@ static class Extensions
 
     sealed class SimplePropertyDesc : PropertyDesc
     {
-        private readonly IDictionary<string, JsonElement> _args;
-
         public string[] ParentPath;
 
-        public SimplePropertyDesc(IDictionary<string, JsonElement> args)
+        public override object GetValue(RenderArgs args)
         {
-            _args = args;
-        }
-
-        protected override object GetValue()
-        {
-            var value = GetValueRef();
+            var value = GetValueRef(args.Arguments);
             return Property.WithValue(value);
         }        
 
-        private JsonElement GetValueRef()
+        private JsonElement GetValueRef(IDictionary<string, JsonElement> args)
         {
             if (ParentPath.Length > 0)
             {
-                if (!_args.TryGetValue(ParentPath[0], out var parent))
+                if (!args.TryGetValue(ParentPath[0], out var parent))
                 {
                     return JsonNull;
                 }
@@ -93,11 +86,11 @@ static class Extensions
                     return result;
                 }
             }
-            else if (_args.TryGetValue(OriginalName, out var item))
+            else if (args.TryGetValue(OriginalName, out var item))
             {
                 return item;
             }
-            else if (OriginalName == "ChildContent" && _args.TryGetValue("children", out var children))
+            else if (OriginalName == "ChildContent" && args.TryGetValue("children", out var children))
             {
                 return children;
             }
@@ -116,7 +109,7 @@ static class Extensions
         task.ConfigureAwait(false);
     }
 
-    public static IDictionary<string, object> AdjustArguments(this Type type, NavigationManager navigationManager, IDictionary<string, JsonElement> args)
+    public static IDictionary<string, object> AdjustArguments(this Type type, NavigationManager navigationManager, IDictionary<string, JsonElement> providedArgs)
     {
         if (!allowedArgs.TryGetValue(type, out var allowed))
         {
@@ -132,7 +125,7 @@ static class Extensions
                         {
                             var segments = p.JsParameterName.Split(".");
 
-                            return new SimplePropertyDesc(args)
+                            return new SimplePropertyDesc
                             {
                                 Property = m,
                                 OriginalName = segments.Last(),
@@ -147,7 +140,7 @@ static class Extensions
                     {
                         return queryParameters.Select(p =>
                         {
-                            return new QueryPropertyDesc(navigationManager)
+                            return new QueryPropertyDesc
                             {
                                 Property = m,
                                 OriginalName = m.Name,
@@ -158,7 +151,7 @@ static class Extensions
                     
                     return new PropertyDesc[]
                     {
-                        new SimplePropertyDesc(args)
+                        new SimplePropertyDesc
                         {
                             Property = m,
                             OriginalName = m.Name,
@@ -171,7 +164,8 @@ static class Extensions
             allowedArgs.Add(type, allowed);
         }
 
-        return allowed.ToDictionary(m => m.Name, m => m.Value);
+        var args = new RenderArgs(navigationManager, providedArgs);
+        return allowed.ToDictionary(m => m.Name, m => m.GetValue(args));
     }
 
     private static object WithValue(this PropertyInfo property, string value)

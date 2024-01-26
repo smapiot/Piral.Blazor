@@ -1,36 +1,37 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-    <PropertyGroup>
-        <PackageId>Piral.Blazor.DevServer</PackageId>
-        <AssemblyName>piral-blazor-devserver</AssemblyName>
-        <TargetFramework>net7.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <IsPackable>true</IsPackable>
-        <IsProjectReferenceProvider>false</IsProjectReferenceProvider>
-        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
-        <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
-        <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
-        <VersionPrefix>7.0.11</VersionPrefix>
-        <Description>Blazor Dev Server for Blazor pilets.</Description>
-        <Authors>Florian Rappl</Authors>
-        <Company>smapiot</Company>
-        <NoPackageAnalysis>true</NoPackageAnalysis>
-        <NuspecFile>Piral.Blazor.DevServer.nuspec</NuspecFile>
-    </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>Piral.Blazor.DevServer</PackageId>
+    <AssemblyName>piral-blazor-devserver</AssemblyName>
+    <TargetFramework>net7.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <IsProjectReferenceProvider>false</IsProjectReferenceProvider>
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+    <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
+    <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
+    <VersionPrefix>7.0.11</VersionPrefix>
+    <Description>Blazor Dev Server for Blazor pilets.</Description>
+    <Authors>Florian Rappl</Authors>
+    <Company>smapiot</Company>
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+    <NuspecFile>Piral.Blazor.DevServer.nuspec</NuspecFile>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.10" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.10" />
+  </ItemGroup>
 
-    <PropertyGroup>
-        <NuspecProperties>
-            $(NuspecProperties);packageId=$(PackageId);authors=$(Authors)
-        </NuspecProperties>
-        <NuspecProperties Condition="'$(VersionSuffix)' != ''">
-            $(NuspecProperties);version=$(VersionPrefix)-$(VersionSuffix)
-        </NuspecProperties>
-        <NuspecProperties Condition="'$(VersionSuffix)' == ''">
-            $(NuspecProperties);version=$(VersionPrefix)
-        </NuspecProperties>
-    </PropertyGroup>
+  <PropertyGroup>
+    <NuspecProperties>
+      $(NuspecProperties);packageId=$(PackageId);authors=$(Authors)
+    </NuspecProperties>
+    <NuspecProperties Condition="'$(VersionSuffix)' != ''">
+      $(NuspecProperties);version=$(VersionPrefix)-$(VersionSuffix)
+    </NuspecProperties>
+    <NuspecProperties Condition="'$(VersionSuffix)' == ''">
+      $(NuspecProperties);version=$(VersionPrefix)
+    </NuspecProperties>
+  </PropertyGroup>
 </Project>
