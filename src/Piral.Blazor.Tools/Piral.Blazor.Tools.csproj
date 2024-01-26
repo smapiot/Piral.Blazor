@@ -2,9 +2,8 @@
 
   <PropertyGroup>
     <PackageId>Piral.Blazor.Tools</PackageId>
-    <VersionPrefix>8.0.11</VersionPrefix>
+    <VersionPrefix>8.0.12</VersionPrefix>
     <Authors>Florian Rappl</Authors>
-    <LangVersion>9</LangVersion>
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -14,6 +13,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
