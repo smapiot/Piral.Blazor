@@ -617,9 +617,9 @@ namespace Piral.Blazor.Tools
 
                 if (canScaffold)
                 {
-                    var requireInstall = PreparePilet();
-
                     CopyConfigurationFiles();
+                    
+                    var requireInstall = PreparePilet();
 
                     if (requireInstall)
                     {
