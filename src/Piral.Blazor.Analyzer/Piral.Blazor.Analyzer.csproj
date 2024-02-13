@@ -5,7 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-    <VersionPrefix>8.0.12</VersionPrefix>
+    <VersionPrefix>8.0.13</VersionPrefix>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <PackageReadmeFile>README.md</PackageReadmeFile>
