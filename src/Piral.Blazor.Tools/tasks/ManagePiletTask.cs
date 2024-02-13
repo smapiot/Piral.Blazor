@@ -191,24 +191,24 @@ namespace Piral.Blazor.Tools
             return 0;
         }
 
-        private void CopyConfigurationFiles()
+        private void InitializeNpmConfiguration()
         {
-            var configurationFiles = new[] { ".npmrc" };
+            var configFileName = ".npmrc";
             var source = ConfigDir;
             var target = ProjectDir;
 
-            Log.LogMessage($"Copying config files from '{source}'...");
+            var existingConfigFile = Path.Combine(source, configFileName);
 
-            foreach (var configurationFile in configurationFiles)
+            if (File.Exists(existingConfigFile))
             {
-                var sourceFile = Path.Combine(source, configurationFile);
-
-                if (File.Exists(sourceFile))
-                {
-                    var targetFile = Path.Combine(target, configurationFile);
-                    Log.LogMessage($"Copying file '{configurationFile}' from '{sourceFile}'.");
-                    File.Copy(sourceFile, targetFile, true);
-                }
+                Log.LogMessage($"Taking '{configFileName}' from '{existingConfigFile}'.");
+                var targetFile = Path.Combine(target, configFileName);
+                File.Copy(existingConfigFile, targetFile, true);
+            }
+            else
+            {
+                Log.LogMessage($"Creating '{configFileName}' with entry from NpmRegistry.");
+                File.AppendAllLines(Path.Combine(target, configFileName), [$"registry={NpmRegistry}", "always-auth=true"], Encoding.UTF8);
             }
         }
 
@@ -403,10 +403,13 @@ namespace Piral.Blazor.Tools
             }
 
             Directory.CreateDirectory(target);
+
+            InitializeNpmConfiguration();
+
             Run("npm", npm, target, $"{npmPrefix}init -y");
             Run("npm", npm, target, $"{npmPrefix}install piral-cli@{CliVersion} --save-dev");
             Run("npm", npm, target, $"{npmPrefix}install piral-cli-{Bundler}@{bundlerVersion} --save-dev");
-            Run("piral-cli", npx, target, $"{npxPrefix}pilet new \"{Emulator}\" --registry \"{NpmRegistry}\" --bundler none --no-install");
+            Run("piral-cli", npx, target, $"{npxPrefix}pilet new \"{Emulator}\" --bundler none --no-install");
 
             ChangeOutputDirectory();
 
@@ -456,7 +459,7 @@ namespace Piral.Blazor.Tools
             }
 
             var json = JObject.Parse(File.ReadAllText(packageJsonFile));
-            
+
             if (!string.IsNullOrEmpty(Version))
             {
                 json["version"] = Version;
@@ -510,7 +513,7 @@ namespace Piral.Blazor.Tools
         {
             if (string.IsNullOrEmpty(name))
             {
-                name = "pilet";                
+                name = "pilet";
             }
 
             name = name.ToLowerInvariant();
@@ -564,7 +567,7 @@ namespace Piral.Blazor.Tools
                 throw new Exception($"The file '{originalJsonFile}' does not exist.");
             }
 
-            if (!File.Exists(overwritesJsonFile)) 
+            if (!File.Exists(overwritesJsonFile))
             {
                 Log.LogMessage($"No '{target}' file found to merge into '{source}'.");
                 return;
@@ -576,10 +579,10 @@ namespace Piral.Blazor.Tools
             }
 
             var result = new JObject();
-            var originalJson = JObject.Parse(File.ReadAllText(backup)); 
-            var overwritesJson = JObject.Parse(File.ReadAllText(overwritesJsonFile)); 
+            var originalJson = JObject.Parse(File.ReadAllText(backup));
+            var overwritesJson = JObject.Parse(File.ReadAllText(overwritesJsonFile));
 
-            result.Merge(originalJson); 
+            result.Merge(originalJson);
             result.Merge(overwritesJson);
 
             File.WriteAllText(originalJsonFile, JsonConvert.SerializeObject(result, Formatting.Indented));
@@ -618,8 +621,6 @@ namespace Piral.Blazor.Tools
                 if (canScaffold)
                 {
                     var requireInstall = PreparePilet();
-
-                    CopyConfigurationFiles();
 
                     if (requireInstall)
                     {
