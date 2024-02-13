@@ -201,13 +201,13 @@ namespace Piral.Blazor.Tools
 
             if (File.Exists(existingConfigFile))
             {
-                Log.LogWarning($"Ignoring NpmRegistry property! Copying file '{configFileName}' from '{existingConfigFile}'.");
+                Log.LogMessage($"Taking '{configFileName}' from '{existingConfigFile}'.");
                 var targetFile = Path.Combine(target, configFileName);
                 File.Copy(existingConfigFile, targetFile, true);
             }
             else
             {
-                Log.LogMessage($"Creating '{configFileName}' with provided NpmRegistry property.");
+                Log.LogMessage($"Creating '{configFileName}' with entry from NpmRegistry.");
                 File.AppendAllLines(Path.Combine(target, configFileName), [$"registry={NpmRegistry}", "always-auth=true"], Encoding.UTF8);
             }
         }
