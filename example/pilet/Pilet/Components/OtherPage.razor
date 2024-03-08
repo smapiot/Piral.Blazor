@@ -11,8 +11,13 @@
 else
 {
     <div>
-    The Id was not read from the url.
-    <a href="/other/single/12345">Go to URL with parameter 12345</a>
+    The Id was not read from the url.<br />
+    <a href="/other/single/12345">Go to relative URL inside in this tab with parameter 12345</a><br />
+    <a href="http://localhost:1234/other/single/12345">Go to absolute URL inside in this tab with parameter 12345</a><br />
+    <a href="/other/single/12345" target="_self">Go to relative URL inside self tab with parameter 12345</a><br />
+    <a href="http://localhost:1234/other/single/12345" target="_self">Go to absolute URL inside self tab with parameter 12345</a><br />
+    <a href="/other/single/12345" target="_blank">Go to relative URL inside new tab with parameter 12345</a><br />
+    <a href="http://localhost:1234/other/single/12345" target="_blank">Go to absolute URL inside new tab with parameter 12345</a>
 </div>
 }
 
