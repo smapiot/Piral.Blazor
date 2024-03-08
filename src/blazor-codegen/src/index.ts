@@ -66,7 +66,21 @@ module.exports = async function () {
       let result = null;
 
       if (typeof app[fn] === 'function') {
-        result = await app[fn](...args);
+        result = await app[fn].call(app, ...args);
+      } else if (typeof fn === 'string' && fn.indexOf('.') > 0) {
+        const parts = fn.split('.');
+        const name = parts.pop();
+        let ctx = app;
+
+        parts.forEach(part => {
+          if (ctx && part in ctx) {
+            ctx = ctx[part];
+          }
+        });
+
+        if (ctx && typeof ctx[name] === 'function') {
+          ctx[name].call(ctx, ...args);
+        }
       }
 
       app.emit(responseTo, result);
