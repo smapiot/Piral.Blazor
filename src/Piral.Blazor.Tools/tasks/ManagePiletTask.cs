@@ -48,7 +48,6 @@ namespace Piral.Blazor.Tools
         [Required]
         public string Target { get; set; }
 
-        [Required]
         public string NpmRegistry { get; set; }
 
         [Required]
@@ -196,6 +195,7 @@ namespace Piral.Blazor.Tools
             var configFileName = ".npmrc";
             var source = ConfigDir;
             var target = ProjectDir;
+            var registry = NpmRegistry;
 
             var existingConfigFile = Path.Combine(source, configFileName);
 
@@ -205,10 +205,10 @@ namespace Piral.Blazor.Tools
                 var targetFile = Path.Combine(target, configFileName);
                 File.Copy(existingConfigFile, targetFile, true);
             }
-            else
+            else if (!String.IsNullOrEmpty(registry))
             {
                 Log.LogMessage($"Creating '{configFileName}' with entry from NpmRegistry.");
-                File.AppendAllLines(Path.Combine(target, configFileName), [$"registry={NpmRegistry}", "always-auth=true"], Encoding.UTF8);
+                File.AppendAllLines(Path.Combine(target, configFileName), [$"registry={registry}", "always-auth=true"], Encoding.UTF8);
             }
         }
 

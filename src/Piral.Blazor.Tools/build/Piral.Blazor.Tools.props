@@ -2,7 +2,7 @@
 <Project>
     <PropertyGroup>
         <PiralInstance></PiralInstance>
-        <NpmRegistry>https://registry.npmjs.org/</NpmRegistry>
+        <NpmRegistry></NpmRegistry>
         <Bundler>esbuild</Bundler>
         <ProjectsWithStaticFiles></ProjectsWithStaticFiles>
         <Monorepo></Monorepo>
