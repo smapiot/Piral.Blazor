@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Reflection;
 
 namespace Piral.Blazor.Core;
 
-internal class CacheManipulatorService : ICacheManipulatorService
+internal class CacheManipulatorService
 {
     private readonly Type _ctiType;
     private readonly Func<Type, Action<IServiceProvider, IComponent>> _createInitializer;
