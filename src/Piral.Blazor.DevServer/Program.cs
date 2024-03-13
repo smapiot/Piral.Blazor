@@ -8,6 +8,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
+var indexHtml = "index.html";
 var wwwRoot = "wwwroot";
 var piletApiSegment = "/$pilet-api";
 var cliPort = GetFreeTcpPort();
@@ -24,21 +25,52 @@ var piletJsonPath = Path.Combine(piletDir, "pilet.json");
 var packageJsonPath = Path.Combine(piletDir, "package.json");
 var piralInstance = FindPiralInstance(piletJsonPath, packageJsonPath);
 var distDir = Path.Combine(piletDir, "dist");
-var www = Path.Combine(piletDir, "node_modules", piralInstance, "app");
-var wwwProvider = new PhysicalFileProvider(www);
+var appShellRootDir = Path.Combine(piletDir, "node_modules", piralInstance.Name);
+var appDir = Path.Combine(appShellRootDir, "app");
 var contentTypeProvider = CreateStaticFileTypeProvider();
+var files = Enumerable.Empty<string>();
 
-static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
+static IEnumerable<string> GetWebsiteEmulatorFiles(string packageJsonPath)
+{
+    if (File.Exists(packageJsonPath))
+    {
+        using var jsonStream = File.Open(packageJsonPath, FileMode.Open);
+        var package = JsonSerializer.Deserialize<PackageJson>(jsonStream);
+        var source = package?.PiralCli?.Source;
+
+        if (source is not null && (source.StartsWith("http://") || source.StartsWith("https://")))
+        {
+            return package?.Files ?? Enumerable.Empty<string>();
+        }
+    }
+
+    return Enumerable.Empty<string>();
+}
+
+static PiralInstance FindPiralInstance(string piletJsonPath, string packageJsonPath)
 {
     if (File.Exists(piletJsonPath))
     {
         using var jsonStream = File.Open(piletJsonPath, FileMode.Open);
         var pilet = JsonSerializer.Deserialize<PiletJson>(jsonStream);
-        var key = pilet?.PiralInstances?.Keys.FirstOrDefault();
 
-        if (key is not null)
+        if (pilet?.PiralInstances is not null)
         {
-            return key;
+            foreach (var item in pilet?.PiralInstances!)
+            {
+                if (item.Value.IsSelected ?? false)
+                {
+                    return new PiralInstance(item.Key, !string.IsNullOrEmpty(item.Value.Url));
+                }
+            }
+        }
+
+        var firstItem = pilet?.PiralInstances?.FirstOrDefault();
+
+        if (firstItem.HasValue)
+        {
+            var instance = firstItem.Value;
+            return new PiralInstance(instance.Key, !string.IsNullOrEmpty(instance.Value.Url));
         }
     }
 
@@ -50,7 +82,7 @@ static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
 
         if (key is not null)
         {
-            return key;
+            return new PiralInstance(key, false);
         }
     }
 
@@ -144,18 +176,33 @@ Console.WriteLine("");
 app.UseDeveloperExceptionPage();
 app.UseWebSockets();
 app.UseWebAssemblyDebugging();
-app.UseStaticFiles(new StaticFileOptions
+
+if (!piralInstance.IsWebsite)
 {
-    OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
-    FileProvider = wwwProvider,
-    ServeUnknownFileTypes = true,
-    ContentTypeProvider = contentTypeProvider,
-});
+    var wwwProvider = new PhysicalFileProvider(appDir);
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
+        FileProvider = wwwProvider,
+        ServeUnknownFileTypes = true,
+        ContentTypeProvider = contentTypeProvider,
+    });
+}
+
 app.Use(async (context, next) =>
 {
     var reqPath = context.Request.Path.Value!;
     var host = context.Request.Host;
     var scheme = context.Request.IsHttps ? "https" : "http";
+    var name = reqPath[1..];
+    var query = context.Request.QueryString.Value ?? string.Empty;
+
+    if (piralInstance.IsWebsite && !files.Any())
+    {
+        var appShellPackage = Path.Combine(appShellRootDir, "package.json");
+        files = GetWebsiteEmulatorFiles(appShellPackage);
+    }
 
     // right now we support a single-pilet only; in the future multiple pilets may
     // be debugged, too
@@ -221,8 +268,17 @@ app.Use(async (context, next) =>
     {
         var httpFactory = context.RequestServices.GetService<IHttpClientFactory>()!;
         var client = httpFactory.CreateClient();
-        var query = context.Request.QueryString.Value ?? string.Empty;
         var url = new Uri($"{feedUrl}{reqPath}{query}");
+        var request = context.CreateProxyHttpRequest(url);
+        var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+        await context.CopyProxyHttpResponse(response);
+    }
+    else if (name != indexHtml && files.Contains(name))
+    {
+        var httpFactory = context.RequestServices.GetService<IHttpClientFactory>()!;
+        var client = httpFactory.CreateClient();
+        var url = new Uri($"{feedUrl}{reqPath}{query}");
+        Console.WriteLine($"Proxy file {name} from '{url.AbsoluteUri}'");
         var request = context.CreateProxyHttpRequest(url);
         var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
         await context.CopyProxyHttpResponse(response);
@@ -236,11 +292,24 @@ app.UseRouting();
 #pragma warning disable ASP0014 // Suggest using top level route registrations
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapFallbackToFile("index.html", new StaticFileOptions
+    async Task FallbackHandler(HttpContext context)
     {
-        OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
-        FileProvider = wwwProvider,
-    });
+        var reqPath = context.Request.Path.Value!;
+        var host = context.Request.Host;
+        var scheme = context.Request.IsHttps ? "https" : "http";
+        var apiBaseUrl = $"{scheme}://{host}{piletApiSegment}";
+        var windowInjectionScript = $"window['dbg:pilet-api'] = '{apiBaseUrl}';";
+        var findStr = "<script";
+        var replaceStr = $"<script>/* Pilet Debugging Emulator Config Injection */{windowInjectionScript}</script><script";
+        using var stream = File.OpenRead(Path.Combine(appDir, indexHtml));
+        using var reader = new StreamReader(stream);
+        var originalHtml = await reader.ReadToEndAsync();
+        var contentHtml = originalHtml.Replace(findStr, replaceStr);
+        AppendHeaders(context, app);
+        await context.Response.WriteAsync(contentHtml);
+    }
+
+    endpoints.MapFallback(FallbackHandler);
 });
 #pragma warning restore ASP0014 // Suggest using top level route registrations
 
