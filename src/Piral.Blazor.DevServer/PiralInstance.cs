@@ -1,8 +1,14 @@
 ﻿namespace Piral.Blazor.DevServer;
 
-public class PiralInstance(string name, bool website)
+public class PiralInstance
 {
-    public string Name { get; } = name;
+    public PiralInstance(string name, bool website)
+    {
+        Name = name;
+        IsWebsite = website;
+    }
 
-    public bool IsWebsite { get; } = website;
+    public string Name { get; }
+
+    public bool IsWebsite { get; }
 }
