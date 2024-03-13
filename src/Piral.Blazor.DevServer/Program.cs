@@ -25,11 +25,10 @@ var piletJsonPath = Path.Combine(piletDir, "pilet.json");
 var packageJsonPath = Path.Combine(piletDir, "package.json");
 var piralInstance = FindPiralInstance(piletJsonPath, packageJsonPath);
 var distDir = Path.Combine(piletDir, "dist");
-var appShellRootDir = Path.Combine(piletDir, "node_modules", piralInstance);
-var appShellPackage = Path.Combine(appShellRootDir, "package.json");
+var appShellRootDir = Path.Combine(piletDir, "node_modules", piralInstance.Name);
 var appDir = Path.Combine(appShellRootDir, "app");
-var files = GetWebsiteEmulatorFiles(appShellPackage);
 var contentTypeProvider = CreateStaticFileTypeProvider();
+var files = Enumerable.Empty<string>();
 
 static IEnumerable<string> GetWebsiteEmulatorFiles(string packageJsonPath)
 {
@@ -48,17 +47,30 @@ static IEnumerable<string> GetWebsiteEmulatorFiles(string packageJsonPath)
     return Enumerable.Empty<string>();
 }
 
-static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
+static PiralInstance FindPiralInstance(string piletJsonPath, string packageJsonPath)
 {
     if (File.Exists(piletJsonPath))
     {
         using var jsonStream = File.Open(piletJsonPath, FileMode.Open);
         var pilet = JsonSerializer.Deserialize<PiletJson>(jsonStream);
-        var key = pilet?.PiralInstances?.Keys.FirstOrDefault();
 
-        if (key is not null)
+        if (pilet?.PiralInstances is not null)
         {
-            return key;
+            foreach (var item in pilet?.PiralInstances!)
+            {
+                if (item.Value.IsSelected ?? false)
+                {
+                    return new PiralInstance(item.Key, !string.IsNullOrEmpty(item.Value.Url));
+                }
+            }
+        }
+
+        var firstItem = pilet?.PiralInstances?.FirstOrDefault();
+
+        if (firstItem.HasValue)
+        {
+            var instance = firstItem.Value;
+            return new PiralInstance(instance.Key, !string.IsNullOrEmpty(instance.Value.Url));
         }
     }
 
@@ -70,7 +82,7 @@ static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
 
         if (key is not null)
         {
-            return key;
+            return new PiralInstance(key, false);
         }
     }
 
@@ -165,7 +177,7 @@ app.UseDeveloperExceptionPage();
 app.UseWebSockets();
 app.UseWebAssemblyDebugging();
 
-if (!files.Any())
+if (!piralInstance.IsWebsite)
 {
     var wwwProvider = new PhysicalFileProvider(appDir);
 
@@ -185,6 +197,12 @@ app.Use(async (context, next) =>
     var scheme = context.Request.IsHttps ? "https" : "http";
     var name = reqPath[1..];
     var query = context.Request.QueryString.Value ?? string.Empty;
+
+    if (piralInstance.IsWebsite && !files.Any())
+    {
+        var appShellPackage = Path.Combine(appShellRootDir, "package.json");
+        files = GetWebsiteEmulatorFiles(appShellPackage);
+    }
 
     // right now we support a single-pilet only; in the future multiple pilets may
     // be debugged, too
