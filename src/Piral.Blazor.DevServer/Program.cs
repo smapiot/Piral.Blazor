@@ -236,11 +236,24 @@ app.UseRouting();
 #pragma warning disable ASP0014 // Suggest using top level route registrations
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapFallbackToFile("index.html", new StaticFileOptions
+    async Task FallbackHandler(HttpContext context)
     {
-        OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
-        FileProvider = wwwProvider,
-    });
+        var host = context.Request.Host;
+        var scheme = context.Request.IsHttps ? "https" : "http";
+        var apiBaseUrl = $"{scheme}://{host}{piletApiSegment}";
+        var windowInjectionScript = $"window['dbg:pilet-api'] = '{apiBaseUrl}';";
+        var findStr = "<script";
+        var replaceStr = $"<script>/* Pilet Debugging Emulator Config Injection */{windowInjectionScript}</script><script";
+        var fileInfo = wwwProvider.GetFileInfo("index.html");
+        using var stream = fileInfo.CreateReadStream();
+        using var reader = new StreamReader(stream);
+        var originalHtml = await reader.ReadToEndAsync();
+        var contentHtml = originalHtml.Replace(findStr, replaceStr);
+        AppendHeaders(context, app);
+        await context.Response.WriteAsync(contentHtml);
+    }
+
+    endpoints.MapFallback(FallbackHandler);
 });
 #pragma warning restore ASP0014 // Suggest using top level route registrations
 
