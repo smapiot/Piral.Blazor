@@ -50,7 +50,12 @@ export async function checkInstallation(
     );
     const piralVersion = getPiralVersion(shellPackagePath);
     const installCmd = `npm i blazor@${blazorVersion} piral-blazor@${piralVersion} --no-save --legacy-peer-deps`;
-    await execAsync(installCmd);
+    await execAsync(installCmd, {
+      env: {
+        ...process.env,
+        NODE_ENV: 'development',
+      },
+    });
   }
 }
 
