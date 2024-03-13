@@ -496,6 +496,12 @@ namespace Piral.Blazor.Tools
             Run("npm", npm, ProjectDir, $"{npmPrefix}install --silent");
         }
 
+        private void InitiateFirstBuild()
+        {
+            Log.LogMessage("Initiating first build...");
+            Run("npm", npm, ProjectDir, $"{npmPrefix}run build");
+        }
+
         private void UpdateAuxiliaryFiles()
         {
             UpdatePackageJson();
@@ -639,6 +645,11 @@ namespace Piral.Blazor.Tools
                     }
 
                     EnableAnalyzer();
+
+                    if (requireInstall)
+                    {
+                        InitiateFirstBuild();
+                    }
                 }
                 else
                 {
