@@ -208,7 +208,8 @@ namespace Piral.Blazor.Tools
             else if (!String.IsNullOrEmpty(registry))
             {
                 Log.LogMessage($"Creating '{configFileName}' with entry from NpmRegistry.");
-                File.AppendAllLines(Path.Combine(target, configFileName), [$"registry={registry}", "always-auth=true"], Encoding.UTF8);
+                var nl = Environment.NewLine;
+                File.AppendAllText(Path.Combine(target, configFileName), $"registry={registry}{nl}always-auth=true", Encoding.UTF8);
             }
         }
 
