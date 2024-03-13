@@ -8,6 +8,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
+var indexHtml = "index.html";
 var wwwRoot = "wwwroot";
 var piletApiSegment = "/$pilet-api";
 var cliPort = GetFreeTcpPort();
@@ -24,9 +25,28 @@ var piletJsonPath = Path.Combine(piletDir, "pilet.json");
 var packageJsonPath = Path.Combine(piletDir, "package.json");
 var piralInstance = FindPiralInstance(piletJsonPath, packageJsonPath);
 var distDir = Path.Combine(piletDir, "dist");
-var www = Path.Combine(piletDir, "node_modules", piralInstance, "app");
-var wwwProvider = new PhysicalFileProvider(www);
+var appShellRootDir = Path.Combine(piletDir, "node_modules", piralInstance);
+var appShellPackage = Path.Combine(appShellRootDir, "package.json");
+var appDir = Path.Combine(appShellRootDir, "app");
+var files = GetWebsiteEmulatorFiles(appShellPackage);
 var contentTypeProvider = CreateStaticFileTypeProvider();
+
+static IEnumerable<string> GetWebsiteEmulatorFiles(string packageJsonPath)
+{
+    if (File.Exists(packageJsonPath))
+    {
+        using var jsonStream = File.Open(packageJsonPath, FileMode.Open);
+        var package = JsonSerializer.Deserialize<PackageJson>(jsonStream);
+        var source = package?.PiralCli?.Source;
+
+        if (source is not null && (source.StartsWith("http://") || source.StartsWith("https://")))
+        {
+            return package?.Files ?? Enumerable.Empty<string>();
+        }
+    }
+
+    return Enumerable.Empty<string>();
+}
 
 static string FindPiralInstance(string piletJsonPath, string packageJsonPath)
 {
@@ -144,18 +164,27 @@ Console.WriteLine("");
 app.UseDeveloperExceptionPage();
 app.UseWebSockets();
 app.UseWebAssemblyDebugging();
-app.UseStaticFiles(new StaticFileOptions
+
+if (!files.Any())
 {
-    OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
-    FileProvider = wwwProvider,
-    ServeUnknownFileTypes = true,
-    ContentTypeProvider = contentTypeProvider,
-});
+    var wwwProvider = new PhysicalFileProvider(appDir);
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = (res) => AppendHeaders(res.Context, app),
+        FileProvider = wwwProvider,
+        ServeUnknownFileTypes = true,
+        ContentTypeProvider = contentTypeProvider,
+    });
+}
+
 app.Use(async (context, next) =>
 {
     var reqPath = context.Request.Path.Value!;
     var host = context.Request.Host;
     var scheme = context.Request.IsHttps ? "https" : "http";
+    var name = reqPath[1..];
+    var query = context.Request.QueryString.Value ?? string.Empty;
 
     // right now we support a single-pilet only; in the future multiple pilets may
     // be debugged, too
@@ -221,8 +250,17 @@ app.Use(async (context, next) =>
     {
         var httpFactory = context.RequestServices.GetService<IHttpClientFactory>()!;
         var client = httpFactory.CreateClient();
-        var query = context.Request.QueryString.Value ?? string.Empty;
         var url = new Uri($"{feedUrl}{reqPath}{query}");
+        var request = context.CreateProxyHttpRequest(url);
+        var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+        await context.CopyProxyHttpResponse(response);
+    }
+    else if (name != indexHtml && files.Contains(name))
+    {
+        var httpFactory = context.RequestServices.GetService<IHttpClientFactory>()!;
+        var client = httpFactory.CreateClient();
+        var url = new Uri($"{feedUrl}{reqPath}{query}");
+        Console.WriteLine($"Proxy file {name} from '{url.AbsoluteUri}'");
         var request = context.CreateProxyHttpRequest(url);
         var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
         await context.CopyProxyHttpResponse(response);
@@ -238,14 +276,14 @@ app.UseEndpoints(endpoints =>
 {
     async Task FallbackHandler(HttpContext context)
     {
+        var reqPath = context.Request.Path.Value!;
         var host = context.Request.Host;
         var scheme = context.Request.IsHttps ? "https" : "http";
         var apiBaseUrl = $"{scheme}://{host}{piletApiSegment}";
         var windowInjectionScript = $"window['dbg:pilet-api'] = '{apiBaseUrl}';";
         var findStr = "<script";
         var replaceStr = $"<script>/* Pilet Debugging Emulator Config Injection */{windowInjectionScript}</script><script";
-        var fileInfo = wwwProvider.GetFileInfo("index.html");
-        using var stream = fileInfo.CreateReadStream();
+        using var stream = File.OpenRead(Path.Combine(appDir, indexHtml));
         using var reader = new StreamReader(stream);
         var originalHtml = await reader.ReadToEndAsync();
         var contentHtml = originalHtml.Replace(findStr, replaceStr);
