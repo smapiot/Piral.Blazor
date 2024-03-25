@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Piral.Blazor.Core;
 
-internal class CacheManipulatorService
+internal class CacheManipulatorService : ICacheManipulatorService
 {
     private readonly Type _ctiType;
     private readonly Func<Type, Action<IServiceProvider, IComponent>> _createInitializer;

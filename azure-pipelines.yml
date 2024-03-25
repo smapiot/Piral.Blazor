@@ -40,6 +40,11 @@ steps:
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
 - script: |
+    rm ~/.nuget/packages/microsoft.aspnetcore.components/8.0.1/lib/net8.0/Microsoft.AspNetCore.Components.dll
+    cp tools/Microsoft.AspNetCore.Components.dll ~/.nuget/packages/microsoft.aspnetcore.components/8.0.1/lib/net8.0/Microsoft.AspNetCore.Components.dll
+  displayName: 'Change GAC'
+
+- script: |
     dotnet build tests
     dotnet test tests
   displayName: 'Run Tests'

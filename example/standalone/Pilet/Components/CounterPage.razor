@@ -9,11 +9,15 @@
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
+<Foo @ref=foo></Foo>
+
 <p>Also a counter with React for comparison:</p>
 
 <Extension Name="react-counter" />
 
 @code {
+    private Foo foo;
+
     [Parameter]
     [PiralQueryParameter]  
     public string Foo { get; set; } 

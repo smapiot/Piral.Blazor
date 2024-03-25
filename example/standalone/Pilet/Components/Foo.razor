@@ -1,0 +1,14 @@
+@using Microsoft.Extensions.Logging
+
+@inject ILogger<Foo> logger;
+
+<strong>Hello from Foo!</strong>
+
+@code {
+    protected override void OnInitialized()
+    {
+        logger.LogInformation("Initialized FOO");
+        base.OnInitialized();
+    }
+
+}
