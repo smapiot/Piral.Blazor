@@ -737,6 +737,12 @@ DotNet.invokeMethodAsync('Piral.Blazor.Core', 'SetLogLevel', logLevel);
 
 Here, the value for `logLevel` should be between 0-6, where 0 logs everything (even traces) and 6 logs nothing. Alternatively, you can also set a log level when initializing `piral-blazor`.
 
+## FAQ
+
+1. I cannot use breakpoints when I debug a Piral.Blazor pilet in VS. What could be wrong?
+
+Make sure you actually emit a PDB and have `Debug` selected as configuration. Also, don't change the configuration to have `<DebugType>Full</DebugType>` or similar in the project file. You'll need a portable PDB (modern format), not a full PDB (legacy format for Windows).
+
 ## License
 
 Piral.Blazor is released using the MIT license. For more information see the [license file](https://raw.githubusercontent.com/smapiot/Piral.Blazor/blazor-6.0/LICENSE).

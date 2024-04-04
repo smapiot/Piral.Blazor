@@ -306,6 +306,7 @@ app.UseEndpoints(endpoints =>
         var originalHtml = await reader.ReadToEndAsync();
         var contentHtml = originalHtml.Replace(findStr, replaceStr);
         AppendHeaders(context, app);
+        AppendContentType(context, contentTypeProvider, "index.html");
         await context.Response.WriteAsync(contentHtml);
     }
 

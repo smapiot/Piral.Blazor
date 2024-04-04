@@ -1,7 +1,7 @@
 @inject IComponentActivationService Activation
 @implements IDisposable
 
-<DynamicComponent Type="@Activation.Root" Parameters="@parameters" />
+<RenderView Type="@Activation.Root" Parameters="@parameters" />
 
 @code {
 private static readonly RenderFragment componentView = @<ComponentView />;

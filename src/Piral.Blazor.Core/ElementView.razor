@@ -1,7 +1,7 @@
 @inject IComponentActivationService Activation
 @implements IDisposable
 
-<DynamicComponent Type="@_element.Component" Parameters="@_element.Args" />
+<RenderView Type="@_element.Component" Parameters="@_element.Args" />
 
 @code {
 private PiralElement _element;
