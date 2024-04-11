@@ -54,7 +54,7 @@ function removeStyles() {
 }`;
 
 export const standaloneRemapCode = `
-  app.defineBlazorReferences = (refs, satellites, prio) => pbc.defineBlazorReferences(refs, app.meta, satellites, prio);
+  app.defineBlazorReferences = (refs, satellites, ...rest) => pbc.defineBlazorReferences(refs, app.meta, satellites, ...rest);
   app.defineBlazorOptions = pbc.defineBlazorOptions || (() => {});
   app.fromBlazor = pbc.fromBlazor;
   app.releaseBlazorReferences = pbc.releaseBlazorReferences;
