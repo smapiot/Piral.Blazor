@@ -1,0 +1,41 @@
+diff --git a/src/Components/Components/src/ComponentFactory.cs b/src/Components/Components/src/ComponentFactory.cs
+index 38a73f4e94..0eb516203e 100644
+--- a/src/Components/Components/src/ComponentFactory.cs
++++ b/src/Components/Components/src/ComponentFactory.cs
+@@ -48,7 +48,7 @@ internal sealed class ComponentFactory
+ 
+     public IComponent InstantiateComponent(IServiceProvider serviceProvider, [DynamicallyAccessedMembers(Component)] Type componentType, IComponentRenderMode? callerSpecifiedRenderMode, int? parentComponentId)
+     {
+-        var (componentTypeRenderMode, propertyInjector) = GetComponentTypeInfo(componentType);
++        var (componentTypeRenderMode, _) = GetComponentTypeInfo(componentType);
+         IComponent component;
+ 
+         if (componentTypeRenderMode is null && callerSpecifiedRenderMode is null)
+@@ -73,17 +73,7 @@ internal sealed class ComponentFactory
+             throw new InvalidOperationException($"The component activator returned a null value for a component of type {componentType.FullName}.");
+         }
+ 
+-        if (component.GetType() == componentType)
+-        {
+-            // Fast, common case: use the cached data we already looked up
+-            propertyInjector(serviceProvider, component);
+-        }
+-        else
+-        {
+-            // Uncommon case where the activator/resolver returned a different type. Needs an extra cache lookup.
+-            PerformPropertyInjection(serviceProvider, component);
+-        }
+-
++        PerformPropertyInjection(serviceProvider, component);
+         return component;
+     }
+ 
+@@ -168,7 +158,7 @@ internal sealed class ComponentFactory
+         }
+ 
+         public void Deconstruct(
+-            out IComponentRenderMode? componentTypeRenderMode, 
++            out IComponentRenderMode? componentTypeRenderMode,
+             out Action<IServiceProvider, IComponent> performPropertyInjection)
+         {
+             componentTypeRenderMode = ComponentTypeRenderMode;

@@ -1,5 +1,7 @@
 # Patch Instructions
 
+## Binary Patch
+
 To create the modified `Microsoft.AspNetCore.Components.dll` you'll need to use Windows and the [dnSpy](https://github.com/dnSpyEx/dnSpy) tool.
 
 1. Open the original `Microsoft.AspNetCore.Components.dll` located in the global NuGet folder (if there is none, make sure to first run `dotnet build`) using dnSpy
@@ -15,3 +17,15 @@ So the original should look like this:
 And the modified version looks like this:
 
 ![Modified Implementation](./instantiate-modified.png)
+
+## Source Patch
+
+These steps can be automated.
+
+1. `git clone https://github.com/dotnet/aspnetcore.git`
+2. `cd aspnetcore` (to project root)
+3. `git apply /piral.blazor.source/tools/componentfactory-piral.patch` (don't forget to replace `/piral.blazor.source` with the path to the actual `Piral.Blazor` repository)
+4. `cd src/Components` (from project root)
+5. `./build.sh` (on Linux, otherwise `build.cmd` on Windows)
+6. Usually it would be good to also build for Release afterwards; `cd Components/src` (from `src/Components`) and `dotnet build Microsoft.AspNetCore.Components.csproj -c Release`
+7. Now use / copy `artifacts/bin/Microsoft.AspNetCore.Components/Release/net8.0/Microsoft.AspNetCore.Components.dll` (from project root) to the NuGet package dir
