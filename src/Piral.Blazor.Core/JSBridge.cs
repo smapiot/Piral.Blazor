@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,10 +8,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Runtime.Loader;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
+#if DEBUG
+[assembly: MetadataUpdateHandlerAttribute(typeof(Piral.Blazor.Core.JSBridge))]
+#endif
 
 namespace Piral.Blazor.Core;
 
@@ -138,6 +142,7 @@ public static class JSBridge
             var library = await LoadAssemblyInContext(client, context, pilet.DllUrl, pilet.PdbUrl);
             var service = new PiletService(js, client, context, pilet);
 
+            data.Definition = pilet;
             data.Library = library;
             data.Service = service;
             data.LanguageHandler = async (s, e) =>
@@ -218,6 +223,27 @@ public static class JSBridge
 
     #endregion
 
+    #region Hot Reload Handling
+
+#if DEBUG
+    public static event Action<Type[]> UpdateApplicationEvent;
+
+    internal static void ClearCache(Type[] types)
+    {
+        var js = Host.Services.GetService<IJSRuntime>();
+        js.InvokeVoidAsync("Blazor.emitPiralEvent", "blazor-hot-reloading", EventArgs.Empty);
+    }
+
+    internal static void UpdateApplication(Type[] types)
+    {
+        var js = Host.Services.GetService<IJSRuntime>();
+        UpdateApplicationEvent?.Invoke(types);
+        js.InvokeVoidAsync("Blazor.emitPiralEvent", "blazor-hot-reloaded", EventArgs.Empty);
+    }
+#endif
+
+    #endregion
+
     internal static void RenderContent(string contentId, JsonElement content)
     {
         var js = Host.Services.GetService<IJSRuntime>();
@@ -278,6 +304,8 @@ public static class JSBridge
         public PiletService Service { get; set; }
 
         public EventHandler LanguageHandler { get; set; }
+
+        public PiletDefinition Definition { get; set; }
     }
 
     #endregion
