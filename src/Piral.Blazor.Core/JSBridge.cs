@@ -284,7 +284,9 @@ public static class JSBridge
 
                 if (!available)
                 {
-                    var symbols = string.Concat(url.AsSpan(0, url.Length - 4), ".pdb");
+                    var ext = url.EndsWith(".wasm") ? ".wasm" : ".dll";
+                    var extLessUrl = url.AsSpan(0, url.Length - ext.Length);
+                    var symbols = string.Concat(extLessUrl, ".pdb");
                     var pdbUrl = (dependencySymbols?.Contains(symbols) ?? false) ? symbols : null;
                     await LoadAssemblyInContext(client, context, url, pdbUrl);
                 }
