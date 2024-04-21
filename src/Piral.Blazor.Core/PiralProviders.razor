@@ -1,0 +1,25 @@
+@inject IComponentActivationService Activation
+@implements IDisposable
+
+@foreach (var provider in Activation.Providers)
+{
+    <DynamicComponent Type="@provider" />
+}
+
+@code {
+private void ProvidersChanged(object sender, EventArgs e)
+{
+    this.StateHasChanged();
+}
+
+public void Dispose()
+{
+    Activation.ProvidersChanged -= ProvidersChanged;
+}
+
+protected override Task OnInitializedAsync()
+{
+    Activation.ProvidersChanged += ProvidersChanged;
+    return base.OnInitializedAsync();
+}
+}
