@@ -3,7 +3,7 @@
 
 @foreach (var active in Activation.Components)
 {
-    <div id="@active.ReferenceId">
+    <div id="@active.ReferenceId" style="display: none">
         <div style="display: contents">
             <RenderView Type="@active.Component" Parameters="@active.Args" />
         </div>
