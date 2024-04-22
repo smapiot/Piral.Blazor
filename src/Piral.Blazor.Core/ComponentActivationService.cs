@@ -11,7 +11,7 @@ namespace Piral.Blazor.Core;
 
 public class ComponentActivationService : IComponentActivationService
 {
-    private static readonly string appRoot = "approot";
+    private static readonly string appRoot = "#approot";
 
     private readonly Dictionary<string, Type> _components = new();
 
@@ -19,23 +19,30 @@ public class ComponentActivationService : IComponentActivationService
 
     private readonly List<ActiveComponent> _active = new();
 
+    private readonly List<Type> _provider = new();
+
     private readonly ILogger<ComponentActivationService> _logger;
 
     private readonly IModuleContainerService _container;
-    
+
     private readonly NavigationManager _navigationManager;
 
     public event EventHandler ComponentsChanged;
 
+    public event EventHandler ProvidersChanged;
+
     public event EventHandler RootChanged;
 
     public IEnumerable<ActiveComponent> Components => _active;
+
+    public IEnumerable<Type> Providers => _provider;
 
     public Type Root => GetComponent(appRoot) ?? typeof(DefaultRoot);
 
     private static readonly IReadOnlyCollection<Type> AttributeTypes = new List<Type>
     {
         typeof(PiralAppRootAttribute),
+        typeof(PiralProviderAttribute),
         typeof(PiralComponentAttribute),
         typeof(PiralExtensionAttribute),
         typeof(RouteAttribute),
@@ -55,6 +62,11 @@ public class ComponentActivationService : IComponentActivationService
         {
             _logger.LogWarning("The provided component name has already been registered.");
         }
+        else if (componentName.StartsWith("provider-"))
+        {
+            _provider.Add(componentType);
+            ProvidersChanged?.Invoke(this, EventArgs.Empty);
+        }
         else
         {
             _components.Add(componentName, componentType);
@@ -70,12 +82,21 @@ public class ComponentActivationService : IComponentActivationService
     {
         if (_components.TryGetValue(componentName, out var componentType))
         {
-            DeactivateComponent(componentName);
-            _components.Remove(componentName);
-
-            if (componentName == appRoot)
+            if (componentName.StartsWith("provider-"))
             {
                 RootChanged?.Invoke(this, EventArgs.Empty);
+                _provider.Remove(componentType);
+                ProvidersChanged?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                DeactivateComponent(componentName);
+                _components.Remove(componentName);
+
+                if (componentName == appRoot)
+                {
+                    RootChanged?.Invoke(this, EventArgs.Empty);
+                }
             }
         }
         else
@@ -303,6 +324,8 @@ public class ComponentActivationService : IComponentActivationService
                     $"{((PiralComponentAttribute)attribute).Name ?? member.FullName}",
                 Type _ when attributeType == typeof(PiralAppRootAttribute) =>
                     appRoot,
+                Type _ when attributeType == typeof(PiralProviderAttribute) =>
+                    $"provider-{member.FullName}",
                 _ => null
             });
         }

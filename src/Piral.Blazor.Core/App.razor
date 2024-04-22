@@ -1,6 +1,7 @@
 @inject IComponentActivationService Activation
 @implements IDisposable
 
+<PiralProviders />
 <RenderView Type="@Activation.Root" Parameters="@parameters" />
 
 @code {

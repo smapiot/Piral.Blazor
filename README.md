@@ -544,6 +544,26 @@ To dynamically change / refresh your components when the language change you'll 
 
 This way, your components will always remain up-to-date and render the right translations.
 
+## Provider Components
+
+Sometimes Blazor components require some global components (or "providers") to be added. To accomplish this you can create components marked with the `PiralProviderAttribute` attribute.
+
+Example:
+
+
+```razor
+@attribute [PiralProvider]
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+```
+
+Providers will *never* receive any parameters - they are rendered only once and will remain active for the whole lifecycle of the application. There can be more than one provider.
+
+Provider components are adjacent to your other components, which may come and go and will be - in general - somewhere else in the DOM. As such they are not ideal for providing some cascading value or other properties. They are ideal, however, when you need something running all the time.
+
+In contrast, Piral also has the concept of a root component, which comes with another set of constraints.
+
 ### Root Component
 
 By default, the Blazor pilets run in a dedicated Blazor application with no root component. If you need a root component, e.g., to provide some common values from a `CascadingValue` component such as `CascadingAuthenticationState` from the `Microsoft.AspNetCore.Components.Authorization` package, you can actually override the default root component:
@@ -582,7 +602,7 @@ You can also provide your own providers here (or nest them as you want):
 
 **Note**: There is always just one `PiralAppRoot` component. If you did not supply one then the default `PiralAppRoot` will be used. If you already provided one, no other `PiralAppRoot` can be used.
 
-It is critical to understand that each attached pilet component starts its own Blazor rendering tree. Therefore, while there is just a single `PiralAppRoot` component there might be multiple instances active at a given point in time.
+It is critical to understand that each attached pilet component starts its own Blazor rendering tree. Therefore, while there is just a single `PiralAppRoot` component there might be multiple instances active at a given point in time. This is a crucial difference to `PiralProvider` components, which are essentially singletons from a rendering perspective.
 
 ## Running and Debugging the Pilet :rocket:
 

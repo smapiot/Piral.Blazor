@@ -9,6 +9,11 @@ public interface IComponentActivationService
     /// The handler to monitor when the active components changed.
     /// </summary>
     event EventHandler ComponentsChanged;
+
+    /// <summary>
+    /// The handler to monitor when the available providers changed.
+    /// </summary>
+    event EventHandler ProvidersChanged;
     
     /// <summary>
     /// The handler to monitor when the root component changed.
@@ -19,6 +24,11 @@ public interface IComponentActivationService
     /// Gets the currently active components.
     /// </summary>
     IEnumerable<ActiveComponent> Components { get; }
+
+    /// <summary>
+    /// Gets the currently available providers.
+    /// </summary>
+    IEnumerable<Type> Providers { get; }
 
     /// <summary>
     /// Gets a mounted element using its reference ID.
