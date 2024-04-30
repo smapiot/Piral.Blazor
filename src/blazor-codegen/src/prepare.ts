@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "fs";
 import { copyAll } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
-import { diffBlazorBootFiles } from "./utils";
+import { diffBlazorBootFiles, matchesSatellite } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
 import { BlazorManifest, StaticAssets } from "./types";
 import {
@@ -111,7 +111,10 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
     (satellites, name) => {
       const resources = satelliteResources[name];
       const files = Object.keys(resources);
-      satellites[name] = toFramework(files);
+      const toSatellitePath = (file: string) =>
+        staticAssets.Assets.find((m) => matchesSatellite(m, name, file))
+          ?.RelativePath;
+      satellites[name] = files.map(toSatellitePath).filter(Boolean);
       return satellites;
     },
     {} as Record<string, Array<string>>

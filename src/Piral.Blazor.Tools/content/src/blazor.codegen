@@ -1751,6 +1751,12 @@ var import_fs2 = require("fs");
 function getAllKeys(manifest, type) {
   return Object.keys(manifest.resources[type] || {});
 }
+function matchesIdentity(asset, file) {
+  return asset.Identity.endsWith(`/${file}`) || asset.Identity.endsWith(`\\${file}`);
+}
+function matchesSatellite(asset, culture, file) {
+  return asset.AssetRole === "Related" && asset.AssetTraitValue === culture && matchesIdentity(asset, file);
+}
 function getUniqueKeys(originalManifest, piletManifest, type) {
   const original = getAllKeys(originalManifest, type);
   const dedicated = getAllKeys(piletManifest, type);
@@ -2028,7 +2034,11 @@ async function prepare(targetDir, staticAssets) {
   const satellites = Object.keys(satelliteResources || {}).reduce((satellites2, name) => {
     const resources = satelliteResources[name];
     const files = Object.keys(resources);
-    satellites2[name] = toFramework(files);
+    const toSatellitePath = (file) => {
+      var _a;
+      return (_a = staticAssets.Assets.find((m) => matchesSatellite(m, name, file))) == null ? void 0 : _a.RelativePath;
+    };
+    satellites2[name] = files.map(toSatellitePath).filter(Boolean);
     return satellites2;
   }, {});
   if (blazorInAppshell) {

@@ -4,11 +4,30 @@ import {
   BlazorManifest,
   BlazorResourceType,
   ProjectConfig,
+  StaticAsset,
   StaticAssets,
 } from "./types";
 
 function getAllKeys(manifest: BlazorManifest, type: BlazorResourceType) {
   return Object.keys(manifest.resources[type] || {});
+}
+
+export function matchesIdentity(asset: StaticAsset, file: string) {
+  return (
+    asset.Identity.endsWith(`/${file}`) || asset.Identity.endsWith(`\\${file}`)
+  );
+}
+
+export function matchesSatellite(
+  asset: StaticAsset,
+  culture: string,
+  file: string
+) {
+  return (
+    asset.AssetRole === "Related" &&
+    asset.AssetTraitValue === culture &&
+    matchesIdentity(asset, file)
+  );
 }
 
 function getUniqueKeys(
