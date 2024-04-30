@@ -21,7 +21,18 @@ public class PiralServiceProvider : IPiralServiceProvider
         {
             foreach (var service in piletServices)
             {
-                childServices.Add(service);
+                if (service.Lifetime != ServiceLifetime.Scoped || service.IsKeyedService)
+                {
+                    childServices.Add(service);
+                }
+                else if (service.ImplementationType != null)
+                {
+                    childServices.Add(new ServiceDescriptor(service.ServiceType, service.ImplementationType, ServiceLifetime.Singleton));
+                }
+                else
+                {
+                    childServices.Add(new ServiceDescriptor(service.ServiceType, service.ImplementationFactory, ServiceLifetime.Singleton));
+                }
             }
         });
 
