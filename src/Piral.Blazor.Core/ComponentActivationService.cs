@@ -195,10 +195,9 @@ public class ComponentActivationService : IComponentActivationService
         }
     }
 
-    public void LoadComponentsFromAssembly(Assembly assembly, IPiletService pilet)
+    public IServiceProvider LoadComponentsFromAssembly(Assembly assembly, IPiletService pilet)
     {
-        _container.ConfigureModule(assembly, pilet);
-        
+        var provider = _container.ConfigureModule(assembly, pilet);        
         var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
 
         foreach (var componentType in componentTypes)
@@ -217,6 +216,8 @@ public class ComponentActivationService : IComponentActivationService
                 _logger.LogInformation($"Registered {componentName}");
             }
         }
+
+        return provider;
     }
 
     public void UnloadComponentsFromAssembly(Assembly assembly)

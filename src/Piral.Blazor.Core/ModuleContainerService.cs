@@ -20,7 +20,7 @@ public class ModuleContainerService : IModuleContainerService
         _providers.Add(AssemblyLoadContext.Default, _provider);
     }
 
-    public void ConfigureModule(Assembly assembly, IPiletService pilet)
+    public IServiceProvider ConfigureModule(Assembly assembly, IPiletService pilet)
     {
         var services = new ServiceCollection();
         var alc = AssemblyLoadContext.GetLoadContext(assembly);
@@ -29,13 +29,18 @@ public class ModuleContainerService : IModuleContainerService
         ConfigureLocalServices(services, assembly, pilet);
         ConfigureDefaultServices(services, assembly, pilet);
 
+        return _providers[alc] = CreateProvider(alc, services);
+    }
+
+    private IServiceProvider CreateProvider(AssemblyLoadContext alc, ServiceCollection services)
+    {
         if (alc == AssemblyLoadContext.Default)
         {
-            _providers[alc] = _provider.ExtendGlobalServiceProvider(services);
+            return _provider.ExtendGlobalServiceProvider(services);
         }
         else
         {
-            _providers[alc] = _provider.CreatePiletServiceProvider(services);
+            return _provider.CreatePiletServiceProvider(services);
         }
     }
 

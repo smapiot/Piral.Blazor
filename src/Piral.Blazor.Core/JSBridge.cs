@@ -39,6 +39,8 @@ public static class JSBridge
 
     public static WebAssemblyHost Host { get; set; }
 
+    public static IEnumerable<T> GetServices<T>() => _pilets.Values.Select(m => m.Provider.GetService<T>()).Where(m => m is not null).ToArray();
+
     public static void Initialize(WebAssemblyHost host)
     {
         Host = host;
@@ -152,7 +154,7 @@ public static class JSBridge
             };
 
             Localization.LanguageChanged += data.LanguageHandler;
-            ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service);
+            data.Provider = ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service);
         }
     }
 
@@ -307,6 +309,8 @@ public static class JSBridge
         public EventHandler LanguageHandler { get; set; }
 
         public PiletDefinition Definition { get; set; }
+
+        public IServiceProvider Provider { get; set; }
     }
 
     #endregion

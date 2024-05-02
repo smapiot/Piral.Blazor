@@ -11,7 +11,7 @@ public interface IModuleContainerService
     /// </summary>
     /// <param name="assembly">The pilet's assembly.</param>
     /// <param name="pilet">The pilet's service.</param>
-    void ConfigureModule(Assembly assembly, IPiletService pilet);
+    IServiceProvider ConfigureModule(Assembly assembly, IPiletService pilet);
 
     /// <summary>
     /// Gets the provider that was established for the given assembly.

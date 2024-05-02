@@ -16,12 +16,13 @@ public class Program
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
         var baseAddress = new Uri(builder.HostEnvironment.BaseAddress);
         var factory = new PiralServiceProviderFactory();
+        var handler = new HttpDelegatingHandler();
 
         builder.RootComponents.Add<App>("#blazor-root");
         builder.RootComponents.RegisterCustomElement<Element>("piral-blazor-component");
 
         builder.Services
-            .AddSingleton(new HttpClient { BaseAddress = baseAddress })
+            .AddSingleton(new HttpClient(handler) { BaseAddress = baseAddress })
             .AddSingleton<IComponentActivator, PiletComponentActivator>()
             .AddSingleton<ICacheManipulatorService, CacheManipulatorService>()
             .AddSingleton<IComponentActivationService, ComponentActivationService>()
