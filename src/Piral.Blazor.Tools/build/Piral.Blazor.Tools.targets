@@ -18,6 +18,10 @@
         <_piletUrl>http://localhost:1234</_piletUrl>
     </PropertyGroup>
 
+	<PropertyGroup Condition="'$(PiletKind)' == 'global'">
+		<PublishTrimmed>false</PublishTrimmed>
+	</PropertyGroup>
+
     <Target Name="SetupPiral" DependsOnTargets="ResolveStaticWebAssetsInputs" AfterTargets="Build">
         <CallTarget Targets="Scaffold" />
     </Target>
