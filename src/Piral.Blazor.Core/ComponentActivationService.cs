@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace Piral.Blazor.Core;
 
-public class ComponentActivationService : IComponentActivationService
+internal class ComponentActivationService : IComponentActivationService
 {
     private static readonly string appRoot = "#approot";
 
@@ -22,8 +22,6 @@ public class ComponentActivationService : IComponentActivationService
     private readonly List<Type> _provider = new();
 
     private readonly ILogger<ComponentActivationService> _logger;
-
-    private readonly IModuleContainerService _container;
     
     private readonly NavigationManager _navigationManager;
 
@@ -50,10 +48,10 @@ public class ComponentActivationService : IComponentActivationService
 
     public ComponentActivationService(IModuleContainerService container, NavigationManager navigationManager, ILogger<ComponentActivationService> logger)
     {
-        _container = container;
         _navigationManager = navigationManager;
         _logger = logger;
         JSBridge.ActivationService = this;
+        JSBridge.ContainerService = container;
     }
 
     public void Register(string componentName, Type componentType)
@@ -195,9 +193,8 @@ public class ComponentActivationService : IComponentActivationService
         }
     }
 
-    public IServiceProvider LoadComponentsFromAssembly(Assembly assembly, IPiletService pilet)
+    public void LoadComponentsFromAssembly(Assembly assembly)
     {
-        var provider = _container.ConfigureModule(assembly, pilet);        
         var componentTypes = assembly.GetTypesWithAttributes(AttributeTypes);
 
         foreach (var componentType in componentTypes)
@@ -216,8 +213,6 @@ public class ComponentActivationService : IComponentActivationService
                 _logger.LogInformation($"Registered {componentName}");
             }
         }
-
-        return provider;
     }
 
     public void UnloadComponentsFromAssembly(Assembly assembly)

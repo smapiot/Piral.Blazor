@@ -23,6 +23,6 @@ public static class ServiceCollectionExtensions
             return request;
         }
 
-        public async Task<HttpResponseMessage> OnResponse(HttpResponseMessage response, CancellationToken cancellationToken) => response;
+        public Task<HttpResponseMessage> OnResponse(HttpResponseMessage response, CancellationToken cancellationToken) => Task.FromResult(response);
     }
 }

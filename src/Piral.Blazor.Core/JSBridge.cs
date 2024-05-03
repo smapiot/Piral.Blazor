@@ -35,13 +35,15 @@ public static class JSBridge
         "core-pilet" // enables the definition of a core pilet
     };
 
-    public static ComponentActivationService ActivationService { get; set; }
+    internal static ComponentActivationService ActivationService { get; set; }
 
-    public static WebAssemblyHost Host { get; set; }
+    internal static IModuleContainerService ContainerService { get; set; }
 
-    public static IEnumerable<T> GetServices<T>() => _pilets.Values.Select(m => m.Provider.GetService<T>()).Where(m => m is not null).ToArray();
+    internal static WebAssemblyHost Host { get; set; }
 
-    public static void Initialize(WebAssemblyHost host)
+    public static IEnumerable<T> GetServices<T>() => _pilets.Values.Select(m => m.Provider?.GetService(typeof(T))).Where(m => m is not null).OfType<T>().ToArray();
+
+    internal static void Initialize(WebAssemblyHost host)
     {
         Host = host;
     }
@@ -147,6 +149,7 @@ public static class JSBridge
             data.Definition = pilet;
             data.Library = library;
             data.Service = service;
+            data.Provider = ContainerService?.ConfigureModule(library, service);
             data.LanguageHandler = async (s, e) =>
             {
                 await data.Service.LoadLanguage(Localization.Language);
@@ -154,7 +157,7 @@ public static class JSBridge
             };
 
             Localization.LanguageChanged += data.LanguageHandler;
-            data.Provider = ActivationService?.LoadComponentsFromAssembly(data.Library, data.Service);
+            ActivationService?.LoadComponentsFromAssembly(data.Library);
         }
     }
 
@@ -195,7 +198,10 @@ public static class JSBridge
         var dll = await client.GetStreamAsync(url);
         var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
         var pilet = new PiletService(js, client, url);
-        ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
+
+        ContainerService?.ConfigureModule(assembly, pilet);
+        ActivationService?.LoadComponentsFromAssembly(assembly);
+
         _assemblies[url] = assembly;
     }
 
@@ -208,7 +214,10 @@ public static class JSBridge
         var pdb = await client.GetStreamAsync(pdbUrl);
         var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
         var pilet = new PiletService(js, client, dllUrl);
-        ActivationService?.LoadComponentsFromAssembly(assembly, pilet);
+
+        ContainerService?.ConfigureModule(assembly, pilet);
+        ActivationService?.LoadComponentsFromAssembly(assembly);
+
         _assemblies[dllUrl] = assembly;
     }
 
@@ -298,19 +307,6 @@ public static class JSBridge
                 }
             }
         }
-    }
-
-    class PiletData
-    {
-        public Assembly Library { get; set; }
-
-        public PiletService Service { get; set; }
-
-        public EventHandler LanguageHandler { get; set; }
-
-        public PiletDefinition Definition { get; set; }
-
-        public IServiceProvider Provider { get; set; }
     }
 
     #endregion

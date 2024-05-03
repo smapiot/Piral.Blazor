@@ -7,6 +7,11 @@ namespace Piral.Blazor.Core;
 
 public class HttpDelegatingHandler : DelegatingHandler
 {
+    public HttpDelegatingHandler()
+        : base(new HttpClientHandler())
+    {
+    }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var interceptors = JSBridge.GetServices<IHttpInterceptor>();
