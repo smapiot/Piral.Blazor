@@ -9,7 +9,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddAccessCodeInterceptor(this IServiceCollection services)
     {
-        return services.AddSingleton<IHttpInterceptor>();
+        return services.AddSingleton<IHttpInterceptor, AccessCodeHttpInterceptor>();
     }
 
     class AccessCodeHttpInterceptor(IPiletService piletService) : IHttpInterceptor
