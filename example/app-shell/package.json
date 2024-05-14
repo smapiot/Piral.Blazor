@@ -22,9 +22,9 @@
     "postUpgrade": ""
   },
   "dependencies": {
-    "blazor": "8.0.15",
-    "piral": "1.5.3",
-    "piral-blazor": "1.5.3"
+    "blazor": "8.0.16",
+    "piral": "1.5.5",
+    "piral-blazor": "1.5.5"
   },
   "devDependencies": {
     "@types/node": "latest",
@@ -32,10 +32,9 @@
     "@types/react-dom": "^18.0.0",
     "@types/react-router": "^5.0.0",
     "@types/react-router-dom": "^5.0.0",
-    "path-to-regexp": "6.2.1",
-    "piral-cli": "1.5.3",
+    "piral-cli": "1.5.5",
     "piral-cli-esbuild": "latest",
     "sass": "^1.49.9",
-    "typescript": "^4.6.2"
+    "typescript": "^5"
   }
 }
