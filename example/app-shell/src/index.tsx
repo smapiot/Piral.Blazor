@@ -1,5 +1,5 @@
 import * as React from "react";
-import { render } from "react-dom";
+import { createRoot } from "react-dom/client";
 import { Piral, createInstance, createStandardApi } from "piral";
 import { createBlazorApi } from "piral-blazor";
 import { layout, errors } from "./layout";
@@ -20,4 +20,5 @@ const instance = createInstance({
   },
 });
 
-render(<Piral instance={instance} />, document.querySelector("#app"));
+const root = createRoot(document.querySelector("#app"));
+root.render(<Piral instance={instance} />);
