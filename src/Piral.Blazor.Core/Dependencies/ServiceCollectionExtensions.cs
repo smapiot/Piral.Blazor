@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Piral.Blazor.Core.Dependencies;
@@ -41,7 +38,7 @@ internal static class ServiceCollectionExtensions
         // Child service descriptors can be added "as-is"
         foreach (var item in childServiceCollection.ChildDescriptors)
         {
-            reWrittenServiceCollection.Add(item);
+            reWrittenServiceCollection.Add(ChangeScopedRegistrationToSingleton(item));
         }
 
         var childSp = reWrittenServiceCollection.BuildServiceProvider();
@@ -65,6 +62,22 @@ internal static class ServiceCollectionExtensions
         return disposableSp;
     }
 
+    private static ServiceDescriptor ChangeScopedRegistrationToSingleton(ServiceDescriptor item)
+    {
+        if (item.Lifetime != ServiceLifetime.Scoped || item.IsKeyedService)
+        {
+            return item;
+        }
+        else if (item.ImplementationType != null)
+        {
+            return new ServiceDescriptor(item.ServiceType, item.ImplementationType, ServiceLifetime.Singleton);
+        }
+        else
+        {
+            return new ServiceDescriptor(item.ServiceType, item.ImplementationFactory, ServiceLifetime.Singleton);
+        }
+    }
+
     private static ServiceDescriptor CreateChildDescriptorForExternalService(ServiceDescriptor item, IServiceProvider parentServiceProvider)
     {
         // For any services that implement IDisposable, they they will be tracked by Microsofts `ServiceProvider` when it creates them.
@@ -74,9 +87,13 @@ internal static class ServiceCollectionExtensions
         // However for "singleton" registrations, we want to assume that the singleton should be a "global" singleton - so we don't want the
         // child container to create an instance for that service by default. If the user wants the service to be "singleton at the child container level"
         // then they can add a registration to the ChildServiceCollection for this (which will override anything we do here to amend the parent level registration).
-        if (item.Lifetime == ServiceLifetime.Transient || item.Lifetime == ServiceLifetime.Scoped)
+        if (item.Lifetime == ServiceLifetime.Transient)
         {
             return item;
+        }
+        else if (item.Lifetime == ServiceLifetime.Scoped)
+        {
+            return ChangeScopedRegistrationToSingleton(item);
         }
 
         if (item.ImplementationInstance != null)
