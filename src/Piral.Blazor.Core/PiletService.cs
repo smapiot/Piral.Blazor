@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Piral.Blazor.Core;
@@ -155,10 +156,13 @@ public sealed class PiletService : IPiletService, IDisposable
 
     public async Task<T> Call<T>(string fn, params object[] args)
     {
+        const int timeoutMs = 20_000;
         var id = Guid.NewGuid();
         var responseTo = $"blazor-interop-response-{id}";
+        var ct = new CancellationTokenSource(timeoutMs);
         var tcs = new TaskCompletionSource<T>();
         var handler = tcs.SetResult;
+        ct.Token.Register(() => tcs.TrySetCanceled(), useSynchronizationContext: false);
         AddEventListener(responseTo, handler);
         DispatchEvent($"blazor-interop-{Name}@{Version}", new
         {
@@ -166,7 +170,7 @@ public sealed class PiletService : IPiletService, IDisposable
             fn,
             args,
         });
-        var result = await tcs.Task;
+        var result = await tcs.Task.ConfigureAwait(false);
         RemoveEventListener(responseTo, handler);
         return result;
         

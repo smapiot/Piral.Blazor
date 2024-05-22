@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
 
         public async Task<HttpRequestMessage> OnRequest(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var token = await _piletService.GetAccessToken();
+            var token = await _piletService.GetAccessToken().ConfigureAwait(false);
             request.Headers.Add("Authorization", $"Bearer {token}");
             return request;
         }
