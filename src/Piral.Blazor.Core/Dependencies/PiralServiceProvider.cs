@@ -21,14 +21,11 @@ public class PiralServiceProvider : IPiralServiceProvider
         {
             foreach (var service in piletServices)
             {
-                childServices.Add(service);
+                var desc = ChangeScopedRegistrationToSingleton(service);
+                childServices.Add(desc);
+                _globalServices.Add(desc);
             }
         });
-
-        foreach (var service in piletServices)
-        {
-            _globalServices.Add(service);
-        }
 
         return _globalServiceProvider;
     }
@@ -39,9 +36,26 @@ public class PiralServiceProvider : IPiralServiceProvider
         {
             foreach (var service in piletServices)
             {
-                childServices.Add(service);
+                var desc = ChangeScopedRegistrationToSingleton(service);
+                childServices.Add(desc);
             }
         });
+    }
+
+    private static ServiceDescriptor ChangeScopedRegistrationToSingleton(ServiceDescriptor item)
+    {
+        if (item.Lifetime != ServiceLifetime.Scoped || item.IsKeyedService)
+        {
+            return item;
+        }
+        else if (item.ImplementationType != null)
+        {
+            return new ServiceDescriptor(item.ServiceType, item.ImplementationType, ServiceLifetime.Singleton);
+        }
+        else
+        {
+            return new ServiceDescriptor(item.ServiceType, item.ImplementationFactory, ServiceLifetime.Singleton);
+        }
     }
 
     public object GetService(Type serviceType) => _globalServiceProvider.GetService(serviceType);

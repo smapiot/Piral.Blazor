@@ -32,16 +32,13 @@ internal static class ServiceCollectionExtensions
             if (desc != null)
             {
                 reWrittenServiceCollection.Add(desc);
-                Console.WriteLine("Registered parent service {0} with LC {1}", desc.ServiceType.Name, desc.Lifetime);
             }
         }
 
         // Child service descriptors can be added "as-is"
         foreach (var item in childServiceCollection.ChildDescriptors)
         {
-            var desc = ChangeScopedRegistrationToSingleton(item);
-            reWrittenServiceCollection.Add(desc);
-            Console.WriteLine("Registered parent service {0} with LC {1}", desc.ServiceType.Name, desc.Lifetime);
+            reWrittenServiceCollection.Add(item);
         }
 
         var childSp = reWrittenServiceCollection.BuildServiceProvider();
@@ -65,22 +62,6 @@ internal static class ServiceCollectionExtensions
         return disposableSp;
     }
 
-    private static ServiceDescriptor ChangeScopedRegistrationToSingleton(ServiceDescriptor item)
-    {
-        if (item.Lifetime != ServiceLifetime.Scoped || item.IsKeyedService)
-        {
-            return item;
-        }
-        else if (item.ImplementationType != null)
-        {
-            return new ServiceDescriptor(item.ServiceType, item.ImplementationType, ServiceLifetime.Singleton);
-        }
-        else
-        {
-            return new ServiceDescriptor(item.ServiceType, item.ImplementationFactory, ServiceLifetime.Singleton);
-        }
-    }
-
     private static ServiceDescriptor CreateChildDescriptorForExternalService(ServiceDescriptor item, IServiceProvider parentServiceProvider)
     {
         // For any services that implement IDisposable, they they will be tracked by Microsofts `ServiceProvider` when it creates them.
@@ -96,7 +77,7 @@ internal static class ServiceCollectionExtensions
         }
         else if (item.Lifetime == ServiceLifetime.Scoped)
         {
-            return ChangeScopedRegistrationToSingleton(item);
+            return item;
         }
 
         if (item.ImplementationInstance != null)
