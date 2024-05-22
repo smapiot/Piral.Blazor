@@ -41,7 +41,10 @@ public static class JSBridge
 
     internal static WebAssemblyHost Host { get; set; }
 
-    public static IEnumerable<T> GetServices<T>() => _pilets.Values.Select(m => m.Provider?.GetService(typeof(T))).Where(m => m is not null).OfType<T>().ToArray();
+    public static IEnumerable<T> GetServices<T>() => _pilets.Values
+        .Select(m => m.Provider?.GetService(typeof(T)))
+        .Where(m => m is not null).OfType<T>()
+        .Distinct().ToArray();
 
     internal static void Initialize(WebAssemblyHost host)
     {

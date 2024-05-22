@@ -27,18 +27,21 @@ internal static class ServiceCollectionExtensions
 
         foreach (var item in parentRegistrations)
         {
-            var rewrittenDescriptor = CreateChildDescriptorForExternalService(item, parentScope.ServiceProvider);
+            var desc = CreateChildDescriptorForExternalService(item, parentScope.ServiceProvider);
 
-            if (rewrittenDescriptor != null)
+            if (desc != null)
             {
-                reWrittenServiceCollection.Add(rewrittenDescriptor);
+                reWrittenServiceCollection.Add(desc);
+                Console.WriteLine("Registered parent service {0} with LC {1}", desc.ServiceType.Name, desc.Lifetime);
             }
         }
 
         // Child service descriptors can be added "as-is"
         foreach (var item in childServiceCollection.ChildDescriptors)
         {
-            reWrittenServiceCollection.Add(ChangeScopedRegistrationToSingleton(item));
+            var desc = ChangeScopedRegistrationToSingleton(item);
+            reWrittenServiceCollection.Add(desc);
+            Console.WriteLine("Registered parent service {0} with LC {1}", desc.ServiceType.Name, desc.Lifetime);
         }
 
         var childSp = reWrittenServiceCollection.BuildServiceProvider();
