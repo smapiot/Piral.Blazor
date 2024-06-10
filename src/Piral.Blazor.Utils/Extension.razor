@@ -3,6 +3,10 @@
 <slot @ref=SlotRef></slot>
 
 @code {
+private ExtensionOptions _options = new ExtensionOptions
+{
+    CanUpdate = false,
+};
 private ElementReference SlotRef;
 
 /// <summary>
@@ -44,12 +48,24 @@ public List<ExtensionRegistration> FromJsOnOrder(List<ExtensionRegistration> ite
     return Order?.Invoke(items) ?? items;
 }
 
+[JSInvokable("Configure")]
+public void FromJsOnInit(ExtensionOptions options)
+{
+    _options = options;
+}
+
 protected override async Task OnAfterRenderAsync(bool firstRender)
 {
-    if (firstRender)
+    if (firstRender || _options.CanUpdate)
     {
+        var methodName = firstRender ? "Blazor.emitRenderEvent" : "Blazor.emitUpdateEvent";
         var objRef = DotNetObjectReference.Create(this);
-        await JSRuntime.InvokeVoidAsync("Blazor.emitRenderEvent", SlotRef, Name, Params, objRef, FallbackComponent);
+        await JSRuntime.InvokeVoidAsync(methodName, SlotRef, Name, Params, objRef, FallbackComponent);
     }
+}
+
+public class ExtensionOptions
+{
+    public bool CanUpdate { get; set; }
 }
 }
