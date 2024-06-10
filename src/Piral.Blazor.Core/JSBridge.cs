@@ -25,13 +25,15 @@ public static class JSBridge
     private static Dictionary<string, Assembly> _assemblies = new();
     private static Dictionary<string, PiletData> _pilets = new();
     private static List<string> _sharedDependencies = new();
-    private static string[] _capabilities = new[] {
+    private static string[] _capabilities = new[]
+    {
         "load", // enables using "LoadPilet" / "UnloadPilet" instead of "LoadComponentsFromLibrary" etc.
         "custom-element", // enables using "CreateElement" etc. intead of "Activate" etc.
         "language", // enables using satellite assemblies
         "logging", // enables setting the log level
         "events", // enables support for emitting / subscribing to Piral events
         "dependency-symbols", // enables support for dependency symbols in the metadata
+        "configurable", // enables support for configurable extension slots
         "core-pilet" // enables the definition of a core pilet
     };
 
