@@ -2077,7 +2077,7 @@ var import_glob = __toESM(require("glob"));
 var import_path4 = require("path");
 var import_fs5 = require("fs");
 var import_fast_xml_parser = __toESM(require_fxp());
-function getProjectName(Project, defaultName) {
+function getProjectName(Project) {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup) ? Project.PropertyGroup : [Project.PropertyGroup];
     const propertyGroup = propertyGroups.find((p) => p.AssemblyName);
@@ -2085,7 +2085,7 @@ function getProjectName(Project, defaultName) {
       return propertyGroup.AssemblyName;
     }
   }
-  return defaultName;
+  return void 0;
 }
 function getPriority(Project) {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
@@ -2095,7 +2095,7 @@ function getPriority(Project) {
       return propertyGroup.PiletPriority;
     }
   }
-  return "undefined";
+  return void 0;
 }
 function getKind(Project) {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
@@ -2105,9 +2105,9 @@ function getKind(Project) {
       return propertyGroup.PiletKind;
     }
   }
-  return "local";
+  return void 0;
 }
-function getTargetFramework(Project, reject) {
+function getTargetFramework(Project) {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup) ? Project.PropertyGroup : [Project.PropertyGroup];
     const propertyGroup = propertyGroups.find((p) => p.TargetFramework);
@@ -2115,8 +2115,20 @@ function getTargetFramework(Project, reject) {
       return propertyGroup.TargetFramework;
     }
   }
-  reject(new Error('The project file does not specify a "TargetFramework" property.'));
-  return "";
+  return void 0;
+}
+function getImportedProjects(Project, basePath) {
+  const projects = [];
+  if (typeof Project.Import !== "undefined") {
+    const imports = Array.isArray(Project.Import) ? Project.Import : [Project.Import];
+    for (const importItem of imports) {
+      const path = importItem["@_Project"];
+      if (typeof path === "string") {
+        projects.push((0, import_path4.resolve)(basePath, path));
+      }
+    }
+  }
+  return projects;
 }
 function getConfigFolderName(Project) {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
@@ -2126,7 +2138,7 @@ function getConfigFolderName(Project) {
       return propertyGroup.ConfigFolder;
     }
   }
-  return "";
+  return void 0;
 }
 function getSharedDependencies(Project) {
   const sharedDependencies = [];
@@ -2147,37 +2159,68 @@ function getSharedDependencies(Project) {
   }
   return sharedDependencies;
 }
+function readProject(path) {
+  const projectDir = (0, import_path4.dirname)(path);
+  return new Promise((resolve5, reject) => {
+    (0, import_fs5.readFile)(path, "utf8", async (err, xmlData) => {
+      if (err) {
+        return reject(err);
+      }
+      const xmlParser = new import_fast_xml_parser.XMLParser();
+      const { Project } = xmlParser.parse(xmlData);
+      const importedProject = getImportedProjects(Project, projectDir);
+      const result = {
+        projectDir,
+        configDir: getConfigFolderName(Project),
+        sharedDependencies: getSharedDependencies(Project),
+        targetFramework: getTargetFramework(Project),
+        priority: getPriority(Project),
+        kind: getKind(Project),
+        projectName: getProjectName(Project)
+      };
+      for (const project of importedProject.reverse()) {
+        const newResult = await readProject(project);
+        Object.entries(newResult).forEach(([name, value]) => {
+          if (result[name] === void 0) {
+            result[name] = value;
+          } else if (Array.isArray(result[name])) {
+            result[name].push(...value);
+          }
+        });
+      }
+      resolve5(result);
+    });
+  });
+}
 function getProjectConfig(projectDir) {
   return new Promise((resolvePromise, rejectPromise) => {
     (0, import_glob.default)(`${projectDir}/*.csproj`, (err, matches) => {
-      if (!!err || !matches || matches.length == 0)
+      if (!!err || !matches || matches.length === 0) {
         return rejectPromise(new Error(`Project file not found. Details: ${err}`));
-      if (matches.length > 1)
+      }
+      if (matches.length > 1) {
         return rejectPromise(new Error(`Only one project file is allowed. You have: ${JSON.stringify(matches, null, 2)}`));
+      }
       const path = matches[0];
-      const defaultAssetName = (0, import_path4.basename)(matches[0]).replace(".csproj", "");
-      (0, import_fs5.readFile)(path, "utf8", (err2, xmlData) => {
-        if (err2) {
-          rejectPromise(err2);
-        } else {
-          const xmlParser = new import_fast_xml_parser.XMLParser();
-          const { Project } = xmlParser.parse(xmlData);
-          const configFolderName = getConfigFolderName(Project);
-          const targetFramework = getTargetFramework(Project, rejectPromise);
-          resolvePromise({
-            projectDir,
-            configDir: (0, import_path4.resolve)(projectDir, configFolderName),
-            objectsDir: (0, import_path4.resolve)(projectDir, "obj"),
-            paFile: (0, import_path4.resolve)(projectDir, "obj", pajson),
-            swaFile: (0, import_path4.resolve)(projectDir, "obj", configuration, targetFramework, swajson),
-            sharedDependencies: getSharedDependencies(Project),
-            targetFramework,
-            priority: getPriority(Project),
-            kind: getKind(Project),
-            projectName: getProjectName(Project, defaultAssetName)
-          });
+      const defaultAssetName = (0, import_path4.basename)(path).replace(".csproj", "");
+      readProject(path).then((result) => {
+        var _a, _b, _c, _d;
+        if (!result.targetFramework) {
+          throw new Error('The project file does not specify a "TargetFramework" property.');
         }
-      });
+        return {
+          projectDir: result.projectDir,
+          configDir: (0, import_path4.resolve)(projectDir, result.configDir),
+          objectsDir: (0, import_path4.resolve)(projectDir, "obj"),
+          paFile: (0, import_path4.resolve)(projectDir, "obj", pajson),
+          swaFile: (0, import_path4.resolve)(projectDir, "obj", configuration, (_a = result.targetFramework) != null ? _a : "", swajson),
+          sharedDependencies: result.sharedDependencies,
+          targetFramework: result.targetFramework,
+          priority: (_b = result.priority) != null ? _b : "undefined",
+          kind: (_c = result.kind) != null ? _c : "local",
+          projectName: (_d = result.projectName) != null ? _d : defaultAssetName
+        };
+      }).then(resolvePromise, rejectPromise);
     });
   });
 }

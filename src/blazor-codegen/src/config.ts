@@ -1,11 +1,11 @@
 import glob from "glob";
-import { basename, resolve } from "path";
+import { basename, dirname, resolve } from "path";
 import { readFile } from "fs";
 import { XMLParser } from "fast-xml-parser";
 import { configuration, pajson, swajson } from "./constants";
 import { ProjectConfig } from "./types";
 
-function getProjectName(Project: any, defaultName: string): string {
+function getProjectName(Project: any): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
@@ -17,7 +17,7 @@ function getProjectName(Project: any, defaultName: string): string {
     }
   }
 
-  return defaultName;
+  return undefined;
 }
 
 function getPriority(Project: any): string {
@@ -32,7 +32,7 @@ function getPriority(Project: any): string {
     }
   }
 
-  return "undefined";
+  return undefined;
 }
 
 function getKind(Project: any): string {
@@ -47,13 +47,10 @@ function getKind(Project: any): string {
     }
   }
 
-  return "local";
+  return undefined;
 }
 
-function getTargetFramework(
-  Project: any,
-  reject: (err: Error) => void
-): string {
+function getTargetFramework(Project: any): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
@@ -65,11 +62,27 @@ function getTargetFramework(
     }
   }
 
-  reject(
-    new Error('The project file does not specify a "TargetFramework" property.')
-  );
+  return undefined;
+}
 
-  return "";
+function getImportedProjects(Project: any, basePath: string): Array<string> {
+  const projects: Array<string> = [];
+
+  if (typeof Project.Import !== "undefined") {
+    const imports = Array.isArray(Project.Import)
+      ? Project.Import
+      : [Project.Import];
+
+    for (const importItem of imports) {
+      const path = importItem["@_Project"];
+
+      if (typeof path === "string") {
+        projects.push(resolve(basePath, path));
+      }
+    }
+  }
+
+  return projects;
 }
 
 function getConfigFolderName(Project: any): string {
@@ -84,7 +97,7 @@ function getConfigFolderName(Project: any): string {
     }
   }
 
-  return "";
+  return undefined;
 }
 
 function getSharedDependencies(Project: any): Array<string> {
@@ -95,7 +108,9 @@ function getSharedDependencies(Project: any): Array<string> {
       ? Project.ItemGroup
       : [Project.ItemGroup];
 
-    const sharedGroups = itemGroups.filter(group => group['@_Label'] === 'shared');
+    const sharedGroups = itemGroups.filter(
+      (group) => group["@_Label"] === "shared"
+    );
 
     for (const group of sharedGroups) {
       if (group.PackageReference) {
@@ -104,9 +119,9 @@ function getSharedDependencies(Project: any): Array<string> {
           : [group.PackageReference];
 
         for (const reference of references) {
-          const name = reference['@_Name'];
+          const name = reference["@_Name"];
 
-          if (typeof name === 'string') {
+          if (typeof name === "string") {
             sharedDependencies.push(name);
           }
         }
@@ -117,14 +132,65 @@ function getSharedDependencies(Project: any): Array<string> {
   return sharedDependencies;
 }
 
+interface ProjectResult {
+  targetFramework: string;
+  projectDir: string;
+  configDir: string;
+  sharedDependencies: Array<string>;
+  priority: string;
+  kind: string;
+  projectName: string;
+}
+
+function readProject(path: string) {
+  const projectDir = dirname(path);
+
+  return new Promise<ProjectResult>((resolve, reject) => {
+    readFile(path, "utf8", async (err, xmlData) => {
+      if (err) {
+        return reject(err);
+      }
+
+      const xmlParser = new XMLParser();
+      const { Project } = xmlParser.parse(xmlData);
+      const importedProject = getImportedProjects(Project, projectDir);
+      const result: ProjectResult = {
+        projectDir,
+        configDir: getConfigFolderName(Project),
+        sharedDependencies: getSharedDependencies(Project),
+        targetFramework: getTargetFramework(Project),
+        priority: getPriority(Project),
+        kind: getKind(Project),
+        projectName: getProjectName(Project),
+      };
+
+      for (const project of importedProject.reverse()) {
+        const newResult = await readProject(project);
+
+        Object.entries(newResult).forEach(([name, value]) => {
+          if (result[name] === undefined) {
+            result[name] = value;
+          } else if (Array.isArray(result[name])) {
+            result[name].push(...value);
+          }
+        });
+      }
+
+      resolve(result);
+    });
+  });
+}
+
 export function getProjectConfig(projectDir: string) {
   return new Promise<ProjectConfig>((resolvePromise, rejectPromise) => {
     glob(`${projectDir}/*.csproj`, (err, matches) => {
-      if (!!err || !matches || matches.length == 0)
+      if (!!err || !matches || matches.length === 0) {
         return rejectPromise(
           new Error(`Project file not found. Details: ${err}`)
         );
-      if (matches.length > 1)
+      }
+
+      if (matches.length > 1) {
         return rejectPromise(
           new Error(
             `Only one project file is allowed. You have: ${JSON.stringify(
@@ -134,38 +200,39 @@ export function getProjectConfig(projectDir: string) {
             )}`
           )
         );
+      }
+
       const path = matches[0];
-      const defaultAssetName = basename(matches[0]).replace(".csproj", "");
+      const defaultAssetName = basename(path).replace(".csproj", "");
 
-      readFile(path, "utf8", (err, xmlData) => {
-        if (err) {
-          rejectPromise(err);
-        } else {
-          const xmlParser = new XMLParser();
-          const { Project } = xmlParser.parse(xmlData);
-          const configFolderName = getConfigFolderName(Project);
-          const targetFramework = getTargetFramework(Project, rejectPromise);
+      readProject(path)
+        .then((result) => {
+          if (!result.targetFramework) {
+            throw new Error(
+              'The project file does not specify a "TargetFramework" property.'
+            );
+          }
 
-          resolvePromise({
-            projectDir,
-            configDir: resolve(projectDir, configFolderName),
+          return {
+            projectDir: result.projectDir,
+            configDir: resolve(projectDir, result.configDir),
             objectsDir: resolve(projectDir, "obj"),
             paFile: resolve(projectDir, "obj", pajson),
             swaFile: resolve(
               projectDir,
               "obj",
               configuration,
-              targetFramework,
+              result.targetFramework ?? "",
               swajson
             ),
-            sharedDependencies: getSharedDependencies(Project),
-            targetFramework,
-            priority: getPriority(Project),
-            kind: getKind(Project),
-            projectName: getProjectName(Project, defaultAssetName),
-          });
-        }
-      });
+            sharedDependencies: result.sharedDependencies,
+            targetFramework: result.targetFramework,
+            priority: result.priority ?? "undefined",
+            kind: result.kind ?? "local",
+            projectName: result.projectName ?? defaultAssetName,
+          };
+        })
+        .then(resolvePromise, rejectPromise);
     });
   });
 }
