@@ -2166,7 +2166,10 @@ function readProject(path) {
       if (err) {
         return reject(err);
       }
-      const xmlParser = new import_fast_xml_parser.XMLParser();
+      const xmlParser = new import_fast_xml_parser.XMLParser({
+        ignoreAttributes: false,
+        allowBooleanAttributes: true
+      });
       const { Project } = xmlParser.parse(xmlData);
       const importedProject = getImportedProjects(Project, projectDir);
       const result = {
@@ -2210,10 +2213,10 @@ function getProjectConfig(projectDir) {
         }
         return {
           projectDir: result.projectDir,
-          configDir: (0, import_path4.resolve)(projectDir, result.configDir),
+          configDir: (0, import_path4.resolve)(projectDir, (_a = result.configDir) != null ? _a : ""),
           objectsDir: (0, import_path4.resolve)(projectDir, "obj"),
           paFile: (0, import_path4.resolve)(projectDir, "obj", pajson),
-          swaFile: (0, import_path4.resolve)(projectDir, "obj", configuration, (_a = result.targetFramework) != null ? _a : "", swajson),
+          swaFile: (0, import_path4.resolve)(projectDir, "obj", configuration, result.targetFramework, swajson),
           sharedDependencies: result.sharedDependencies,
           targetFramework: result.targetFramework,
           priority: (_b = result.priority) != null ? _b : "undefined",

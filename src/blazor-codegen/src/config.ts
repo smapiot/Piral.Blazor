@@ -153,6 +153,7 @@ function readProject(path: string) {
 
       const xmlParser = new XMLParser({
         ignoreAttributes: false,
+        allowBooleanAttributes: true
       });
       const { Project } = xmlParser.parse(xmlData);
       const importedProject = getImportedProjects(Project, projectDir);
