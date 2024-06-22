@@ -151,7 +151,9 @@ function readProject(path: string) {
         return reject(err);
       }
 
-      const xmlParser = new XMLParser();
+      const xmlParser = new XMLParser({
+        ignoreAttributes: false,
+      });
       const { Project } = xmlParser.parse(xmlData);
       const importedProject = getImportedProjects(Project, projectDir);
       const result: ProjectResult = {
@@ -215,14 +217,14 @@ export function getProjectConfig(projectDir: string) {
 
           return {
             projectDir: result.projectDir,
-            configDir: resolve(projectDir, result.configDir),
+            configDir: resolve(projectDir, result.configDir ?? ""),
             objectsDir: resolve(projectDir, "obj"),
             paFile: resolve(projectDir, "obj", pajson),
             swaFile: resolve(
               projectDir,
               "obj",
               configuration,
-              result.targetFramework ?? "",
+              result.targetFramework,
               swajson
             ),
             sharedDependencies: result.sharedDependencies,
