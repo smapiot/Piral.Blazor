@@ -32,10 +32,3 @@ index 38a73f4e94..0eb516203e 100644
  
 @@ -168,7 +158,7 @@ internal sealed class ComponentFactory
          }
- 
-         public void Deconstruct(
--            out IComponentRenderMode? componentTypeRenderMode, 
-+            out IComponentRenderMode? componentTypeRenderMode,
-             out Action<IServiceProvider, IComponent> performPropertyInjection)
-         {
-             componentTypeRenderMode = ComponentTypeRenderMode;
