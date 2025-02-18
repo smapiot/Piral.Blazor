@@ -1,13 +1,13 @@
 # Piral.Blazor.Template
 
-[![Nuget](https://img.shields.io/badge/nuget-v8.0.17-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/8.0.17)
+[![Nuget](https://img.shields.io/badge/nuget-v8.0.18-blue)](https://www.nuget.org/packages/Piral.Blazor.Template/8.0.18)
 
 For getting started easily, a Blazor template is available. This will set up a Blazor pilet for the preferred Piral instance.
 
 ### Installation
 
 - Make sure that [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) is installed.
-- Run `dotnet new install Piral.Blazor.Template::8.0.17` to install the project template globally.
+- Run `dotnet new install Piral.Blazor.Template::8.0.18` to install the project template globally.
 
 ### Usage
 
