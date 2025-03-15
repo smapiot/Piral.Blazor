@@ -95,8 +95,15 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
     );
   }
 
+  if (!existsSync(appdir)) {
+    throw new Error(
+      `The Piral instance has not been found at "${appdir}". Did you install the dependencies?`
+    );
+  }
+
   // Piral Blazor checks
-  const appFrameworkDir = resolve(appdir, "app", "_framework");
+  const appFrameworkDirs = [resolve(appdir, "app", "_framework"), resolve(appdir, "dist", "_framework")];
+  const appFrameworkDir = appFrameworkDirs.find(m => existsSync(m)) || appFrameworkDirs.shift();
   const bbAppShellPath = resolve(appFrameworkDir, bbjson);
   const blazorInAppshell = existsSync(bbAppShellPath);
   const shellPackagePath = resolve(appdir, packageJsonFilename);
