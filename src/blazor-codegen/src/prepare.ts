@@ -99,6 +99,12 @@ export async function prepare(
     );
   }
 
+  if (!existsSync(appdir)) {
+    throw new Error(
+      `The Piral instance has not been found at "${appdir}". Did you install the dependencies?`
+    );
+  }
+
   // Piral Blazor checks
   const appFrameworkDirs = [
     resolve(appdir, "app", "_framework"),

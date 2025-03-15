@@ -1,4 +1,3 @@
-import { existsSync } from "fs";
 import { resolve } from "path";
 
 export function getPiralVersion(shellPackagePath: string) {
@@ -22,11 +21,12 @@ export function getPiralVersion(shellPackagePath: string) {
 }
 
 export function findAppDir(baseFolder: string, piralName: string) {
-  const appdir = resolve(baseFolder, "node_modules", piralName);
-
-  if (!existsSync(`${appdir}/app`) && existsSync(`${appdir}/dist`)) {
-    return `${appdir}/dist`;
+  try {
+    const path = require.resolve(`${piralName}/package.json`, {
+      paths: [baseFolder],
+    });
+    return resolve(path, "..");
+  } catch {
+    return resolve(baseFolder, "node_modules", piralName);
   }
-
-  return appdir;
 }

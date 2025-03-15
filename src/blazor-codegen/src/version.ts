@@ -57,7 +57,7 @@ export function extractDotnetVersion(
   }
 
   version =
-    projectAssets.project.frameworks["net8.0"]?.dependencies[
+    projectAssets.project.frameworks["net9.0"]?.dependencies[
       "Microsoft.AspNetCore.Components.WebAssembly"
     ]?.version || "0.0.0";
   res = /(\d+\.\d+\.\d+)/.exec(version);

@@ -3976,7 +3976,7 @@ var require_fxp = __commonJS({
 
 // src/index.ts
 var import_path5 = require("path");
-var import_fs6 = require("fs");
+var import_fs5 = require("fs");
 
 // src/io.ts
 var import_fs = require("fs");
@@ -4153,7 +4153,7 @@ function extractDotnetVersion(manifest, projectAssets) {
   if (res) {
     return res[1];
   }
-  version = projectAssets.project.frameworks["net8.0"]?.dependencies["Microsoft.AspNetCore.Components.WebAssembly"]?.version || "0.0.0";
+  version = projectAssets.project.frameworks["net9.0"]?.dependencies["Microsoft.AspNetCore.Components.WebAssembly"]?.version || "0.0.0";
   res = /(\d+\.\d+\.\d+)/.exec(version);
   if (res) {
     return res[1];
@@ -4242,10 +4242,9 @@ function createAllTargetRefs(config, uniqueDependencies, projectAssets) {
 
 // src/prepare.ts
 var import_path3 = require("path");
-var import_fs4 = require("fs");
+var import_fs3 = require("fs");
 
 // src/piral.ts
-var import_fs3 = require("fs");
 var import_path2 = require("path");
 function getPiralVersion(shellPackagePath) {
   try {
@@ -4265,11 +4264,14 @@ function getPiralVersion(shellPackagePath) {
   }
 }
 function findAppDir(baseFolder, piralName) {
-  const appdir = (0, import_path2.resolve)(baseFolder, "node_modules", piralName);
-  if (!(0, import_fs3.existsSync)(`${appdir}/app`) && (0, import_fs3.existsSync)(`${appdir}/dist`)) {
-    return `${appdir}/dist`;
+  try {
+    const path = require.resolve(`${piralName}/package.json`, {
+      paths: [baseFolder]
+    });
+    return (0, import_path2.resolve)(path, "..");
+  } catch {
+    return (0, import_path2.resolve)(baseFolder, "node_modules", piralName);
   }
-  return appdir;
 }
 
 // src/project.ts
@@ -4338,7 +4340,7 @@ function findInstanceName(piralPiletFolder) {
     /\\/g,
     "/"
   );
-  const piletJsonFileExists = (0, import_fs4.existsSync)(piletJsonFilePath);
+  const piletJsonFileExists = (0, import_fs3.existsSync)(piletJsonFilePath);
   if (piletJsonFileExists) {
     const piletJson = require((0, import_path3.resolve)(piralPiletFolder, piletJsonFilename));
     const selectedInstance = Object.keys(piletJson.piralInstances).find(
@@ -4354,7 +4356,7 @@ function findInstanceName(piralPiletFolder) {
 function findBlazorVersion(piralPiletFolder) {
   const key = "Version=";
   const blazorrcPath = (0, import_path3.resolve)(piralPiletFolder, blazorrc);
-  const content = (0, import_fs4.readFileSync)(blazorrcPath, "utf8");
+  const content = (0, import_fs3.readFileSync)(blazorrcPath, "utf8");
   const line = content.split("\r").join("").split("\n").find((m) => m.startsWith(key));
   if (typeof line === "string") {
     return line.substring(key.length);
@@ -4396,7 +4398,7 @@ async function prepare(targetDir, staticAssets, projectAssets) {
   ];
   const appFrameworkDir = appFrameworkDirs.find((m) => (0, import_fs3.existsSync)(m)) || appFrameworkDirs.shift();
   const bbAppShellPath = (0, import_path3.resolve)(appFrameworkDir, bbjson);
-  const blazorInAppshell = (0, import_fs4.existsSync)(bbAppShellPath);
+  const blazorInAppshell = (0, import_fs3.existsSync)(bbAppShellPath);
   const shellPackagePath = (0, import_path3.resolve)(appdir, packageJsonFilename);
   const manifest = manifestSource.Identity;
   const piletManifest = require(manifest);
@@ -4467,7 +4469,7 @@ async function prepare(targetDir, staticAssets, projectAssets) {
 // src/config.ts
 var import_glob = __toESM(require_glob());
 var import_path4 = require("path");
-var import_fs5 = require("fs");
+var import_fs4 = require("fs");
 var import_fast_xml_parser = __toESM(require_fxp());
 function getProjectName(Project) {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
@@ -4556,7 +4558,7 @@ function getSharedDependencies(Project) {
 function readProject(path) {
   const projectDir = (0, import_path4.dirname)(path);
   return new Promise((resolve5, reject) => {
-    (0, import_fs5.readFile)(path, "utf8", async (err, xmlData) => {
+    (0, import_fs4.readFile)(path, "utf8", async (err, xmlData) => {
       if (err) {
         return reject(err);
       }
@@ -4829,7 +4831,7 @@ module.exports = async function() {
     app.defineBlazorOptions({ resourcePathRoot: path });
   }`;
   const setupFilePath = (0, import_path5.join)(config.configDir, setupfile).replace(/\\/g, "/");
-  const setupFileExists = (0, import_fs6.existsSync)(setupFilePath);
+  const setupFileExists = (0, import_fs5.existsSync)(setupFilePath);
   if (setupFileExists) {
     allImports.push(`import projectSetup from '${setupFilePath}';`);
   }
@@ -4858,7 +4860,7 @@ module.exports = async function() {
     /\\/g,
     "/"
   );
-  const teardownFileExists = (0, import_fs6.existsSync)(teardownFilePath);
+  const teardownFileExists = (0, import_fs5.existsSync)(teardownFilePath);
   if (teardownFileExists) {
     allImports.push(`import projectTeardown from '${teardownFilePath}';`);
   }
