@@ -5,7 +5,7 @@ import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { diffBlazorBootFiles, matchesSatellite } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
-import { BlazorManifest, StaticAssets } from "./types";
+import { BlazorManifest, ProjectAssets, StaticAssets } from "./types";
 import {
   alwaysIgnored,
   bbjson,
@@ -112,7 +112,7 @@ export async function prepare(
   const manifest = manifestSource.Identity;
   const piletManifest: BlazorManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const piletDotnetVersion = extractDotnetVersion(piletManifest);
+  const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
   const { satelliteResources } = piletManifest.resources;
 

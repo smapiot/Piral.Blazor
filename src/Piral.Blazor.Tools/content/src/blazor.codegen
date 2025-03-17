@@ -4146,9 +4146,19 @@ function isVersionSame(parentVersion, childVersion) {
 function stripVersion(x) {
   return x.split("/")[0];
 }
-function extractDotnetVersion(manifest) {
+function extractDotnetVersion(manifest, projectAssets) {
   const dotnetFiles = manifest.resources.runtime || manifest.resources.jsModuleRuntime;
-  return Object.keys(dotnetFiles).map((x) => x.match(/^dotnet\.(.*?)\.js/)).find(Boolean)?.[1] || "0.0.0";
+  let version = Object.keys(dotnetFiles).map((x) => x.match(/^dotnet\.(.*?)\.js/)).find(Boolean)?.[1] || "0.0.0";
+  let res = /\.(\d+\.\d+\.\d+)\./.exec(version);
+  if (res) {
+    return res[1];
+  }
+  version = projectAssets.project.frameworks["net8.0"]?.dependencies["Microsoft.AspNetCore.Components.WebAssembly"]?.version || "0.0.0";
+  res = /(\d+\.\d+\.\d+)/.exec(version);
+  if (res) {
+    return res[1];
+  }
+  return "0.0.0";
 }
 function checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion) {
   const versionMatch = isVersionSame(appshellDotnetVersion, piletDotnetVersion);
@@ -4363,7 +4373,7 @@ function getBlazorRelease(version) {
   const [blazorRelease] = npmBlazorVersion.split(".");
   return `^${blazorRelease}`;
 }
-async function prepare(targetDir, staticAssets) {
+async function prepare(targetDir, staticAssets, projectAssets) {
   const piralPiletFolder = (0, import_path3.resolve)(__dirname, "..");
   const instanceName = findInstanceName(piralPiletFolder);
   const appdir = findAppDir(piralPiletFolder, instanceName);
@@ -4391,7 +4401,7 @@ async function prepare(targetDir, staticAssets) {
   const manifest = manifestSource.Identity;
   const piletManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const piletDotnetVersion = extractDotnetVersion(piletManifest);
+  const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
   const { satelliteResources } = piletManifest.resources;
   const satellites = Object.keys(satelliteResources || {}).reduce(
@@ -4763,7 +4773,7 @@ module.exports = async function() {
   }
   const projectAssets = require(config.paFile);
   const staticAssets = require(config.swaFile);
-  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } = await prepare(targetDir, staticAssets);
+  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } = await prepare(targetDir, staticAssets, projectAssets);
   [config.swaFile, config.paFile, manifest, ...watchPaths].filter((m) => m.indexOf(`/${config.projectName}.`) !== -1).forEach((path) => this.addDependency(path));
   if (standalone) {
     allImports.push(`import * as pbc from 'piral-blazor/convert';`);
