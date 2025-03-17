@@ -5,7 +5,7 @@ import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { diffBlazorBootFiles, matchesSatellite } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
-import { BlazorManifest, StaticAssets } from "./types";
+import { BlazorManifest, ProjectAssets, StaticAssets } from "./types";
 import {
   alwaysIgnored,
   bbjson,
@@ -77,7 +77,7 @@ function getBlazorRelease(version: string) {
   return `^${blazorRelease}`;
 }
 
-export async function prepare(targetDir: string, staticAssets: StaticAssets) {
+export async function prepare(targetDir: string, staticAssets: StaticAssets, projectAssets: ProjectAssets) {
   const piralPiletFolder = resolve(__dirname, "..");
   const instanceName = findInstanceName(piralPiletFolder);
   const appdir = findAppDir(piralPiletFolder, instanceName);
@@ -110,7 +110,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
   const manifest = manifestSource.Identity;
   const piletManifest: BlazorManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const piletDotnetVersion = extractDotnetVersion(piletManifest);
+  const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
   const { satelliteResources } = piletManifest.resources;
 
@@ -133,7 +133,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets) {
     );
 
     const appShellManifest: BlazorManifest = require(bbAppShellPath);
-    const appshellDotnetVersion = extractDotnetVersion(appShellManifest);
+    const appshellDotnetVersion = extractDotnetVersion(appShellManifest, projectAssets);
     const existingFiles = toFramework(readdirSync(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
 
