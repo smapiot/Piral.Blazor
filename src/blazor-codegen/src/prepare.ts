@@ -1,6 +1,6 @@
 import { resolve, join } from "path";
 import { existsSync, readdirSync, readFileSync } from "fs";
-import { copyAll } from "./io";
+import { copyAll, getAssetName } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { diffBlazorBootFiles, matchesSatellite } from "./utils";
@@ -77,7 +77,11 @@ function getBlazorRelease(version: string) {
   return `^${blazorRelease}`;
 }
 
-export async function prepare(targetDir: string, staticAssets: StaticAssets, projectAssets: ProjectAssets) {
+export async function prepare(
+  targetDir: string,
+  staticAssets: StaticAssets,
+  projectAssets: ProjectAssets
+) {
   const piralPiletFolder = resolve(__dirname, "..");
   const instanceName = findInstanceName(piralPiletFolder);
   const appdir = findAppDir(piralPiletFolder, instanceName);
@@ -86,7 +90,7 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets, pro
     (m) =>
       wasmResourceTraitNames.includes(m.AssetTraitName) &&
       m.AssetTraitValue === "manifest" &&
-      m.RelativePath.endsWith(bbjson)
+      getAssetName(m).endsWith(bbjson)
   );
 
   if (!manifestSource) {
@@ -102,8 +106,12 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets, pro
   }
 
   // Piral Blazor checks
-  const appFrameworkDirs = [resolve(appdir, "app", "_framework"), resolve(appdir, "dist", "_framework")];
-  const appFrameworkDir = appFrameworkDirs.find(m => existsSync(m)) || appFrameworkDirs.shift();
+  const appFrameworkDirs = [
+    resolve(appdir, "app", "_framework"),
+    resolve(appdir, "dist", "_framework"),
+  ];
+  const appFrameworkDir =
+    appFrameworkDirs.find((m) => existsSync(m)) || appFrameworkDirs.shift();
   const bbAppShellPath = resolve(appFrameworkDir, bbjson);
   const blazorInAppshell = existsSync(bbAppShellPath);
   const shellPackagePath = resolve(appdir, packageJsonFilename);
@@ -119,8 +127,9 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets, pro
       const resources = satelliteResources[name];
       const files = Object.keys(resources);
       const toSatellitePath = (file: string) =>
-        staticAssets.Assets.find((m) => matchesSatellite(m, name, file))
-          ?.RelativePath;
+        getAssetName(
+          staticAssets.Assets.find((m) => matchesSatellite(m, name, file))
+        );
       satellites[name] = files.map(toSatellitePath).filter(Boolean);
       return satellites;
     },
@@ -133,7 +142,10 @@ export async function prepare(targetDir: string, staticAssets: StaticAssets, pro
     );
 
     const appShellManifest: BlazorManifest = require(bbAppShellPath);
-    const appshellDotnetVersion = extractDotnetVersion(appShellManifest, projectAssets);
+    const appshellDotnetVersion = extractDotnetVersion(
+      appShellManifest,
+      projectAssets
+    );
     const existingFiles = toFramework(readdirSync(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
 

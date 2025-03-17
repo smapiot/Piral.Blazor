@@ -4048,11 +4048,15 @@ function copyFiles(assets, target) {
 function isCompressFile(path) {
   return path.endsWith(".gz") || path.endsWith(".br");
 }
+function getAssetName(asset) {
+  return asset?.RelativePath.replace("#[.{fingerprint}]?", "");
+}
 function isAsset(asset, name) {
-  return (0, import_path.basename)(asset.RelativePath) === name;
+  return (0, import_path.basename)(getAssetName(asset)) === name;
 }
 function getAssetPath(asset) {
-  return asset.BasePath !== "/" ? `${asset.BasePath}/${asset.RelativePath}` : asset.RelativePath;
+  const name = getAssetName(asset);
+  return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
 }
 function getFilePath(source, name) {
   const item = source.Assets.find((m) => isAsset(m, name));
@@ -4376,7 +4380,7 @@ async function prepare(targetDir, staticAssets, projectAssets) {
   const instanceName = findInstanceName(piralPiletFolder);
   const appdir = findAppDir(piralPiletFolder, instanceName);
   const manifestSource = staticAssets.Assets.find(
-    (m) => wasmResourceTraitNames.includes(m.AssetTraitName) && m.AssetTraitValue === "manifest" && m.RelativePath.endsWith(bbjson)
+    (m) => wasmResourceTraitNames.includes(m.AssetTraitName) && m.AssetTraitValue === "manifest" && getAssetName(m).endsWith(bbjson)
   );
   if (!manifestSource) {
     throw new Error(
@@ -4388,7 +4392,10 @@ async function prepare(targetDir, staticAssets, projectAssets) {
       `The Piral instance has not been found at "${appdir}". Did you install the dependencies?`
     );
   }
-  const appFrameworkDirs = [(0, import_path3.resolve)(appdir, "app", "_framework"), (0, import_path3.resolve)(appdir, "dist", "_framework")];
+  const appFrameworkDirs = [
+    (0, import_path3.resolve)(appdir, "app", "_framework"),
+    (0, import_path3.resolve)(appdir, "dist", "_framework")
+  ];
   const appFrameworkDir = appFrameworkDirs.find((m) => (0, import_fs3.existsSync)(m)) || appFrameworkDirs.shift();
   const bbAppShellPath = (0, import_path3.resolve)(appFrameworkDir, bbjson);
   const blazorInAppshell = (0, import_fs3.existsSync)(bbAppShellPath);
@@ -4403,7 +4410,9 @@ async function prepare(targetDir, staticAssets, projectAssets) {
     (satellites2, name) => {
       const resources = satelliteResources[name];
       const files = Object.keys(resources);
-      const toSatellitePath = (file) => staticAssets.Assets.find((m) => matchesSatellite(m, name, file))?.RelativePath;
+      const toSatellitePath = (file) => getAssetName(
+        staticAssets.Assets.find((m) => matchesSatellite(m, name, file))
+      );
       satellites2[name] = files.map(toSatellitePath).filter(Boolean);
       return satellites2;
     },
@@ -4414,7 +4423,10 @@ async function prepare(targetDir, staticAssets, projectAssets) {
       "The app shell already integrates `piral-blazor` with `blazor`."
     );
     const appShellManifest = require(bbAppShellPath);
-    const appshellDotnetVersion = extractDotnetVersion(appShellManifest, projectAssets);
+    const appshellDotnetVersion = extractDotnetVersion(
+      appShellManifest,
+      projectAssets
+    );
     const existingFiles = toFramework((0, import_fs3.readdirSync)(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(
