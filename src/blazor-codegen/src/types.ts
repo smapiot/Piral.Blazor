@@ -70,14 +70,12 @@ export interface ProjectAssets {
         targetAlias: string;
         dependencies: Record<
           string,
-          Record<
-            string,
-            {
-              suppressParent?: string;
-              target: string;
-              version: string;
-            }
-          >
+          {
+            suppressParent?: string;
+            autoReferenced?: boolean;
+            target: string;
+            version: string;
+          }
         >;
         imports: Array<string>;
         warn: boolean;

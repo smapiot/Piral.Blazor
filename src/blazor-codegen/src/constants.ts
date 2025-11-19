@@ -7,6 +7,7 @@ export const configuration = isRelease ? "Release" : "Debug";
 export const action = isRelease ? "publish" : "build";
 export const variant = isRelease ? "release" : "debug";
 
+export const selectedFramework = "net10.0";
 export const blazorrc = ".blazorrc";
 export const bbjson = "blazor.boot.json";
 export const pajson = "project.assets.json";
@@ -16,6 +17,7 @@ export const analyzer = "Piral.Blazor.Analyzer";
 export const setupfile = "setup.tsx";
 export const teardownfile = "teardown.tsx";
 export const swajson = `staticwebassets.${action}.json`;
+export const mainAssembly = "Microsoft.AspNetCore.Components.WebAssembly";
 
 const ignoredNames = [
   "Microsoft.Build.Framework",

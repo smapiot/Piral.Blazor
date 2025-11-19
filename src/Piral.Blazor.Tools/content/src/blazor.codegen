@@ -3988,6 +3988,7 @@ var isRelease = process.env.NODE_ENV === "production";
 var configuration = isRelease ? "Release" : "Debug";
 var action = isRelease ? "publish" : "build";
 var variant = isRelease ? "release" : "debug";
+var selectedFramework = "net10.0";
 var blazorrc = ".blazorrc";
 var bbjson = "blazor.boot.json";
 var pajson = "project.assets.json";
@@ -3997,6 +3998,7 @@ var analyzer = "Piral.Blazor.Analyzer";
 var setupfile = "setup.tsx";
 var teardownfile = "teardown.tsx";
 var swajson = `staticwebassets.${action}.json`;
+var mainAssembly = "Microsoft.AspNetCore.Components.WebAssembly";
 var ignoredNames = [
   "Microsoft.Build.Framework",
   "Microsoft.Build.Utilities.Core",
@@ -4048,11 +4050,15 @@ function copyFiles(assets, target) {
 function isCompressFile(path) {
   return path.endsWith(".gz") || path.endsWith(".br");
 }
+function getAssetName(asset) {
+  return asset?.RelativePath.replace(/#\[\.{fingerprint}\][!?]/g, "").replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "");
+}
 function isAsset(asset, name) {
-  return (0, import_path.basename)(asset.RelativePath) === name;
+  return (0, import_path.basename)(getAssetName(asset)) === name;
 }
 function getAssetPath(asset) {
-  return asset.BasePath !== "/" ? `${asset.BasePath}/${asset.RelativePath}` : asset.RelativePath;
+  const name = getAssetName(asset);
+  return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
 }
 function getFilePath(source, name) {
   const item = source.Assets.find((m) => isAsset(m, name));
@@ -4142,9 +4148,20 @@ function isVersionSame(parentVersion, childVersion) {
 function stripVersion(x) {
   return x.split("/")[0];
 }
-function extractDotnetVersion(manifest) {
+function extractDotnetVersion(manifest, projectAssets) {
   const dotnetFiles = manifest.resources.runtime || manifest.resources.jsModuleRuntime;
-  return Object.keys(dotnetFiles).map((x) => x.match(/^dotnet\.(.*?)\.js/)).find(Boolean)?.[1] || "0.0.0";
+  const dotnetVersion = Object.keys(dotnetFiles).map((x) => x.match(/^dotnet\.(.*?)\.js/)).find(Boolean)?.[1] || "0.0.0";
+  const dotnetVersionFinding = /\.(\d+\.\d+\.\d+)\./.exec(dotnetVersion);
+  if (dotnetVersionFinding) {
+    return dotnetVersionFinding[1];
+  }
+  const framework = projectAssets.project.frameworks[selectedFramework];
+  const dependencyVersion = framework?.dependencies[mainAssembly]?.version || "0.0.0";
+  const dependencyVersionFinding = /(\d+\.\d+\.\d+)/.exec(dependencyVersion);
+  if (dependencyVersionFinding) {
+    return dependencyVersionFinding[1];
+  }
+  return "0.0.0";
 }
 function checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion) {
   const versionMatch = isVersionSame(appshellDotnetVersion, piletDotnetVersion);
@@ -4359,12 +4376,12 @@ function getBlazorRelease(version) {
   const [blazorRelease] = npmBlazorVersion.split(".");
   return `^${blazorRelease}`;
 }
-async function prepare(targetDir, staticAssets) {
+async function prepare(targetDir, staticAssets, projectAssets) {
   const piralPiletFolder = (0, import_path3.resolve)(__dirname, "..");
   const instanceName = findInstanceName(piralPiletFolder);
   const appdir = findAppDir(piralPiletFolder, instanceName);
   const manifestSource = staticAssets.Assets.find(
-    (m) => wasmResourceTraitNames.includes(m.AssetTraitName) && m.AssetTraitValue === "manifest" && m.RelativePath.endsWith(bbjson)
+    (m) => wasmResourceTraitNames.includes(m.AssetTraitName) && m.AssetTraitValue === "manifest" && getAssetName(m).endsWith(bbjson)
   );
   if (!manifestSource) {
     throw new Error(
@@ -4378,7 +4395,7 @@ async function prepare(targetDir, staticAssets) {
   const manifest = manifestSource.Identity;
   const piletManifest = require(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-  const piletDotnetVersion = extractDotnetVersion(piletManifest);
+  const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
   const { satelliteResources } = piletManifest.resources;
   const satellites = Object.keys(satelliteResources || {}).reduce(
@@ -4396,7 +4413,10 @@ async function prepare(targetDir, staticAssets) {
       "The app shell already integrates `piral-blazor` with `blazor`."
     );
     const appShellManifest = require(bbAppShellPath);
-    const appshellDotnetVersion = extractDotnetVersion(appShellManifest);
+    const appshellDotnetVersion = extractDotnetVersion(
+      appShellManifest,
+      projectAssets
+    );
     const existingFiles = toFramework((0, import_fs4.readdirSync)(appFrameworkDir));
     const ignored = [...alwaysIgnored, ...existingFiles];
     const [dlls, pdbs] = diffBlazorBootFiles(
@@ -4745,7 +4765,7 @@ module.exports = async function() {
   }
   const projectAssets = require(config.paFile);
   const staticAssets = require(config.swaFile);
-  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } = await prepare(targetDir, staticAssets);
+  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } = await prepare(targetDir, staticAssets, projectAssets);
   [config.swaFile, config.paFile, manifest, ...watchPaths].filter((m) => m.indexOf(`/${config.projectName}.`) !== -1).forEach((path) => this.addDependency(path));
   if (standalone) {
     allImports.push(`import * as pbc from 'piral-blazor/convert';`);

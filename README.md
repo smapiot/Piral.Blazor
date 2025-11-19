@@ -2,12 +2,7 @@
 
 # Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/blazor-10.0/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-10.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-10.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/issues) [![Community Chat](https://dcbadge.vercel.app/api/server/kKJ2FZmK8t?style=flat)](https://discord.gg/kKJ2FZmK8t) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
 
-All .NET things to make <a href="https://blazor.net" rel="nofollow"><img
-src="https://devblogs.microsoft.com/aspnet/wp-content/uploads/sites/16/2019/04/BrandBlazor_nohalo_1000x.png"
-height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
-<a href="https://piral.io" rel="nofollow">
-<img src="https://piral.io/logo-simple.f8667084.png" height="10">
-&nbsp;Piral</a>.
+All .NET things to make <a href="https://blazor.net" rel="nofollow"><img src="https://everyday.codes/wp-content/uploads/2019/12/BrandBlazor_nohalo_1000x.png" height="10">&nbsp;Blazor</a> work seamlessly in micro frontends using <a href="https://piral.io" rel="nofollow"><img src="https://piral.io/logo-simple.f8667084.png" height="10">&nbsp;</a>.
 
 > This is the branch for Blazor 10.0 with .NET 10.0. If you want to switch to Blazor with the older releases, see below
 
