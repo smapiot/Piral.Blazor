@@ -22,7 +22,7 @@
     "postUpgrade": ""
   },
   "dependencies": {
-    "blazor": "9.0.18",
+    "blazor": "9.0.19",
     "piral": "1.7.2",
     "piral-blazor": "1.7.2"
   },

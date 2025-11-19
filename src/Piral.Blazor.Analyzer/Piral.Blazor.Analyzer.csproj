@@ -5,7 +5,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <RootNamespace>Piral.Blazor.Analyzer</RootNamespace>
-    <VersionPrefix>9.0.18</VersionPrefix>
+    <VersionPrefix>9.0.19</VersionPrefix>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <PackageReadmeFile>README.md</PackageReadmeFile>
