@@ -1,15 +1,18 @@
 [![Piral Logo](https://github.com/smapiot/piral/raw/main/docs/assets/logo.png)](https://piral.io)
 
-# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/blazor-9.0/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-9.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-9.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/issues) [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/piral-io/blazor) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
+# Piral.Blazor &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/smapiot/piral.blazor/blob/blazor-9.0/LICENSE) [![Build Status](https://smapiot.visualstudio.com/piral-pipelines/_apis/build/status/smapiot.piral.blazor?branchName=blazor-9.0)](https://smapiot.visualstudio.com/piral-pipelines/_build/latest?definitionId=48&branchName=blazor-9.0) [![GitHub Tag](https://img.shields.io/github/tag/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/releases) [![GitHub Issues](https://img.shields.io/github/issues/smapiot/Piral.Blazor.svg)](https://github.com/smapiot/Piral.Blazor/issues) [![Community Chat](https://dcbadge.vercel.app/api/server/kKJ2FZmK8t?style=flat)](https://discord.gg/kKJ2FZmK8t) [![Feed Status](https://img.shields.io/uptimerobot/status/m783654792-cfe3913c7481e0f44c143f63)](https://status.piral.io/)
 
-All .NET things to make <a href="https://blazor.net" rel="nofollow"><img
-src="https://devblogs.microsoft.com/aspnet/wp-content/uploads/sites/16/2019/04/BrandBlazor_nohalo_1000x.png"
-height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
-<a href="https://piral.io" rel="nofollow">
-<img src="https://piral.io/logo-simple.f8667084.png" height="10">
-&nbsp;Piral</a>.
+All .NET things to make <a href="https://blazor.net" rel="nofollow"><img src="https://everyday.codes/wp-content/uploads/2019/12/BrandBlazor_nohalo_1000x.png" height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using <a href="https://piral.io" rel="nofollow"><img src="https://piral.io/logo-simple.f8667084.png" height="10">&nbsp;</a>.
 
-> This is the branch for Blazor 9.0 with .NET 9.0. If you want to switch to Blazor with the older .NET Core 3.2, please refer to the [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2), [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0), [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0),[`blazor-7.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-7.0), or [`blazor-8.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-8.0) branch.
+> This is the branch for Blazor 9.0 with .NET 9.0. If you want to switch to Blazor with older releases, see below
+
+- [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2)
+- [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0)
+- [`blazor-6.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-6.0)
+- [`blazor-7.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-7.0)
+- [`blazor-8.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-8.0)
+- [`blazor-9.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-9.0) (**current** branch)
+- [`blazor-10.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-10.0)
 
 ## Getting Started
 
