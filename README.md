@@ -17,6 +17,7 @@ height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using
 - [`blazor-7.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-7.0)
 - [`blazor-8.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-8.0)
 - [`blazor-9.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-9.0)
+- [`blazor-10.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-10.0) (**current** branch)
 
 ## Getting Started
 
