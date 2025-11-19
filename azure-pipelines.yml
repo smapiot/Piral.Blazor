@@ -105,6 +105,10 @@ steps:
   displayName: 'Pack Assemblies'
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
+- script: |
+    apt install mono-complete
+  displayName: 'Install Mono'
+
 - task: NuGetCommand@2
   displayName: 'Publish Packages on NuGet'
   inputs:
