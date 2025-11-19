@@ -1,4 +1,5 @@
-import { BlazorManifest } from "./types";
+import { mainAssembly, selectedFramework } from "./constants";
+import { BlazorManifest, ProjectAssets } from "./types";
 
 /* 
   More advanced version compare that can handle versions 
@@ -40,15 +41,35 @@ export function stripVersion(x: string) {
   return x.split("/")[0];
 }
 
-export function extractDotnetVersion(manifest: BlazorManifest) {
+export function extractDotnetVersion(
+  manifest: BlazorManifest,
+  projectAssets: ProjectAssets
+) {
   const dotnetFiles =
     manifest.resources.runtime || manifest.resources.jsModuleRuntime;
 
-  return (
+  const dotnetVersion =
     Object.keys(dotnetFiles)
       .map((x) => x.match(/^dotnet\.(.*?)\.js/))
-      .find(Boolean)?.[1] || "0.0.0"
-  );
+      .find(Boolean)?.[1] || "0.0.0";
+
+  const dotnetVersionFinding = /\.(\d+\.\d+\.\d+)\./.exec(dotnetVersion);
+
+  if (dotnetVersionFinding) {
+    return dotnetVersionFinding[1];
+  }
+
+  const framework = projectAssets.project.frameworks[selectedFramework];
+  const dependencyVersion =
+    framework?.dependencies[mainAssembly]?.version || "0.0.0";
+
+  const dependencyVersionFinding = /(\d+\.\d+\.\d+)/.exec(dependencyVersion);
+
+  if (dependencyVersionFinding) {
+    return dependencyVersionFinding[1];
+  }
+
+  return "0.0.0";
 }
 
 export function checkDotnetVersion(

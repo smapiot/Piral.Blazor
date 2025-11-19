@@ -49,7 +49,7 @@ module.exports = async function () {
   const staticAssets: StaticAssets = require(config.swaFile);
 
   const { standalone, manifest, dlls, pdbs, satellites, watchPaths } =
-    await prepare(targetDir, staticAssets);
+    await prepare(targetDir, staticAssets, projectAssets);
 
   [config.swaFile, config.paFile, manifest, ...watchPaths]
     .filter((m) => m.indexOf(`/${config.projectName}.`) !== -1)

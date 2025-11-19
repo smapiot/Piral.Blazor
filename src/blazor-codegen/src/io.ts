@@ -39,14 +39,25 @@ export function isCompressFile(path: string) {
   return path.endsWith(".gz") || path.endsWith(".br");
 }
 
+export function getAssetName(asset: StaticAsset) {
+  return (
+    asset?.RelativePath
+      // Handle legacy patterns (both ! and ?)
+      .replace(/#\[\.{fingerprint}\][!?]/g, "")
+      // Handle .NET {0} placeholder pattern
+      .replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "")
+  );
+}
+
 export function isAsset(asset: StaticAsset, name: string) {
-  return basename(asset.RelativePath) === name;
+  return basename(getAssetName(asset)) === name;
 }
 
 export function getAssetPath(asset: StaticAsset) {
+  const name = getAssetName(asset);
   return asset.BasePath !== "/"
-    ? `${asset.BasePath}/${asset.RelativePath}`
-    : asset.RelativePath;
+    ? `${asset.BasePath}/${name}`
+    : name;
 }
 
 export function getFilePath(source: StaticAssets, name: string) {
