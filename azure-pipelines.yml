@@ -16,9 +16,9 @@ variables:
 steps:
 
 - task: UseDotNet@2
-  displayName: Install dotnet 9 SDK
+  displayName: Install dotnet 10 SDK
   inputs:
-    version: '9.x'
+    version: '10.x'
     packageType: sdk
 
 - script: |
