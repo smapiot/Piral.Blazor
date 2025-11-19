@@ -28,4 +28,4 @@ These steps can be automated.
 4. `cd src/Components` (from project root)
 5. `./build.sh` (on Linux, otherwise `build.cmd` on Windows)
 6. Usually it would be good to also build for Release afterwards; `cd Components/src` (from `src/Components`) and `dotnet build Microsoft.AspNetCore.Components.csproj -c Release`
-7. Now use / copy `artifacts/bin/Microsoft.AspNetCore.Components/Release/net9.0/Microsoft.AspNetCore.Components.dll` (from project root) to the NuGet package dir
+7. Now use / copy `artifacts/bin/Microsoft.AspNetCore.Components/Release/net10.0/Microsoft.AspNetCore.Components.dll` (from project root) to the NuGet package dir

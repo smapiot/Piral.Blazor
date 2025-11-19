@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageType>Template</PackageType>
-    <VersionPrefix>9.0.18</VersionPrefix>
+    <VersionPrefix>10.0.19</VersionPrefix>
     <PackageId>Piral.Blazor.Template</PackageId>
     <Title>Piral Blazor Pilet Template</Title>
     <Authors>Florian Rappl</Authors>
@@ -12,10 +12,10 @@
     <PackageIcon>icon.png</PackageIcon>
     <PackageDescription>The template for creating Blazor pilets.</PackageDescription>
     <PackageTags>aspnet;templates;blazor;spa;piral;microfrontend;pilet;mife;react</PackageTags>
-    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-9.0/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/smapiot/Piral.Blazor/blob/blazor-10.0/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/smapiot/Piral.Blazor</PackageProjectUrl>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
