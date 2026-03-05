@@ -21,7 +21,7 @@ export function matchesIdentity(asset: StaticAsset, file: string) {
 export function matchesSatellite(
   asset: StaticAsset,
   culture: string,
-  file: string
+  file: string,
 ) {
   return (
     asset.AssetRole === "Related" &&
@@ -33,26 +33,34 @@ export function matchesSatellite(
 function getUniqueKeys(
   originalManifest: BlazorManifest,
   piletManifest: BlazorManifest,
-  type: BlazorResourceType
+  type: BlazorResourceType,
 ) {
   const original = getAllKeys(originalManifest, type);
   const dedicated = getAllKeys(piletManifest, type);
   return dedicated.filter(
-    (m) => !original.includes(m) && !ignoredDlls.includes(m)
+    (m) => !original.includes(m) && !ignoredDlls.includes(m),
   );
 }
 
 export function getRef(dlls: Array<string>, name: string) {
-  const dllName = `${name}.dll`;
+  const fingerprint = /^[0-9a-z]{10}$/;
+  const prefix = `${name}.`;
 
-  if (dlls.includes(dllName)) {
-    return dllName;
-  }
+  for (const dll of dlls) {
+    if (
+      dll.startsWith(prefix) &&
+      (dll.endsWith(".wasm") || dll.endsWith(".dll"))
+    ) {
+      const segments = dll.substring(prefix.length).split(".");
+      segments.pop();
 
-  const wasmName = `${name}.wasm`;
-
-  if (dlls.includes(wasmName)) {
-    return wasmName;
+      if (
+        segments.length === 0 ||
+        (segments.length === 1 && fingerprint.test(segments[0]))
+      ) {
+        return dll;
+      }
+    }
   }
 
   return name;
@@ -74,11 +82,11 @@ export function diffBlazorBootFiles(
   appdir: string,
   appname: string,
   piletManifest: BlazorManifest,
-  originalManifest: BlazorManifest
+  originalManifest: BlazorManifest,
 ): [Array<string>, Array<string>] {
   if (!existsSync(appdir)) {
     throw new Error(
-      `Cannot find the directory of "${appname}". Please re-install the dependencies.`
+      `Cannot find the directory of "${appname}". Please re-install the dependencies.`,
     );
   }
 

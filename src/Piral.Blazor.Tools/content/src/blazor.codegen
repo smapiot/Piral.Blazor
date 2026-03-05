@@ -4093,13 +4093,16 @@ function getUniqueKeys(originalManifest, piletManifest, type) {
   );
 }
 function getRef(dlls, name) {
-  const dllName = `${name}.dll`;
-  if (dlls.includes(dllName)) {
-    return dllName;
-  }
-  const wasmName = `${name}.wasm`;
-  if (dlls.includes(wasmName)) {
-    return wasmName;
+  const fingerprint = /^[0-9a-z]{10}$/;
+  const prefix = `${name}.`;
+  for (const dll of dlls) {
+    if (dll.startsWith(prefix) && (dll.endsWith(".wasm") || dll.endsWith(".dll"))) {
+      const segments = dll.substring(prefix.length).split(".");
+      segments.pop();
+      if (segments.length === 0 || segments.length === 1 && fingerprint.test(segments[0])) {
+        return dll;
+      }
+    }
   }
   return name;
 }
