@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.13" />
-    <PackageReference Include="Piral.Blazor.DevServer" Version="8.0.18" PrivateAssets="all" />
-    <PackageReference Include="Piral.Blazor.Utils" Version="8.0.18" />
-    <PackageReference Include="Piral.Blazor.Tools" Version="8.0.18" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.24" />
+    <PackageReference Include="Piral.Blazor.DevServer" Version="8.0.19" PrivateAssets="all" />
+    <PackageReference Include="Piral.Blazor.Utils" Version="8.0.19" />
+    <PackageReference Include="Piral.Blazor.Tools" Version="8.0.19" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>
