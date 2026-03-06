@@ -50,7 +50,7 @@ export function getAssetName(asset: StaticAsset) {
 }
 
 export function isAsset(asset: StaticAsset, name: string) {
-  return basename(getAssetName(asset)) === name;
+  return basename(asset.Identity) === name;
 }
 
 export function getAssetPath(asset: StaticAsset) {

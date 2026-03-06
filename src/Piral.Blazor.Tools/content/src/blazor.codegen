@@ -4054,7 +4054,7 @@ function getAssetName(asset) {
   return asset?.RelativePath.replace(/#\[\.{fingerprint}\][!?]/g, "").replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "");
 }
 function isAsset(asset, name) {
-  return (0, import_path.basename)(getAssetName(asset)) === name;
+  return (0, import_path.basename)(asset.Identity) === name;
 }
 function getAssetPath(asset) {
   const name = getAssetName(asset);
