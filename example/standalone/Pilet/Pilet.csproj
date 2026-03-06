@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.3" />
     <PackageReference Include="Piral.Blazor.DevServer" Version="10.0.19" />
     <PackageReference Include="Piral.Blazor.Utils" Version="10.0.19" />
     <PackageReference Include="Piral.Blazor.Tools" Version="10.0.19" />
