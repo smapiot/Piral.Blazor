@@ -209,7 +209,7 @@ namespace Piral.Blazor.Tools
             {
                 Log.LogMessage($"Creating '{configFileName}' with entry from NpmRegistry.");
                 var nl = Environment.NewLine;
-                File.AppendAllText(Path.Combine(target, configFileName), $"registry={registry}{nl}always-auth=true", Encoding.UTF8);
+                File.AppendAllText(Path.Combine(target, configFileName), $"registry={registry}{nl}", Encoding.UTF8);
             }
         }
 
