@@ -4,7 +4,7 @@
 
 All .NET things to make <a href="https://blazor.net" rel="nofollow"><img src="https://everyday.codes/wp-content/uploads/2019/12/BrandBlazor_nohalo_1000x.png" height="10">&nbsp;Blazor</a> work seamlessly in microfrontends using <a href="https://piral.io" rel="nofollow"><img src="https://piral.io/logo-simple.f8667084.png" height="10">&nbsp;</a>.
 
-> This is the branch for Blazor 9.0 with .NET 9.0. If you want to switch to Blazor with older releases, see below
+> This is the branch for Blazor 9.0 with .NET 9.0. If you want to switch to Blazor with older/newer releases, see below
 
 - [`blazor-3.2`](https://github.com/smapiot/Piral.Blazor/tree/blazor-3.2)
 - [`blazor-5.0`](https://github.com/smapiot/Piral.Blazor/tree/blazor-5.0)
