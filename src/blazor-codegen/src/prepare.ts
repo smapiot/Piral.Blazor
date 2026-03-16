@@ -1,11 +1,12 @@
 import { resolve, join } from "path";
-import { existsSync, readdirSync, readFileSync } from "fs";
-import { copyAll, getAssetName } from "./io";
+import { readdir, readFile } from "fs/promises";
+
+import { checkExists, copyAll, getAssetName, loadJson } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { diffBlazorBootFiles, matchesSatellite } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
-import { BlazorManifest, ProjectAssets, StaticAssets } from "./types";
+import type { BlazorManifest, ProjectAssets, StaticAssets } from "./types";
 import {
   alwaysIgnored,
   bbjson,
@@ -21,18 +22,22 @@ function toFramework(files: Array<string>) {
   return files.map((n) => `_framework/${n}`);
 }
 
-function findInstanceName(piralPiletFolder: string): string {
-  const packageJson = require(resolve(piralPiletFolder, packageJsonFilename));
+async function findInstanceName(piralPiletFolder: string): Promise<string> {
+  const packageJson = await loadJson(
+    resolve(piralPiletFolder, packageJsonFilename),
+  );
   const piletJsonFilePath = join(piralPiletFolder, piletJsonFilename).replace(
     /\\/g,
-    "/"
+    "/",
   );
-  const piletJsonFileExists = existsSync(piletJsonFilePath);
+  const piletJsonFileExists = await checkExists(piletJsonFilePath);
 
   if (piletJsonFileExists) {
-    const piletJson = require(resolve(piralPiletFolder, piletJsonFilename));
+    const piletJson = await loadJson(
+      resolve(piralPiletFolder, piletJsonFilename),
+    );
     const selectedInstance = Object.keys(piletJson.piralInstances).find(
-      (key) => piletJson.piralInstances[key].selected
+      (key) => piletJson.piralInstances[key].selected,
     );
 
     if (selectedInstance !== undefined) {
@@ -45,10 +50,10 @@ function findInstanceName(piralPiletFolder: string): string {
   return packageJson.piral.name;
 }
 
-function findBlazorVersion(piralPiletFolder: string) {
+async function findBlazorVersion(piralPiletFolder: string) {
   const key = "Version=";
   const blazorrcPath = resolve(piralPiletFolder, blazorrc);
-  const content = readFileSync(blazorrcPath, "utf8");
+  const content = await readFile(blazorrcPath, "utf8");
   const line = content
     .split("\r")
     .join("")
@@ -68,7 +73,7 @@ function getBlazorRelease(version: string) {
 
   if (!result) {
     throw new Error(
-      "Could not detect version of Blazor. Something does not seem right."
+      "Could not detect version of Blazor. Something does not seem right.",
     );
   }
 
@@ -80,32 +85,32 @@ function getBlazorRelease(version: string) {
 export async function prepare(
   targetDir: string,
   staticAssets: StaticAssets,
-  projectAssets: ProjectAssets
+  projectAssets: ProjectAssets,
 ) {
   const piralPiletFolder = resolve(__dirname, "..");
-  const instanceName = findInstanceName(piralPiletFolder);
-  const appdir = findAppDir(piralPiletFolder, instanceName);
+  const instanceName = await findInstanceName(piralPiletFolder);
+  const appdir = await findAppDir(piralPiletFolder, instanceName);
 
   const manifestSource = staticAssets.Assets.find(
     (m) =>
       wasmResourceTraitNames.includes(m.AssetTraitName) &&
       m.AssetTraitValue === "manifest" &&
-      getAssetName(m).endsWith(bbjson)
+      getAssetName(m).endsWith(bbjson),
   );
 
   if (!manifestSource) {
     throw new Error(
-      `Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`
+      `Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`,
     );
   }
 
   // Piral Blazor checks
   const appFrameworkDir = resolve(appdir, "app", "_framework");
   const bbAppShellPath = resolve(appFrameworkDir, bbjson);
-  const blazorInAppshell = existsSync(bbAppShellPath);
+  const blazorInAppshell = await checkExists(bbAppShellPath);
   const shellPackagePath = resolve(appdir, packageJsonFilename);
   const manifest = manifestSource.Identity;
-  const piletManifest: BlazorManifest = require(manifest);
+  const piletManifest: BlazorManifest = await loadJson(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
@@ -121,46 +126,47 @@ export async function prepare(
       satellites[name] = files.map(toSatellitePath).filter(Boolean);
       return satellites;
     },
-    {} as Record<string, Array<string>>
+    {} as Record<string, Array<string>>,
   );
 
   if (blazorInAppshell) {
     console.log(
-      "The app shell already integrates `piral-blazor` with `blazor`."
+      "The app shell already integrates `piral-blazor` with `blazor`.",
     );
 
-    const appShellManifest: BlazorManifest = require(bbAppShellPath);
+    const appShellManifest: BlazorManifest = await loadJson(bbAppShellPath);
     const appshellDotnetVersion = extractDotnetVersion(
       appShellManifest,
-      projectAssets
+      projectAssets,
     );
-    const existingFiles = toFramework(readdirSync(appFrameworkDir));
+    const appFrameworkFiles = await readdir(appFrameworkDir);
+    const existingFiles = toFramework(appFrameworkFiles);
     const ignored = [...alwaysIgnored, ...existingFiles];
 
-    const [dlls, pdbs] = diffBlazorBootFiles(
+    const [dlls, pdbs] = await diffBlazorBootFiles(
       appdir,
       instanceName,
       piletManifest,
-      appShellManifest
+      appShellManifest,
     );
 
     checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
 
-    const watchPaths = copyAll(ignored, staticAssets, targetDir);
+    const watchPaths = await copyAll(ignored, staticAssets, targetDir);
 
     return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
   } else {
     const blazorVersion =
-      findBlazorVersion(piralPiletFolder) ||
+      (await findBlazorVersion(piralPiletFolder)) ||
       getBlazorRelease(piletDotnetVersion);
 
     console.log(
-      "The app shell does not contain `piral-blazor`. Using standalone mode."
+      "The app shell does not contain `piral-blazor`. Using standalone mode.",
     );
 
     await checkInstallation(blazorVersion, shellPackagePath);
 
-    const originalManifest: BlazorManifest = require(bbStandalonePath);
+    const originalManifest: BlazorManifest = await loadJson(bbStandalonePath);
     const frameworkFiles = toFramework([
       bbjson,
       ...Object.keys(originalManifest.resources.assembly || {}),
@@ -172,14 +178,14 @@ export async function prepare(
     ]);
     const ignored = [...alwaysIgnored, ...frameworkFiles];
 
-    const [dlls, pdbs] = diffBlazorBootFiles(
+    const [dlls, pdbs] = await diffBlazorBootFiles(
       appdir,
       instanceName,
       piletManifest,
-      originalManifest
+      originalManifest,
     );
 
-    const watchPaths = copyAll(ignored, staticAssets, targetDir);
+    const watchPaths = await copyAll(ignored, staticAssets, targetDir);
 
     return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
   }

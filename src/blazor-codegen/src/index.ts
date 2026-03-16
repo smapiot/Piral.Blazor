@@ -1,12 +1,12 @@
 import { join } from "path";
-import { existsSync } from "fs";
-import { getAssetPath, getFilePath } from "./io";
+
+import { checkExists, getAssetPath, getFilePath, loadJson } from "./io";
 import { rebuildNeeded, getRef } from "./utils";
 import { createAllTargetRefs } from "./targets";
 import { prepare } from "./prepare";
 import { analyzeProject, buildSolution } from "./project";
-import { ProjectAssets, StaticAssets } from "./types";
 import { getProjectConfig } from "./config";
+import type { ProjectAssets, StaticAssets } from "./types";
 import {
   fallbackPiletCode,
   makePiletCode,
@@ -30,7 +30,7 @@ module.exports = async function () {
 
   // always build when files not found or in release
   // never re-build just when there is a change incoming
-  if (!process.env[bv] && (isRelease || rebuildNeeded(config))) {
+  if (!process.env[bv] && (isRelease || (await rebuildNeeded(config)))) {
     try {
       await buildSolution(blazorprojectfolder);
     } catch (err) {
@@ -39,14 +39,14 @@ module.exports = async function () {
           `Something went wrong with the Blazor build.`,
           `Make sure there is at least one Blazor project in your solution.`,
           `Seen error: ${err}`,
-        ].join("\n")
+        ].join("\n"),
       );
     }
   }
 
   // Require modules
-  const projectAssets: ProjectAssets = require(config.paFile);
-  const staticAssets: StaticAssets = require(config.swaFile);
+  const projectAssets: ProjectAssets = await loadJson(config.paFile);
+  const staticAssets: StaticAssets = await loadJson(config.swaFile);
 
   const { standalone, manifest, dlls, pdbs, satellites, watchPaths } =
     await prepare(targetDir, staticAssets, projectAssets);
@@ -99,7 +99,7 @@ module.exports = async function () {
     staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")
       ?.AssetTraitValue ?? "ProjectBundle";
   const bundleFiles = staticAssets.Assets.filter(
-    (m) => m.AssetTraitValue === traitValue
+    (m) => m.AssetTraitValue === traitValue,
   );
 
   // Get the CSS files for the project
@@ -110,7 +110,7 @@ module.exports = async function () {
   // Dervice files
   const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);
   const files = [...refs.map((ref) => getRef(dlls, ref)), ...pdbs].map((name) =>
-    getFilePath(staticAssets, name)
+    getFilePath(staticAssets, name),
   );
 
   const registerDependenciesCode = `export function registerDependencies(app) {
@@ -119,8 +119,8 @@ module.exports = async function () {
     app.defineBlazorReferences(references, satellites, ${
       config.priority
     }, ${JSON.stringify(config.kind)}, ${JSON.stringify(
-    config.sharedDependencies
-  )});
+      config.sharedDependencies,
+    )});
   }`;
 
   //Options
@@ -130,7 +130,7 @@ module.exports = async function () {
 
   // Setup file
   const setupFilePath = join(config.configDir, setupfile).replace(/\\/g, "/");
-  const setupFileExists = existsSync(setupFilePath);
+  const setupFileExists = await checkExists(setupFilePath);
 
   if (setupFileExists) {
     allImports.push(`import projectSetup from '${setupFilePath}';`);
@@ -161,9 +161,9 @@ module.exports = async function () {
   // Teardown file
   const teardownFilePath = join(config.configDir, teardownfile).replace(
     /\\/g,
-    "/"
+    "/",
   );
-  const teardownFileExists = existsSync(teardownFilePath);
+  const teardownFileExists = await checkExists(teardownFilePath);
 
   if (teardownFileExists) {
     allImports.push(`import projectTeardown from '${teardownFilePath}';`);
@@ -185,7 +185,7 @@ module.exports = async function () {
     setupPiletCode,
     teardownPiletCode,
     registerDependenciesCode,
-    registerOptionsCode
+    registerOptionsCode,
   );
 
   try {

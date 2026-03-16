@@ -1,9 +1,10 @@
 import glob from "glob";
 import { basename, dirname, resolve } from "path";
-import { readFile } from "fs";
+import { readFile } from "fs/promises";
 import { XMLParser } from "fast-xml-parser";
+
 import { configuration, pajson, swajson } from "./constants";
-import { ProjectConfig } from "./types";
+import type { ProjectConfig } from "./types";
 
 function getProjectName(Project: any): string {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
@@ -109,7 +110,7 @@ function getSharedDependencies(Project: any): Array<string> {
       : [Project.ItemGroup];
 
     const sharedGroups = itemGroups.filter(
-      (group) => group["@_Label"] === "shared"
+      (group) => group["@_Label"] === "shared",
     );
 
     for (const group of sharedGroups) {
@@ -142,46 +143,38 @@ interface ProjectResult {
   projectName: string;
 }
 
-function readProject(path: string) {
+async function readProject(path: string) {
   const projectDir = dirname(path);
-
-  return new Promise<ProjectResult>((resolve, reject) => {
-    readFile(path, "utf8", async (err, xmlData) => {
-      if (err) {
-        return reject(err);
-      }
-
-      const xmlParser = new XMLParser({
-        ignoreAttributes: false,
-        allowBooleanAttributes: true
-      });
-      const { Project } = xmlParser.parse(xmlData);
-      const importedProject = getImportedProjects(Project, projectDir);
-      const result: ProjectResult = {
-        projectDir,
-        configDir: getConfigFolderName(Project),
-        sharedDependencies: getSharedDependencies(Project),
-        targetFramework: getTargetFramework(Project),
-        priority: getPriority(Project),
-        kind: getKind(Project),
-        projectName: getProjectName(Project),
-      };
-
-      for (const project of importedProject.reverse()) {
-        const newResult = await readProject(project);
-
-        Object.entries(newResult).forEach(([name, value]) => {
-          if (result[name] === undefined) {
-            result[name] = value;
-          } else if (Array.isArray(result[name])) {
-            result[name].push(...value);
-          }
-        });
-      }
-
-      resolve(result);
-    });
+  const xmlData = await readFile(path, "utf8");
+  const xmlParser = new XMLParser({
+    ignoreAttributes: false,
+    allowBooleanAttributes: true,
   });
+  const { Project } = xmlParser.parse(xmlData);
+  const importedProject = getImportedProjects(Project, projectDir);
+  const result: ProjectResult = {
+    projectDir,
+    configDir: getConfigFolderName(Project),
+    sharedDependencies: getSharedDependencies(Project),
+    targetFramework: getTargetFramework(Project),
+    priority: getPriority(Project),
+    kind: getKind(Project),
+    projectName: getProjectName(Project),
+  };
+
+  for (const project of importedProject.reverse()) {
+    const newResult = await readProject(project);
+
+    Object.entries(newResult).forEach(([name, value]) => {
+      if (result[name] === undefined) {
+        result[name] = value;
+      } else if (Array.isArray(result[name])) {
+        result[name].push(...value);
+      }
+    });
+  }
+
+  return result;
 }
 
 export function getProjectConfig(projectDir: string) {
@@ -189,7 +182,7 @@ export function getProjectConfig(projectDir: string) {
     glob(`${projectDir}/*.csproj`, (err, matches) => {
       if (!!err || !matches || matches.length === 0) {
         return rejectPromise(
-          new Error(`Project file not found. Details: ${err}`)
+          new Error(`Project file not found. Details: ${err}`),
         );
       }
 
@@ -199,9 +192,9 @@ export function getProjectConfig(projectDir: string) {
             `Only one project file is allowed. You have: ${JSON.stringify(
               matches,
               null,
-              2
-            )}`
-          )
+              2,
+            )}`,
+          ),
         );
       }
 
@@ -212,7 +205,7 @@ export function getProjectConfig(projectDir: string) {
         .then((result) => {
           if (!result.targetFramework) {
             throw new Error(
-              'The project file does not specify a "TargetFramework" property.'
+              'The project file does not specify a "TargetFramework" property.',
             );
           }
 
@@ -226,7 +219,7 @@ export function getProjectConfig(projectDir: string) {
               "obj",
               configuration,
               result.targetFramework,
-              swajson
+              swajson,
             ),
             sharedDependencies: result.sharedDependencies,
             targetFramework: result.targetFramework,

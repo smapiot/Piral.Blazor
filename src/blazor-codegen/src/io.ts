@@ -1,7 +1,8 @@
-import { copyFileSync, mkdirSync } from "fs";
+import { copyFile, mkdir, readFile, stat } from "fs/promises";
 import { basename, dirname, resolve } from "path";
-import { StaticAsset, StaticAssets } from "./types";
+
 import { ignoredAssets } from "./constants";
+import type { StaticAsset, StaticAssets } from "./types";
 
 function isIgnored(path: string) {
   const name = basename(path);
@@ -15,7 +16,7 @@ function isIgnored(path: string) {
   return false;
 }
 
-function copyFiles(assets: Array<StaticAsset>, target: string) {
+async function copyFiles(assets: Array<StaticAsset>, target: string) {
   const watchPaths: Array<string> = [];
 
   for (const asset of assets) {
@@ -26,8 +27,8 @@ function copyFiles(assets: Array<StaticAsset>, target: string) {
     if (!isCompressFile(toPath) && !isIgnored(toPath)) {
       const toDir = dirname(toPath);
 
-      mkdirSync(toDir, { recursive: true });
-      copyFileSync(fromPath, toPath);
+      await mkdir(toDir, { recursive: true });
+      await copyFile(fromPath, toPath);
       watchPaths.push(fromPath);
     }
   }
@@ -55,9 +56,7 @@ export function isAsset(asset: StaticAsset, name: string) {
 
 export function getAssetPath(asset: StaticAsset) {
   const name = getAssetName(asset);
-  return asset.BasePath !== "/"
-    ? `${asset.BasePath}/${name}`
-    : name;
+  return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
 }
 
 export function getFilePath(source: StaticAssets, name: string) {
@@ -73,12 +72,26 @@ export function getFilePath(source: StaticAssets, name: string) {
 export function copyAll(
   ignored: Array<string>,
   source: StaticAssets,
-  targetDir: string
+  targetDir: string,
 ) {
   const staticFiles = source.Assets.filter(
-    (asset) => !ignored.includes(getAssetPath(asset))
+    (asset) => !ignored.includes(getAssetPath(asset)),
   );
 
   //File copy
   return copyFiles(staticFiles, targetDir);
+}
+
+export async function checkExists(fn: string) {
+  try {
+    await stat(fn);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function loadJson(fn: string) {
+  const content = await readFile(fn, "utf8");
+  return JSON.parse(content);
 }

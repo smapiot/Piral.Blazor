@@ -1,6 +1,6 @@
-import { existsSync } from "fs";
+import { checkExists, loadJson } from "./io";
 import { ignoredDlls } from "./constants";
-import {
+import type {
   BlazorManifest,
   BlazorResourceType,
   ProjectConfig,
@@ -66,25 +66,36 @@ export function getRef(dlls: Array<string>, name: string) {
   return name;
 }
 
-export function rebuildNeeded(config: ProjectConfig) {
-  if (existsSync(config.paFile) && existsSync(config.swaFile)) {
-    const staticAssets: StaticAssets = require(config.swaFile);
+export async function rebuildNeeded(config: ProjectConfig) {
+  const paExists = await checkExists(config.paFile);
+  const swaExists = await checkExists(config.swaFile);
 
-    if (staticAssets.Assets.every((m) => existsSync(m.Identity))) {
-      return false;
+  if (paExists && swaExists) {
+    const staticAssets: StaticAssets = await loadJson(config.swaFile);
+
+    for (const asset of staticAssets.Assets) {
+      const exists = await checkExists(asset.Identity);
+
+      if (!exists) {
+        return true;
+      }
     }
+
+    return false;
   }
 
   return true;
 }
 
-export function diffBlazorBootFiles(
+export async function diffBlazorBootFiles(
   appdir: string,
   appname: string,
   piletManifest: BlazorManifest,
   originalManifest: BlazorManifest,
-): [Array<string>, Array<string>] {
-  if (!existsSync(appdir)) {
+): Promise<[Array<string>, Array<string>]> {
+  const appDirExists = await checkExists(appdir);
+
+  if (!appDirExists) {
     throw new Error(
       `Cannot find the directory of "${appname}". Please re-install the dependencies.`,
     );

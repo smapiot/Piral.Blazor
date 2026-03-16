@@ -1,11 +1,10 @@
 {
-    "compilerOptions": {
-        "esModuleInterop": true,
-        "module": "CommonJS",
-        "declaration": false,
-        "noEmit": true
-    },
-    "include": [
-        "src"
-    ]
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "module": "CommonJS",
+    "declaration": false,
+    "noEmit": true,
+    "target": "es2021"
+  },
+  "include": ["src"]
 }
