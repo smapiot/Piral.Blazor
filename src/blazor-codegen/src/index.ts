@@ -48,8 +48,15 @@ module.exports = async function () {
   const projectAssets: ProjectAssets = await loadJson(config.paFile);
   const staticAssets: StaticAssets = await loadJson(config.swaFile);
 
-  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } =
-    await prepare(targetDir, staticAssets, projectAssets);
+  const {
+    standalone,
+    manifest,
+    dlls,
+    pdbs,
+    satellites,
+    watchPaths,
+    nameMapping,
+  } = await prepare(targetDir, staticAssets, projectAssets);
 
   [config.swaFile, config.paFile, manifest, ...watchPaths]
     .filter((m) => m.indexOf(`/${config.projectName}.`) !== -1)
@@ -92,7 +99,9 @@ module.exports = async function () {
   }`;
 
   // Refs
-  const uniqueDependencies = dlls.map((f) => f.replace(/\.(dll|wasm)$/, ""));
+  const uniqueDependencies = dlls.map((f) =>
+    nameMapping.toName(f).replace(/\.(dll|wasm)$/, ""),
+  );
 
   // Find out if there are ApplicationBundle files, otherwise take ProjectBundle files
   const traitValue =
@@ -105,7 +114,7 @@ module.exports = async function () {
   // Get the CSS files for the project
   const cssLinks = bundleFiles
     .filter((m) => scopedCssTraitNames.includes(m.AssetTraitName))
-    .map(getAssetPath);
+    .map((m) => getAssetPath(m));
 
   // Dervice files
   const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);

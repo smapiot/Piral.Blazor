@@ -4527,20 +4527,31 @@ async function copyFiles(assets, target) {
 function isCompressFile(path) {
   return path.endsWith(".gz") || path.endsWith(".br");
 }
-function getAssetName(asset) {
-  return asset?.RelativePath.replace(/#\[\.{fingerprint}\][!?]/g, "").replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "");
+function getAssetName(asset, fingerprint = "") {
+  return asset?.RelativePath.replace(/#\[\.{fingerprint}\][!?]/g, fingerprint).replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "");
+}
+function getFingerprint(name) {
+  const fingerprint = /^[0-9a-z]{10}$/;
+  const segments = name.split(".");
+  segments.pop();
+  const last = segments.length - 1;
+  if (last > 0 && fingerprint.test(segments[last])) {
+    return `.${segments[last]}`;
+  }
+  return "";
 }
 function isAsset(asset, name) {
   return (0, import_path.basename)(asset.Identity) === name;
 }
-function getAssetPath(asset) {
-  const name = getAssetName(asset);
+function getAssetPath(asset, fingerprint) {
+  const name = getAssetName(asset, fingerprint);
   return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
 }
 function getFilePath(source, name) {
   const item = source.Assets.find((m) => isAsset(m, name));
   if (item) {
-    return getAssetPath(item);
+    const fingerprint = getFingerprint(name);
+    return getAssetPath(item, fingerprint);
   }
   return name;
 }
@@ -4580,10 +4591,10 @@ function getUniqueKeys(originalManifest, piletManifest, type) {
     (m) => !original.includes(m) && !ignoredDlls.includes(m)
   );
 }
-function getRef(dlls, name) {
+function getRef(assemblies, name) {
   const fingerprint = /^[0-9a-z]{10}$/;
   const prefix = `${name}.`;
-  for (const dll of dlls) {
+  for (const dll of assemblies) {
     if (dll.startsWith(prefix) && (dll.endsWith(".wasm") || dll.endsWith(".dll"))) {
       const segments = dll.substring(prefix.length).split(".");
       segments.pop();
@@ -4906,7 +4917,21 @@ async function prepare(targetDir, staticAssets, projectAssets) {
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
-  const { satelliteResources } = piletManifest.resources;
+  const { satelliteResources, fingerprinting = {} } = piletManifest.resources;
+  const nameToFingerprint = new Map(
+    Object.entries(fingerprinting).map(([key, value]) => [value, key])
+  );
+  const fingerprintToName = new Map(
+    Object.entries(fingerprinting).map(([key, value]) => [key, value])
+  );
+  const nameMapping = {
+    toName(fingerprint) {
+      return fingerprintToName.get(fingerprint) ?? fingerprint;
+    },
+    toFingerprint(name) {
+      return nameToFingerprint.get(name) ?? name;
+    }
+  };
   const satellites = Object.keys(satelliteResources || {}).reduce(
     (satellites2, name) => {
       const resources = satelliteResources[name];
@@ -4937,7 +4962,15 @@ async function prepare(targetDir, staticAssets, projectAssets) {
     );
     checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
     const watchPaths = await copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
+    return {
+      dlls,
+      pdbs,
+      standalone,
+      manifest,
+      satellites,
+      watchPaths,
+      nameMapping
+    };
   } else {
     const blazorVersion = await findBlazorVersion(piralPiletFolder) || getBlazorRelease(piletDotnetVersion);
     console.log(
@@ -4962,7 +4995,15 @@ async function prepare(targetDir, staticAssets, projectAssets) {
       originalManifest
     );
     const watchPaths = await copyAll(ignored, staticAssets, targetDir);
-    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
+    return {
+      dlls,
+      pdbs,
+      standalone,
+      manifest,
+      satellites,
+      watchPaths,
+      nameMapping
+    };
   }
 }
 
@@ -5269,7 +5310,15 @@ module.exports = async function() {
   }
   const projectAssets = await loadJson(config.paFile);
   const staticAssets = await loadJson(config.swaFile);
-  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } = await prepare(targetDir, staticAssets, projectAssets);
+  const {
+    standalone,
+    manifest,
+    dlls,
+    pdbs,
+    satellites,
+    watchPaths,
+    nameMapping
+  } = await prepare(targetDir, staticAssets, projectAssets);
   [config.swaFile, config.paFile, manifest, ...watchPaths].filter((m) => m.indexOf(`/${config.projectName}.`) !== -1).forEach((path) => this.addDependency(path));
   if (standalone) {
     allImports.push(`import * as pbc from 'piral-blazor/convert';`);
@@ -5304,12 +5353,14 @@ module.exports = async function() {
     app.unwire = () => app.off(interopEvent, handler);
     ${standalone ? standaloneRemapCode : ""}
   }`;
-  const uniqueDependencies = dlls.map((f) => f.replace(/\.(dll|wasm)$/, ""));
+  const uniqueDependencies = dlls.map(
+    (f) => nameMapping.toName(f).replace(/\.(dll|wasm)$/, "")
+  );
   const traitValue = staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")?.AssetTraitValue ?? "ProjectBundle";
   const bundleFiles = staticAssets.Assets.filter(
     (m) => m.AssetTraitValue === traitValue
   );
-  const cssLinks = bundleFiles.filter((m) => scopedCssTraitNames.includes(m.AssetTraitName)).map(getAssetPath);
+  const cssLinks = bundleFiles.filter((m) => scopedCssTraitNames.includes(m.AssetTraitName)).map((m) => getAssetPath(m));
   const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);
   const files = [...refs.map((ref) => getRef(dlls, ref)), ...pdbs].map(
     (name) => getFilePath(staticAssets, name)

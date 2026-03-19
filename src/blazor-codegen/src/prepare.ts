@@ -114,7 +114,21 @@ export async function prepare(
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
-  const { satelliteResources } = piletManifest.resources;
+  const { satelliteResources, fingerprinting = {} } = piletManifest.resources;
+  const nameToFingerprint = new Map(
+    Object.entries(fingerprinting).map(([key, value]) => [value, key]),
+  );
+  const fingerprintToName = new Map(
+    Object.entries(fingerprinting).map(([key, value]) => [key, value]),
+  );
+  const nameMapping = {
+    toName(fingerprint: string) {
+      return fingerprintToName.get(fingerprint) ?? fingerprint;
+    },
+    toFingerprint(name: string) {
+      return nameToFingerprint.get(name) ?? name;
+    },
+  };
 
   const satellites = Object.keys(satelliteResources || {}).reduce(
     (satellites, name) => {
@@ -154,7 +168,15 @@ export async function prepare(
 
     const watchPaths = await copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
+    return {
+      dlls,
+      pdbs,
+      standalone,
+      manifest,
+      satellites,
+      watchPaths,
+      nameMapping,
+    };
   } else {
     const blazorVersion =
       (await findBlazorVersion(piralPiletFolder)) ||
@@ -187,6 +209,14 @@ export async function prepare(
 
     const watchPaths = await copyAll(ignored, staticAssets, targetDir);
 
-    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
+    return {
+      dlls,
+      pdbs,
+      standalone,
+      manifest,
+      satellites,
+      watchPaths,
+      nameMapping,
+    };
   }
 }

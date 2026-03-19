@@ -40,22 +40,35 @@ export function isCompressFile(path: string) {
   return path.endsWith(".gz") || path.endsWith(".br");
 }
 
-export function getAssetName(asset: StaticAsset) {
+export function getAssetName(asset: StaticAsset, fingerprint = "") {
   return (
     asset?.RelativePath
       // Handle legacy patterns (both ! and ?)
-      .replace(/#\[\.{fingerprint}\][!?]/g, "")
+      .replace(/#\[\.{fingerprint}\][!?]/g, fingerprint)
       // Handle .NET {0} placeholder pattern
       .replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "")
   );
+}
+
+function getFingerprint(name: string) {
+  const fingerprint = /^[0-9a-z]{10}$/;
+  const segments = name.split(".");
+  segments.pop(); // remove extension
+  const last = segments.length - 1;
+
+  if (last > 0 && fingerprint.test(segments[last])) {
+    return `.${segments[last]}`;
+  }
+
+  return "";
 }
 
 export function isAsset(asset: StaticAsset, name: string) {
   return basename(asset.Identity) === name;
 }
 
-export function getAssetPath(asset: StaticAsset) {
-  const name = getAssetName(asset);
+export function getAssetPath(asset: StaticAsset, fingerprint?: string) {
+  const name = getAssetName(asset, fingerprint);
   return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
 }
 
@@ -63,7 +76,8 @@ export function getFilePath(source: StaticAssets, name: string) {
   const item = source.Assets.find((m) => isAsset(m, name));
 
   if (item) {
-    return getAssetPath(item);
+    const fingerprint = getFingerprint(name);
+    return getAssetPath(item, fingerprint);
   }
 
   return name;

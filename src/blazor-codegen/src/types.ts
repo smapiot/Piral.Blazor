@@ -6,12 +6,17 @@ export interface BlazorManifest {
   icuDataMode: number;
   linkerEnabled: boolean;
   resources: {
+    hash?: string;
+    // maps fingerprinted filenames to non-fingerprinted ones (e.g., "CommunityToolkit.Mvvm.ek2f7r3onp.wasm": "CommunityToolkit.Mvvm.wasm")
+    fingerprinting?: Record<string, string>;
     assembly: Record<string, string>;
+    coreAssembly?: Record<string, string>;
     pdb: Record<string, string>;
     runtime?: Record<string, string>;
     jsModuleNative?: Record<string, string>;
     jsModuleRuntime?: Record<string, string>;
     wasmNative?: Record<string, string>;
+    icu?: Record<string, string>;
     extensions: any;
     lazyAssembly: any;
     libraryInitializers: any;

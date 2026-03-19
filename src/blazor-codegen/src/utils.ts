@@ -42,11 +42,11 @@ function getUniqueKeys(
   );
 }
 
-export function getRef(dlls: Array<string>, name: string) {
+export function getRef(assemblies: Array<string>, name: string) {
   const fingerprint = /^[0-9a-z]{10}$/;
   const prefix = `${name}.`;
 
-  for (const dll of dlls) {
+  for (const dll of assemblies) {
     if (
       dll.startsWith(prefix) &&
       (dll.endsWith(".wasm") || dll.endsWith(".dll"))
