@@ -49,7 +49,7 @@ export async function checkInstallation(
     console.warn(
       "The npm packages `blazor` and `piral-blazor` have not been not found. Installing them now...",
     );
-    const piralVersion = getPiralVersion(shellPackagePath);
+    const piralVersion = await getPiralVersion(shellPackagePath);
     const installCmd = `npm i blazor@${blazorVersion} piral-blazor@${piralVersion} --no-save --legacy-peer-deps`;
     await execAsync(installCmd, {
       env: {

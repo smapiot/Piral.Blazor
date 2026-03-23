@@ -2,7 +2,9 @@ import { resolve } from "path";
 
 import { checkExists, loadJson } from "./io";
 
-export async function getPiralVersion(shellPackagePath: string) {
+export async function getPiralVersion(
+  shellPackagePath: string,
+): Promise<string> {
   try {
     const shellData = await loadJson(shellPackagePath);
     const { version } = shellData.piralCLI;

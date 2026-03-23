@@ -110,7 +110,7 @@ export async function prepare(
   const blazorInAppshell = await checkExists(bbAppShellPath);
   const shellPackagePath = resolve(appdir, packageJsonFilename);
   const manifest = manifestSource.Identity;
-  const piletManifest: BlazorManifest = await loadJson(manifest);
+  const piletManifest = await loadJson<BlazorManifest>(manifest);
   const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
@@ -148,7 +148,7 @@ export async function prepare(
       "The app shell already integrates `piral-blazor` with `blazor`.",
     );
 
-    const appShellManifest: BlazorManifest = await loadJson(bbAppShellPath);
+    const appShellManifest = await loadJson<BlazorManifest>(bbAppShellPath);
     const appshellDotnetVersion = extractDotnetVersion(
       appShellManifest,
       projectAssets,
@@ -188,7 +188,7 @@ export async function prepare(
 
     await checkInstallation(blazorVersion, shellPackagePath);
 
-    const originalManifest: BlazorManifest = await loadJson(bbStandalonePath);
+    const originalManifest = await loadJson<BlazorManifest>(bbStandalonePath);
     const frameworkFiles = toFramework([
       bbjson,
       ...Object.keys(originalManifest.resources.assembly || {}),

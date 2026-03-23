@@ -71,7 +71,7 @@ export async function rebuildNeeded(config: ProjectConfig) {
   const swaExists = await checkExists(config.swaFile);
 
   if (paExists && swaExists) {
-    const staticAssets: StaticAssets = await loadJson(config.swaFile);
+    const staticAssets = await loadJson<StaticAssets>(config.swaFile);
 
     for (const asset of staticAssets.Assets) {
       const exists = await checkExists(asset.Identity);

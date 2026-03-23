@@ -105,7 +105,7 @@ export async function checkExists(fn: string) {
   }
 }
 
-export async function loadJson(fn: string) {
+export async function loadJson<T = any>(fn: string) {
   const content = await readFile(fn, "utf8");
-  return JSON.parse(content);
+  return JSON.parse(content) as T;
 }

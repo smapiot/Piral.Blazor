@@ -45,8 +45,8 @@ module.exports = async function () {
   }
 
   // Require modules
-  const projectAssets: ProjectAssets = await loadJson(config.paFile);
-  const staticAssets: StaticAssets = await loadJson(config.swaFile);
+  const projectAssets = await loadJson<ProjectAssets>(config.paFile);
+  const staticAssets = await loadJson<StaticAssets>(config.swaFile);
 
   const {
     standalone,
