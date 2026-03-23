@@ -4977,7 +4977,8 @@ async function prepare(targetDir, staticAssets, projectAssets) {
       "The app shell does not contain `piral-blazor`. Using standalone mode."
     );
     await checkInstallation(blazorVersion, shellPackagePath);
-    const originalManifest = await loadJson(bbStandalonePath);
+    const manifestPath = require.resolve(bbStandalonePath);
+    const originalManifest = await loadJson(manifestPath);
     const frameworkFiles = toFramework([
       bbjson,
       ...Object.keys(originalManifest.resources.assembly || {}),

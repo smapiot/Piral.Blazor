@@ -188,7 +188,8 @@ export async function prepare(
 
     await checkInstallation(blazorVersion, shellPackagePath);
 
-    const originalManifest = await loadJson<BlazorManifest>(bbStandalonePath);
+    const manifestPath = require.resolve(bbStandalonePath);
+    const originalManifest = await loadJson<BlazorManifest>(manifestPath);
     const frameworkFiles = toFramework([
       bbjson,
       ...Object.keys(originalManifest.resources.assembly || {}),
