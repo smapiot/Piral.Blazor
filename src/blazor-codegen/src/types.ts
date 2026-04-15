@@ -156,3 +156,108 @@ export interface StaticAsset {
   CopyToPublishDirectory: string;
   OriginalItemSpec: string;
 }
+
+export interface NameMapper {
+  toName(fingerprint: string): string;
+  toFingerprint(name: string): string;
+}
+
+export type SatelliteAssets = Record<
+  string,
+  Array<{
+    name: string;
+    source: string;
+    target: string;
+  }>
+>;
+
+export interface DerivedAssets {
+  /**
+   * The referenced / used assemblies
+   */
+  assemblies: Array<{
+    /**
+     * Id of the assembly, e.g., "MyPilet"
+     */
+    id: string;
+    /**
+     * Name of the file to copy, e.g., MyPilet.abcdef1234.wasm
+     */
+    name: string;
+    /**
+     * Full source path of the file, e.g., /home/foo/bar/etc/bin/MyPilet.abcdef1234.wasm
+     */
+    source: string;
+    /**
+     * Full target path of the file, e.g., /home/foo/bar/~piral/dist/_framework/MyPilet.abcdef1234.wasm
+     */
+    target: string;
+    /**
+     * Fingerprint used by the file, e.g., .abcdef1234 - empty to denote no fingerprint
+     */
+    fingerprint: string;
+    /**
+     * True indicates that this is just a dependency of the main project, otherwise false
+     */
+    dependency: boolean;
+    /**
+     * The debug symbols for the assembly, if any
+     */
+    symbols?: {
+      /**
+       * The nameof the symbols, e.g., MyPilet
+       */
+      name: string;
+      /**
+       * Full source path of the file, e.g., /home/foo/bar/etc/bin/MyPilet.abcdef1234.pdb
+       */
+      source: string;
+      /**
+       * Full target path of the file, e.g., /home/foo/bar/~piral/dist/_framework/MyPilet.abcdef1234.pdb
+       */
+      target: string;
+      /**
+       * Fingerprint used by the file, e.g., .abcdef1234 - empty to denote no fingerprint
+       */
+      fingerprint: string;
+    };
+    /**
+     * True indicates that this is the main entry point of the pilet, otherwise false
+     */
+    entry: boolean;
+    /**
+     * True indicates that the assembly is already present (in one form or another) in the parent and should be ignored
+     */
+    ignored: boolean;
+  }>;
+  /**
+   * The static web asset files which are not assemblies
+   */
+  files: Array<{
+    /**
+     * If of the file, e.g., MyPilet.css
+     */
+    id: string;
+    /**
+     * Name of the file, e.g., MyPilet.52553.css
+     */
+    name: string;
+    /**
+     * The type of asset, e.g., "css" is a stylesheet
+     */
+    type: "css" | "other";
+    /**
+     * Full source path of the file, e.g., /home/foo/bar/etc/bin/MyPilet.52553.css
+     */
+    source: string;
+    /**
+     * Full target path of the file, e.g., /home/foo/bar/~piral/dist/_framework/MyPilet.52553.css
+     */
+    target: string;
+  }>;
+  /**
+   * The generated satellite assemblies / files
+   * The key is the locale identifier (e.g., "de"), with an array of the actual assemblies
+   */
+  satellites: SatelliteAssets;
+}

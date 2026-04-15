@@ -46,7 +46,7 @@ export function extractDotnetVersion(
   projectAssets: ProjectAssets,
 ) {
   const dotnetFiles =
-    manifest.resources.runtime || manifest.resources.jsModuleRuntime;
+    manifest.resources.runtime || manifest.resources.jsModuleRuntime || {};
 
   const dotnetVersion =
     Object.keys(dotnetFiles)

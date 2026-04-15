@@ -6,12 +6,12 @@ import { XMLParser } from "fast-xml-parser";
 import { configuration, pajson, swajson } from "./constants";
 import type { ProjectConfig } from "./types";
 
-function getProjectName(Project: any): string {
+function getProjectName(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.AssemblyName);
+    const propertyGroup = propertyGroups.find((p: any) => p.AssemblyName);
 
     if (propertyGroup) {
       return propertyGroup.AssemblyName;
@@ -21,12 +21,12 @@ function getProjectName(Project: any): string {
   return undefined;
 }
 
-function getPriority(Project: any): string {
+function getPriority(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.PiletPriority);
+    const propertyGroup = propertyGroups.find((p: any) => p.PiletPriority);
 
     if (propertyGroup && !isNaN(+propertyGroup.PiletPriority)) {
       return propertyGroup.PiletPriority;
@@ -36,12 +36,12 @@ function getPriority(Project: any): string {
   return undefined;
 }
 
-function getKind(Project: any): string {
+function getKind(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.PiletKind);
+    const propertyGroup = propertyGroups.find((p: any) => p.PiletKind);
 
     if (propertyGroup) {
       return propertyGroup.PiletKind;
@@ -51,12 +51,12 @@ function getKind(Project: any): string {
   return undefined;
 }
 
-function getTargetFramework(Project: any): string {
+function getTargetFramework(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.TargetFramework);
+    const propertyGroup = propertyGroups.find((p: any) => p.TargetFramework);
 
     if (propertyGroup) {
       return propertyGroup.TargetFramework;
@@ -86,12 +86,12 @@ function getImportedProjects(Project: any, basePath: string): Array<string> {
   return projects;
 }
 
-function getConfigFolderName(Project: any): string {
+function getConfigFolderName(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.ConfigFolder);
+    const propertyGroup = propertyGroups.find((p: any) => p.ConfigFolder);
 
     if (propertyGroup) {
       return propertyGroup.ConfigFolder;
@@ -110,7 +110,7 @@ function getSharedDependencies(Project: any): Array<string> {
       : [Project.ItemGroup];
 
     const sharedGroups = itemGroups.filter(
-      (group) => group["@_Label"] === "shared",
+      (group: any) => group["@_Label"] === "shared",
     );
 
     for (const group of sharedGroups) {
@@ -154,22 +154,24 @@ async function readProject(path: string) {
   const importedProject = getImportedProjects(Project, projectDir);
   const result: ProjectResult = {
     projectDir,
-    configDir: getConfigFolderName(Project),
+    configDir: getConfigFolderName(Project)!,
     sharedDependencies: getSharedDependencies(Project),
-    targetFramework: getTargetFramework(Project),
-    priority: getPriority(Project),
-    kind: getKind(Project),
-    projectName: getProjectName(Project),
+    targetFramework: getTargetFramework(Project)!,
+    priority: getPriority(Project)!,
+    kind: getKind(Project)!,
+    projectName: getProjectName(Project)!,
   };
 
   for (const project of importedProject.reverse()) {
     const newResult = await readProject(project);
 
     Object.entries(newResult).forEach(([name, value]) => {
-      if (result[name] === undefined) {
-        result[name] = value;
-      } else if (Array.isArray(result[name])) {
-        result[name].push(...value);
+      const ex: Record<string, any> = result;
+
+      if (ex[name] === undefined) {
+        ex[name] = value;
+      } else if (Array.isArray(ex[name])) {
+        ex[name].push(...value);
       }
     });
   }

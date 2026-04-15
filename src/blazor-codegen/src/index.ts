@@ -1,12 +1,10 @@
 import { join } from "path";
 
-import { checkExists, getAssetPath, getFilePath, loadJson } from "./io";
-import { rebuildNeeded, getRef } from "./utils";
-import { createAllTargetRefs } from "./targets";
+import { checkExists } from "./io";
+import { rebuildNeeded } from "./utils";
 import { prepare } from "./prepare";
 import { analyzeProject, buildSolution } from "./project";
 import { getProjectConfig } from "./config";
-import type { ProjectAssets, StaticAssets } from "./types";
 import {
   fallbackPiletCode,
   makePiletCode,
@@ -18,13 +16,13 @@ import {
   blazorprojectfolder,
   isRelease,
   teardownfile,
-  scopedCssTraitNames,
 } from "./constants";
 
 const bv = "PIRAL_BLAZOR_LAST_BUILD";
 
 module.exports = async function () {
   const allImports: Array<string> = [];
+  // @ts-ignore
   const targetDir = this.options.outDir;
   const config = await getProjectConfig(blazorprojectfolder);
 
@@ -44,23 +42,10 @@ module.exports = async function () {
     }
   }
 
-  // Require modules
-  const projectAssets = await loadJson<ProjectAssets>(config.paFile);
-  const staticAssets = await loadJson<StaticAssets>(config.swaFile);
+  const { standalone, assets, watchlist } = await prepare(targetDir, config);
 
-  const {
-    standalone,
-    manifest,
-    dlls,
-    pdbs,
-    satellites,
-    watchPaths,
-    nameMapping,
-  } = await prepare(targetDir, staticAssets, projectAssets);
-
-  [config.swaFile, config.paFile, manifest, ...watchPaths]
-    .filter((m) => m.indexOf(`/${config.projectName}.`) !== -1)
-    .forEach((path) => this.addDependency(path));
+  // @ts-ignore
+  watchlist.forEach((path) => this.addDependency(path));
 
   if (standalone) {
     // Integrate API usually provided by piral-blazor
@@ -98,32 +83,26 @@ module.exports = async function () {
     ${standalone ? standaloneRemapCode : ""}
   }`;
 
-  // Refs
-  const uniqueDependencies = dlls.map((f) =>
-    nameMapping.toName(f).replace(/\.(dll|wasm)$/, ""),
-  );
-
-  // Find out if there are ApplicationBundle files, otherwise take ProjectBundle files
-  const traitValue =
-    staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")
-      ?.AssetTraitValue ?? "ProjectBundle";
-  const bundleFiles = staticAssets.Assets.filter(
-    (m) => m.AssetTraitValue === traitValue,
-  );
-
   // Get the CSS files for the project
-  const cssLinks = bundleFiles
-    .filter((m) => scopedCssTraitNames.includes(m.AssetTraitName))
-    .map((m) => getAssetPath(m));
 
-  // Dervice files
-  const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);
-  const files = [...refs.map((ref) => getRef(dlls, ref)), ...pdbs].map((name) =>
-    getFilePath(staticAssets, name),
+  // Derive files
+  const references = assets.assemblies
+    .filter((m) => !m.ignored)
+    .flatMap((m) => [m.name, m.symbols?.name].filter(Boolean));
+
+  const cssLinks = assets.files
+    .filter((m) => m.type === "css")
+    .map((m) => m.name);
+
+  const satellites = Object.fromEntries(
+    Object.entries(assets.satellites).map(([name, files]) => [
+      name,
+      files.map((m) => m.name),
+    ]),
   );
 
   const registerDependenciesCode = `export function registerDependencies(app) {
-    const references = ${JSON.stringify(files)}.map((file) => path + file);
+    const references = ${JSON.stringify(references)}.map((file) => path + file);
     const satellites = ${JSON.stringify(satellites) || "undefined"};
     app.defineBlazorReferences(references, satellites, ${
       config.priority

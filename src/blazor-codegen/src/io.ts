@@ -2,7 +2,7 @@ import { copyFile, mkdir, readFile, stat } from "fs/promises";
 import { basename, dirname, resolve } from "path";
 
 import { ignoredAssets } from "./constants";
-import type { StaticAsset, StaticAssets } from "./types";
+import type { NameMapper, StaticAsset, StaticAssets } from "./types";
 
 function isIgnored(path: string) {
   const name = basename(path);
@@ -16,12 +16,18 @@ function isIgnored(path: string) {
   return false;
 }
 
-async function copyFiles(assets: Array<StaticAsset>, target: string) {
+async function copyFiles(
+  assets: Array<StaticAsset>,
+  target: string,
+  resolver: NameMapper,
+) {
   const watchPaths: Array<string> = [];
 
   for (const asset of assets) {
     const fromPath = asset.Identity;
-    const toPath = resolve(target, getAssetPath(asset));
+    const original = asset.OriginalItemSpec.split("/").pop()!;
+    const fingerprint = resolver.toFingerprint(original);
+    const toPath = resolve(target, getAssetPath(asset, fingerprint));
 
     // do not copy unnecessary files ...
     if (!isCompressFile(toPath) && !isIgnored(toPath)) {
@@ -87,13 +93,17 @@ export function copyAll(
   ignored: Array<string>,
   source: StaticAssets,
   targetDir: string,
+  resolver: NameMapper,
 ) {
-  const staticFiles = source.Assets.filter(
-    (asset) => !ignored.includes(getAssetPath(asset)),
-  );
+  const staticFiles = source.Assets.filter((asset) => {
+    const original = asset.OriginalItemSpec.split("/").pop()!;
+    const fingerprint = resolver.toFingerprint(original);
+    const name = getAssetPath(asset, fingerprint);
+    return !ignored.includes(name);
+  });
 
   //File copy
-  return copyFiles(staticFiles, targetDir);
+  return copyFiles(staticFiles, targetDir, resolver);
 }
 
 export async function checkExists(fn: string) {
