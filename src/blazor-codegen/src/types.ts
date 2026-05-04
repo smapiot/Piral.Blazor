@@ -146,6 +146,7 @@ export interface StaticAsset {
   ContentRoot: string;
   BasePath: string;
   RelativePath: string;
+  Fingerprint?: string;
   AssetKind: string;
   AssetMode: string;
   AssetRole: string;
@@ -235,7 +236,7 @@ export interface DerivedAssets {
    */
   files: Array<{
     /**
-     * If of the file, e.g., MyPilet.css
+     * Id of the file, e.g., MyPilet.css
      */
     id: string;
     /**

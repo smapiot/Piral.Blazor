@@ -1,4 +1,4 @@
-import { resolve, join } from "path";
+import { resolve, join, basename } from "path";
 import { readdir, readFile } from "fs/promises";
 
 import { checkExists, copyAll, getAssetName, loadJson } from "./io";
@@ -91,14 +91,43 @@ function getBlazorRelease(version: string) {
 }
 
 function getAssets(
+  targetDir: string,
   config: ProjectConfig,
   manifest: BlazorManifest,
   staticAssets: StaticAssets,
   projectAssets: ProjectAssets,
 ): DerivedAssets {
   const assemblies: DerivedAssets["assemblies"] = [];
+  const mainProjectName = projectAssets.project.restore.projectName;
   const files: DerivedAssets["files"] = [];
-  const { satelliteResources, fingerprinting = {} } = manifest.resources;
+  const {
+    satelliteResources,
+    fingerprinting = {},
+    assembly,
+    pdb,
+  } = manifest.resources;
+
+  Object.entries(assembly).forEach(([fullName, hash]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const isEntry = originalName === mainProjectName;
+    const asset = staticAssets.Assets.find((a) =>
+      a.Identity.endsWith(fullName),
+    )!;
+    const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
+    const file = asset.RelativePath.replace("#[.{fingerprint}]?", fingerprint);
+
+    assemblies.push({
+      id: basename(asset.Identity),
+      name: basename(file),
+      source: asset.Identity,
+      target: join(targetDir, file),
+      fingerprint,
+      dependency: !isEntry,
+      entry: isEntry,
+      ignored: false,
+      symbols: undefined, //TODO
+    });
+  });
 
   const satellites: DerivedAssets["satellites"] = Object.keys(
     satelliteResources || {},
@@ -118,6 +147,24 @@ function getAssets(
       }));
     return satellites;
   }, {} as SatelliteAssets);
+
+  staticAssets.Assets.forEach((asset) => {
+    if (!asset.RelativePath.startsWith("_framework")) {
+      const isCss = asset.RelativePath.endsWith(".css");
+      const file = asset.RelativePath.replace(
+        "#[.{fingerprint}]?",
+        asset.Fingerprint ? `.${asset.Fingerprint}` : "",
+      );
+
+      files.push({
+        id: basename(asset.Identity),
+        name: basename(file),
+        type: isCss ? "css" : "other",
+        source: asset.Identity,
+        target: join(targetDir, file),
+      });
+    }
+  });
 
   return {
     assemblies,
@@ -227,7 +274,13 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
     );
   }
 
-  const assets = getAssets(config, piletManifest, staticAssets, projectAssets);
+  const assets = getAssets(
+    targetDir,
+    config,
+    piletManifest,
+    staticAssets,
+    projectAssets,
+  );
   const watchlist = [
     config.swaFile,
     config.paFile,
