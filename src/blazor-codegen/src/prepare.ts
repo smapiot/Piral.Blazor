@@ -1,10 +1,10 @@
 import { resolve, join, basename } from "path";
-import { readdir, readFile } from "fs/promises";
+import { readFile } from "fs/promises";
 
 import { checkExists, copyAll, getAssetName, loadJson } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
-import { diffBlazorBootFiles, matchesSatellite } from "./utils";
+import { matchesSatellite } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
 import {
   alwaysIgnored,
@@ -19,16 +19,11 @@ import {
 import type {
   BlazorManifest,
   DerivedAssets,
-  NameMapper,
   ProjectAssets,
   ProjectConfig,
-  SatelliteAssets,
+  StaticAsset,
   StaticAssets,
 } from "./types";
-
-function toFramework(files: Array<string>) {
-  return files.map((n) => `_framework/${n}`);
-}
 
 async function findInstanceName(piralPiletFolder: string): Promise<string> {
   const packageJson = await loadJson(
@@ -90,9 +85,23 @@ function getBlazorRelease(version: string) {
   return `^${blazorRelease}`;
 }
 
+function getBasicProps(asset: StaticAsset, targetDir: string) {
+  const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
+  const file = asset.RelativePath.trim()
+    .replace("#[.{fingerprint}]?", fingerprint)
+    .replace("#[.{fingerprint}]!", fingerprint);
+
+  return {
+    id: basename(asset.Identity),
+    name: basename(file),
+    fingerprint,
+    source: asset.Identity,
+    target: join(targetDir, file),
+  };
+}
+
 function getAssets(
   targetDir: string,
-  config: ProjectConfig,
   manifest: BlazorManifest,
   staticAssets: StaticAssets,
   projectAssets: ProjectAssets,
@@ -100,77 +109,111 @@ function getAssets(
   const assemblies: DerivedAssets["assemblies"] = [];
   const mainProjectName = projectAssets.project.restore.projectName;
   const files: DerivedAssets["files"] = [];
+  const symbols: DerivedAssets["symbols"] = [];
+  const satellites: DerivedAssets["satellites"] = [];
   const {
-    satelliteResources,
+    satelliteResources = {},
     fingerprinting = {},
-    assembly,
-    pdb,
+    assembly = {},
+    pdb = {},
   } = manifest.resources;
 
-  Object.entries(assembly).forEach(([fullName, hash]) => {
+  Object.entries(assembly).forEach(([fullName]) => {
     const originalName = fingerprinting[fullName] || fullName;
-    const isEntry = originalName === mainProjectName;
+    const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
+    const isEntry = originalName === `${mainProjectName}${ext}`;
     const asset = staticAssets.Assets.find((a) =>
       a.Identity.endsWith(fullName),
-    )!;
-    const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
-    const file = asset.RelativePath.replace("#[.{fingerprint}]?", fingerprint);
+    );
 
-    assemblies.push({
-      id: basename(asset.Identity),
-      name: basename(file),
-      source: asset.Identity,
-      target: join(targetDir, file),
-      fingerprint,
-      dependency: !isEntry,
-      entry: isEntry,
-      ignored: false,
-      symbols: undefined, //TODO
-    });
+    if (asset) {
+      assemblies.push({
+        ...getBasicProps(asset, targetDir),
+        dependency: !isEntry,
+        entry: isEntry,
+        ignored: false,
+      });
+    }
   });
 
-  const satellites: DerivedAssets["satellites"] = Object.keys(
-    satelliteResources || {},
-  ).reduce((satellites, name) => {
-    const resources = satelliteResources[name];
+  Object.entries(pdb).forEach(([fullName]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const isEntry = originalName === `${mainProjectName}.pdb`;
+    const asset = staticAssets.Assets.find(
+      (a) => a.AssetTraitValue === "symbol" && a.Identity.endsWith(fullName),
+    );
+
+    if (asset) {
+      symbols.push({
+        ...getBasicProps(asset, targetDir),
+        entry: isEntry,
+        ignored: false,
+      });
+    }
+  });
+
+  Object.entries(satelliteResources).forEach(([culture, resources]) => {
     const files = Object.keys(resources);
-    const toSatellitePath = (file: string) =>
-      staticAssets.Assets.find((m) => matchesSatellite(m, name, file))
-        ?.RelativePath;
-    satellites[name] = files
-      .map(toSatellitePath)
-      .filter(Boolean)
-      .map((file) => ({
-        name: "",
-        source: "",
-        target: "",
-      }));
+    const findSatelliteAsset = (file: string) =>
+      staticAssets.Assets.find((m) => matchesSatellite(m, culture, file));
+
+    files.map(findSatelliteAsset).forEach((asset) => {
+      if (asset) {
+        satellites.push({
+          ...getBasicProps(asset, targetDir),
+          culture,
+        });
+      }
+    });
     return satellites;
-  }, {} as SatelliteAssets);
+  });
 
   staticAssets.Assets.forEach((asset) => {
-    if (!asset.RelativePath.startsWith("_framework")) {
+    if (asset.AssetTraitName === "Content-Encoding") {
+      // Empty on purpose
+    } else if (asset.AssetTraitValue === "ProjectBundle") {
+      // Empty on purpose
+    } else if (!asset.RelativePath.startsWith("_framework")) {
       const isCss = asset.RelativePath.endsWith(".css");
-      const file = asset.RelativePath.replace(
-        "#[.{fingerprint}]?",
-        asset.Fingerprint ? `.${asset.Fingerprint}` : "",
-      );
+      const props = getBasicProps(asset, targetDir);
 
-      files.push({
-        id: basename(asset.Identity),
-        name: basename(file),
-        type: isCss ? "css" : "other",
-        source: asset.Identity,
-        target: join(targetDir, file),
-      });
+      if (!alwaysIgnored.includes(props.id)) {
+        files.push({
+          ...props,
+          type: isCss ? "css" : "other",
+        });
+      }
     }
   });
 
   return {
     assemblies,
+    symbols,
     files,
     satellites,
   };
+}
+
+function updateAssets(assets: DerivedAssets, parent: BlazorManifest) {
+  const { fingerprinting = {}, assembly = {}, pdb = {} } = parent.resources;
+
+  Object.entries(assembly).forEach(([fullName]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const asset = assets.assemblies.find((m) => m.id === originalName);
+
+    if (asset) {
+      asset.ignored = true;
+    }
+  });
+
+  Object.entries(pdb).forEach(([fullName]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const asset = assets.symbols.find((m) => m.id === originalName);
+
+    if (asset) {
+      asset.ignored = true;
+    }
+  });
 }
 
 export async function prepare(targetDir: string, config: ProjectConfig) {
@@ -203,21 +246,12 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
   const piletManifest = await loadJson<BlazorManifest>(manifest);
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
-  const { satelliteResources, fingerprinting = {} } = piletManifest.resources;
-  const nameToFingerprint = new Map(
-    Object.entries(fingerprinting).map(([key, value]) => [value, key]),
+  const assets = getAssets(
+    targetDir,
+    piletManifest,
+    staticAssets,
+    projectAssets,
   );
-  const fingerprintToName = new Map(
-    Object.entries(fingerprinting).map(([key, value]) => [key, value]),
-  );
-  const nameMapping: NameMapper = {
-    toName(fingerprint: string) {
-      return fingerprintToName.get(fingerprint) ?? fingerprint;
-    },
-    toFingerprint(name: string) {
-      return nameToFingerprint.get(name) ?? name;
-    },
-  };
 
   if (blazorInAppshell) {
     console.log(
@@ -229,17 +263,8 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
       appShellManifest,
       projectAssets,
     );
-    const appFrameworkFiles = await readdir(appFrameworkDir);
-    const existingFiles = toFramework(appFrameworkFiles);
-    const ignored = [...alwaysIgnored, ...existingFiles];
 
-    const [dlls, pdbs] = await diffBlazorBootFiles(
-      appdir,
-      instanceName,
-      piletManifest,
-      appShellManifest,
-    );
-
+    updateAssets(assets, appShellManifest);
     checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
   } else {
     const blazorVersion =
@@ -255,38 +280,19 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
     const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
     const manifestPath = require.resolve(bbStandalonePath);
     const originalManifest = await loadJson<BlazorManifest>(manifestPath);
-    const frameworkFiles = toFramework([
-      bbjson,
-      ...Object.keys(originalManifest.resources.assembly || {}),
-      ...Object.keys(originalManifest.resources.pdb || {}),
-      ...Object.keys(originalManifest.resources.runtime || {}),
-      ...Object.keys(originalManifest.resources.jsModuleRuntime || {}),
-      ...Object.keys(originalManifest.resources.jsModuleNative || {}),
-      ...Object.keys(originalManifest.resources.wasmNative || {}),
-    ]);
-    const ignored = [...alwaysIgnored, ...frameworkFiles];
-
-    const [dlls, pdbs] = await diffBlazorBootFiles(
-      appdir,
-      instanceName,
-      piletManifest,
-      originalManifest,
-    );
+    updateAssets(assets, originalManifest);
   }
 
-  const assets = getAssets(
-    targetDir,
-    config,
-    piletManifest,
-    staticAssets,
-    projectAssets,
-  );
   const watchlist = [
     config.swaFile,
     config.paFile,
     manifest,
     ...assets.assemblies.filter((m) => !m.ignored).map((m) => m.source),
+    ...assets.files.map((m) => m.source),
+    ...assets.satellites.map((m) => m.source),
   ].filter((m) => m.indexOf(`/${config.projectName}.`) !== -1);
+
+  await copyAll(assets);
 
   return {
     watchlist,

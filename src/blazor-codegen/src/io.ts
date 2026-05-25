@@ -1,109 +1,50 @@
 import { copyFile, mkdir, readFile, stat } from "fs/promises";
-import { basename, dirname, resolve } from "path";
+import { dirname } from "path";
 
-import { ignoredAssets } from "./constants";
-import type { NameMapper, StaticAsset, StaticAssets } from "./types";
-
-function isIgnored(path: string) {
-  const name = basename(path);
-
-  for (const asset of ignoredAssets) {
-    if (asset.test(name)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-async function copyFiles(
-  assets: Array<StaticAsset>,
-  target: string,
-  resolver: NameMapper,
-) {
-  const watchPaths: Array<string> = [];
-
-  for (const asset of assets) {
-    const fromPath = asset.Identity;
-    const original = asset.OriginalItemSpec.split("/").pop()!;
-    const fingerprint = resolver.toFingerprint(original);
-    const toPath = resolve(target, getAssetPath(asset, fingerprint));
-
-    // do not copy unnecessary files ...
-    if (!isCompressFile(toPath) && !isIgnored(toPath)) {
-      const toDir = dirname(toPath);
-
-      await mkdir(toDir, { recursive: true });
-      await copyFile(fromPath, toPath);
-      watchPaths.push(fromPath);
-    }
-  }
-
-  return watchPaths;
-}
+import type { DerivedAssets, StaticAsset } from "./types";
 
 export function isCompressFile(path: string) {
   return path.endsWith(".gz") || path.endsWith(".br");
 }
 
-export function getAssetName(asset: StaticAsset, fingerprint = "") {
+export function getAssetName(asset: StaticAsset) {
   return (
     asset?.RelativePath
       // Handle legacy patterns (both ! and ?)
-      .replace(/#\[\.{fingerprint}\][!?]/g, fingerprint)
+      .replace(/#\[\.\{fingerprint\}\][!?]/g, "")
       // Handle .NET {0} placeholder pattern
       .replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "")
   );
 }
 
-function getFingerprint(name: string) {
-  const fingerprint = /^[0-9a-z]{10}$/;
-  const segments = name.split(".");
-  segments.pop(); // remove extension
-  const last = segments.length - 1;
-
-  if (last > 0 && fingerprint.test(segments[last])) {
-    return `.${segments[last]}`;
+export async function copyAll(assets: DerivedAssets) {
+  for (const asset of assets.assemblies) {
+    if (!asset.ignored) {
+      const toDir = dirname(asset.target);
+      await mkdir(toDir, { recursive: true });
+      await copyFile(asset.source, asset.target);
+    }
   }
 
-  return "";
-}
-
-export function isAsset(asset: StaticAsset, name: string) {
-  return basename(asset.Identity) === name;
-}
-
-export function getAssetPath(asset: StaticAsset, fingerprint?: string) {
-  const name = getAssetName(asset, fingerprint);
-  return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
-}
-
-export function getFilePath(source: StaticAssets, name: string) {
-  const item = source.Assets.find((m) => isAsset(m, name));
-
-  if (item) {
-    const fingerprint = getFingerprint(name);
-    return getAssetPath(item, fingerprint);
+  for (const asset of assets.files) {
+    const toDir = dirname(asset.target);
+    await mkdir(toDir, { recursive: true });
+    await copyFile(asset.source, asset.target);
   }
 
-  return name;
-}
+  for (const asset of assets.satellites) {
+    const toDir = dirname(asset.target);
+    await mkdir(toDir, { recursive: true });
+    await copyFile(asset.source, asset.target);
+  }
 
-export function copyAll(
-  ignored: Array<string>,
-  source: StaticAssets,
-  targetDir: string,
-  resolver: NameMapper,
-) {
-  const staticFiles = source.Assets.filter((asset) => {
-    const original = asset.OriginalItemSpec.split("/").pop()!;
-    const fingerprint = resolver.toFingerprint(original);
-    const name = getAssetPath(asset, fingerprint);
-    return !ignored.includes(name);
-  });
-
-  //File copy
-  return copyFiles(staticFiles, targetDir, resolver);
+  for (const asset of assets.symbols) {
+    if (!asset.ignored) {
+      const toDir = dirname(asset.target);
+      await mkdir(toDir, { recursive: true });
+      await copyFile(asset.source, asset.target);
+    }
+  }
 }
 
 export async function checkExists(fn: string) {
