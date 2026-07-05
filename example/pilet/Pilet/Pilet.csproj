@@ -8,9 +8,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.13" />
     <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.13" PrivateAssets="all" />
-    <PackageReference Include="Piral.Blazor.DevServer" Version="9.0.19" />
-    <PackageReference Include="Piral.Blazor.Utils" Version="9.0.19" />
-    <PackageReference Include="Piral.Blazor.Tools" Version="9.0.19" />
+    <PackageReference Include="Piral.Blazor.DevServer" Version="9.0.19-pre.20260504.1" />
+    <PackageReference Include="Piral.Blazor.Utils" Version="9.0.19-pre.20260504.1" />
+    <PackageReference Include="Piral.Blazor.Tools" Version="9.0.19-pre.20260504.1" />
   </ItemGroup>
 
   <ItemGroup>
