@@ -2772,7 +2772,7 @@ function getBasicProps(asset, targetDir) {
   const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
   const file = asset.RelativePath.trim().replace("#[.{fingerprint}]?", fingerprint).replace("#[.{fingerprint}]!", fingerprint);
   return {
-    id: (0, import_path3.basename)(asset.Identity),
+    id: (0, import_path3.basename)(asset.Identity).replace(fingerprint, ""),
     name: (0, import_path3.basename)(file),
     fingerprint,
     source: asset.Identity,
@@ -4855,13 +4855,14 @@ module.exports = async function() {
     app.unwire = () => app.off(interopEvent, handler);
     ${standalone ? standaloneRemapCode : ""}
   }`;
-  const references = assets.assemblies.filter((m) => !m.ignored).flatMap((m) => [m.name, m.symbols?.name].filter(Boolean));
-  const cssLinks = assets.files.filter((m) => m.type === "css").map((m) => m.name);
-  const satellites = Object.fromEntries(
-    Object.entries(assets.satellites).map(([name, files]) => [
-      name,
-      files.map((m) => m.name)
-    ])
+  const references = [...assets.assemblies, ...assets.symbols].filter((m) => !m.ignored).flatMap((m) => `_framework/${m.name}`);
+  const cssLinks = assets.files.filter((m) => m.type === "css").map((m) => `_framework/${m.name}`);
+  const satellites = assets.satellites.reduce(
+    (acc, { culture, name }) => {
+      (acc[culture] ??= []).push(`_framework/${name}`);
+      return acc;
+    },
+    {}
   );
   const registerDependenciesCode = `export function registerDependencies(app) {
     const references = ${JSON.stringify(references)}.map((file) => path + file);

@@ -92,7 +92,7 @@ function getBasicProps(asset: StaticAsset, targetDir: string) {
     .replace("#[.{fingerprint}]!", fingerprint);
 
   return {
-    id: basename(asset.Identity),
+    id: basename(asset.Identity).replace(fingerprint, ""),
     name: basename(file),
     fingerprint,
     source: asset.Identity,

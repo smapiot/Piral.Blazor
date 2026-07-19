@@ -83,22 +83,22 @@ module.exports = async function () {
     ${standalone ? standaloneRemapCode : ""}
   }`;
 
-  // Get the CSS files for the project
-
   // Derive files
-  const references = assets.assemblies
+  const references = [...assets.assemblies, ...assets.symbols]
     .filter((m) => !m.ignored)
-    .flatMap((m) => [m.name, m.symbols?.name].filter(Boolean));
+    .flatMap((m) => `_framework/${m.name}`);
 
+  // Get the CSS files for the project
   const cssLinks = assets.files
     .filter((m) => m.type === "css")
-    .map((m) => m.name);
+    .map((m) => `_framework/${m.name}`);
 
-  const satellites = Object.fromEntries(
-    Object.entries(assets.satellites).map(([name, files]) => [
-      name,
-      files.map((m) => m.name),
-    ]),
+  const satellites = assets.satellites.reduce(
+    (acc, { culture, name }) => {
+      (acc[culture] ??= []).push(`_framework/${name}`);
+      return acc;
+    },
+    {} as Record<string, Array<string>>,
   );
 
   const registerDependenciesCode = `export function registerDependencies(app) {
