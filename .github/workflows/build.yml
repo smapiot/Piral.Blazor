@@ -91,15 +91,20 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/blazor-')
         run: |
           cd dist
-
+          # Remove any existing pre-compressed files to avoid publishing them
+          find . -type f -name '*.br' -delete
+          find . -type f -name '*.gz' -delete
+          # Update the version in package.json to include the pre-release suffix with the GitHub run number
           sed -i -e 's/\("version":\s*"\([0-9]\+\.\?\)\+\)/\1-pre.${{ github.run_number }}/' package.json
-
           npm publish --tag next --provenance
 
       - name: Publish Package on NPM
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cd dist
+          # Remove any existing pre-compressed files to avoid publishing them
+          find . -type f -name '*.br' -delete
+          find . -type f -name '*.gz' -delete
           npm publish --tag latest --provenance
 
       - name: Reset Output
