@@ -86,16 +86,16 @@ module.exports = async function () {
   // Derive files
   const references = [...assets.assemblies, ...assets.symbols]
     .filter((m) => !m.ignored)
-    .flatMap((m) => `_framework/${m.name}`);
+    .flatMap((m) => m.name);
 
   // Get the CSS files for the project
   const cssLinks = assets.files
     .filter((m) => m.type === "css")
-    .map((m) => `_framework/${m.name}`);
+    .map((m) => m.name);
 
   const satellites = assets.satellites.reduce(
     (acc, { culture, name }) => {
-      (acc[culture] ??= []).push(`_framework/${name}`);
+      (acc[culture] ??= []).push(name);
       return acc;
     },
     {} as Record<string, Array<string>>,
