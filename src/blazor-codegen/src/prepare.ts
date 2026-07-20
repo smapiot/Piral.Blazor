@@ -87,9 +87,11 @@ function getBlazorRelease(version: string) {
 
 function getBasicProps(asset: StaticAsset, targetDir: string) {
   const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
-  const replacement = asset.OriginalItemSpec.startsWith("wwwroot")
-    ? ""
-    : fingerprint;
+  const replacement =
+    asset.OriginalItemSpec.startsWith("wwwroot") ||
+    asset.OriginalItemSpec.endsWith(".map")
+      ? ""
+      : fingerprint;
   const file = asset.RelativePath.trim()
     .replace("#[.{fingerprint}]?", replacement)
     .replace("#[.{fingerprint}]!", replacement);
@@ -179,6 +181,15 @@ function getAssets(
       files.push({
         ...props,
         type: isCss ? "css" : "other",
+      });
+    } else if (
+      asset.AssetTraitValue === "" &&
+      asset.Identity.endsWith(".map")
+    ) {
+      const props = getBasicProps(asset, join(targetDir, asset.BasePath));
+      files.push({
+        ...props,
+        type: "other",
       });
     } else if (!asset.RelativePath.startsWith("_framework")) {
       const isCss = asset.RelativePath.endsWith(".css");

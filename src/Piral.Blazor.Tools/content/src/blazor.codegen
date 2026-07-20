@@ -2770,7 +2770,7 @@ function getBlazorRelease(version) {
 }
 function getBasicProps(asset, targetDir) {
   const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
-  const replacement = asset.OriginalItemSpec.startsWith("wwwroot") ? "" : fingerprint;
+  const replacement = asset.OriginalItemSpec.startsWith("wwwroot") || asset.OriginalItemSpec.endsWith(".map") ? "" : fingerprint;
   const file = asset.RelativePath.trim().replace("#[.{fingerprint}]?", replacement).replace("#[.{fingerprint}]!", replacement);
   return {
     id: (0, import_path3.basename)(asset.Identity).replace(fingerprint, ""),
@@ -2842,6 +2842,12 @@ function getAssets(targetDir, manifest, staticAssets, projectAssets) {
       files.push({
         ...props,
         type: isCss ? "css" : "other"
+      });
+    } else if (asset.AssetTraitValue === "" && asset.Identity.endsWith(".map")) {
+      const props = getBasicProps(asset, (0, import_path3.join)(targetDir, asset.BasePath));
+      files.push({
+        ...props,
+        type: "other"
       });
     } else if (!asset.RelativePath.startsWith("_framework")) {
       const isCss = asset.RelativePath.endsWith(".css");
