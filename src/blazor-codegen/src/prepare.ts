@@ -85,6 +85,10 @@ function getBlazorRelease(version: string) {
   return `^${blazorRelease}`;
 }
 
+function getAssetPath(asset: StaticAsset, name: string) {
+  return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
+}
+
 function getBasicProps(asset: StaticAsset, targetDir: string) {
   const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
   const replacement =
@@ -98,7 +102,7 @@ function getBasicProps(asset: StaticAsset, targetDir: string) {
 
   return {
     id: basename(asset.Identity).replace(fingerprint, ""),
-    name: file,
+    name: getAssetPath(asset, file),
     fingerprint,
     source: asset.Identity,
     target: join(targetDir, file),
