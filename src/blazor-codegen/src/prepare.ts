@@ -87,9 +87,12 @@ function getBlazorRelease(version: string) {
 
 function getBasicProps(asset: StaticAsset, targetDir: string) {
   const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
+  const replacement = asset.OriginalItemSpec.startsWith("wwwroot")
+    ? ""
+    : fingerprint;
   const file = asset.RelativePath.trim()
-    .replace("#[.{fingerprint}]?", fingerprint)
-    .replace("#[.{fingerprint}]!", fingerprint);
+    .replace("#[.{fingerprint}]?", replacement)
+    .replace("#[.{fingerprint}]!", replacement);
 
   return {
     id: basename(asset.Identity).replace(fingerprint, ""),
@@ -154,7 +157,7 @@ function getAssets(
   Object.entries(satelliteResources).forEach(([culture, resources]) => {
     const files = Object.keys(resources);
     const findSatelliteAsset = (file: string) =>
-      staticAssets.Assets.find((m) => matchesSatellite(m, culture, file));//TODO
+      staticAssets.Assets.find((m) => matchesSatellite(m, culture, file)); //TODO
 
     files.map(findSatelliteAsset).forEach((asset) => {
       if (asset) {
@@ -171,7 +174,12 @@ function getAssets(
     if (asset.AssetTraitName === "Content-Encoding") {
       // Empty on purpose
     } else if (asset.AssetTraitValue === "ProjectBundle") {
-      // Empty on purpose
+      const isCss = asset.RelativePath.endsWith(".css");
+      const props = getBasicProps(asset, join(targetDir, asset.BasePath));
+      files.push({
+        ...props,
+        type: isCss ? "css" : "other",
+      });
     } else if (!asset.RelativePath.startsWith("_framework")) {
       const isCss = asset.RelativePath.endsWith(".css");
       const props = getBasicProps(asset, targetDir);
