@@ -1,11 +1,9 @@
 import { join } from "path";
-import { existsSync } from "fs";
-import { getAssetPath, getFilePath } from "./io";
-import { rebuildNeeded, getRef } from "./utils";
-import { createAllTargetRefs } from "./targets";
+
+import { checkExists } from "./io";
+import { rebuildNeeded } from "./utils";
 import { prepare } from "./prepare";
 import { analyzeProject, buildSolution } from "./project";
-import { ProjectAssets, StaticAssets } from "./types";
 import { getProjectConfig } from "./config";
 import {
   fallbackPiletCode,
@@ -18,19 +16,19 @@ import {
   blazorprojectfolder,
   isRelease,
   teardownfile,
-  scopedCssTraitNames,
 } from "./constants";
 
 const bv = "PIRAL_BLAZOR_LAST_BUILD";
 
 module.exports = async function () {
   const allImports: Array<string> = [];
+  // @ts-ignore
   const targetDir = this.options.outDir;
   const config = await getProjectConfig(blazorprojectfolder);
 
   // always build when files not found or in release
   // never re-build just when there is a change incoming
-  if (!process.env[bv] && (isRelease || rebuildNeeded(config))) {
+  if (!process.env[bv] && (isRelease || (await rebuildNeeded(config)))) {
     try {
       await buildSolution(blazorprojectfolder);
     } catch (err) {
@@ -39,21 +37,15 @@ module.exports = async function () {
           `Something went wrong with the Blazor build.`,
           `Make sure there is at least one Blazor project in your solution.`,
           `Seen error: ${err}`,
-        ].join("\n")
+        ].join("\n"),
       );
     }
   }
 
-  // Require modules
-  const projectAssets: ProjectAssets = require(config.paFile);
-  const staticAssets: StaticAssets = require(config.swaFile);
+  const { standalone, assets, watchlist } = await prepare(targetDir, config);
 
-  const { standalone, manifest, dlls, pdbs, satellites, watchPaths } =
-    await prepare(targetDir, staticAssets, projectAssets);
-
-  [config.swaFile, config.paFile, manifest, ...watchPaths]
-    .filter((m) => m.indexOf(`/${config.projectName}.`) !== -1)
-    .forEach((path) => this.addDependency(path));
+  // @ts-ignore
+  watchlist.forEach((path) => this.addDependency(path));
 
   if (standalone) {
     // Integrate API usually provided by piral-blazor
@@ -91,36 +83,32 @@ module.exports = async function () {
     ${standalone ? standaloneRemapCode : ""}
   }`;
 
-  // Refs
-  const uniqueDependencies = dlls.map((f) => f.replace(/\.(dll|wasm)$/, ""));
-
-  // Find out if there are ApplicationBundle files, otherwise take ProjectBundle files
-  const traitValue =
-    staticAssets.Assets.find((m) => m.AssetTraitValue === "ApplicationBundle")
-      ?.AssetTraitValue ?? "ProjectBundle";
-  const bundleFiles = staticAssets.Assets.filter(
-    (m) => m.AssetTraitValue === traitValue
-  );
+  // Derive files
+  const references = [...assets.assemblies, ...assets.symbols]
+    .filter((m) => !m.ignored)
+    .flatMap((m) => m.name);
 
   // Get the CSS files for the project
-  const cssLinks = bundleFiles
-    .filter((m) => scopedCssTraitNames.includes(m.AssetTraitName))
-    .map(getAssetPath);
+  const cssLinks = assets.files
+    .filter((m) => m.type === "css")
+    .map((m) => m.name);
 
-  // Dervice files
-  const refs = createAllTargetRefs(config, uniqueDependencies, projectAssets);
-  const files = [...refs.map((ref) => getRef(dlls, ref)), ...pdbs].map((name) =>
-    getFilePath(staticAssets, name)
+  const satellites = assets.satellites.reduce(
+    (acc, { culture, name }) => {
+      (acc[culture] ??= []).push(name);
+      return acc;
+    },
+    {} as Record<string, Array<string>>,
   );
 
   const registerDependenciesCode = `export function registerDependencies(app) {
-    const references = ${JSON.stringify(files)}.map((file) => path + file);
+    const references = ${JSON.stringify(references)}.map((file) => path + file);
     const satellites = ${JSON.stringify(satellites) || "undefined"};
     app.defineBlazorReferences(references, satellites, ${
       config.priority
     }, ${JSON.stringify(config.kind)}, ${JSON.stringify(
-    config.sharedDependencies
-  )});
+      config.sharedDependencies,
+    )});
   }`;
 
   //Options
@@ -130,7 +118,7 @@ module.exports = async function () {
 
   // Setup file
   const setupFilePath = join(config.configDir, setupfile).replace(/\\/g, "/");
-  const setupFileExists = existsSync(setupFilePath);
+  const setupFileExists = await checkExists(setupFilePath);
 
   if (setupFileExists) {
     allImports.push(`import projectSetup from '${setupFilePath}';`);
@@ -161,9 +149,9 @@ module.exports = async function () {
   // Teardown file
   const teardownFilePath = join(config.configDir, teardownfile).replace(
     /\\/g,
-    "/"
+    "/",
   );
-  const teardownFileExists = existsSync(teardownFilePath);
+  const teardownFileExists = await checkExists(teardownFilePath);
 
   if (teardownFileExists) {
     allImports.push(`import projectTeardown from '${teardownFilePath}';`);
@@ -185,7 +173,7 @@ module.exports = async function () {
     setupPiletCode,
     teardownPiletCode,
     registerDependenciesCode,
-    registerOptionsCode
+    registerOptionsCode,
   );
 
   try {

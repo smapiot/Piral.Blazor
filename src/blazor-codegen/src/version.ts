@@ -1,5 +1,5 @@
 import { mainAssembly, selectedFramework } from "./constants";
-import { BlazorManifest, ProjectAssets } from "./types";
+import type { BlazorManifest, ProjectAssets } from "./types";
 
 /* 
   More advanced version compare that can handle versions 
@@ -43,16 +43,14 @@ export function stripVersion(x: string) {
 
 export function extractDotnetVersion(
   manifest: BlazorManifest,
-  projectAssets: ProjectAssets
+  projectAssets: ProjectAssets,
 ) {
   const dotnetFiles =
-    manifest.resources.runtime || manifest.resources.jsModuleRuntime;
+    manifest.resources.runtime || manifest.resources.jsModuleRuntime || {};
 
   const dotnetVersion =
     Object.keys(dotnetFiles)
-
       .map((x) => x.match(/^dotnet\.(.*?)\.js/))
-
       .find(Boolean)?.[1] || "0.0.0";
 
   const dotnetVersionFinding = /\.(\d+\.\d+\.\d+)\./.exec(dotnetVersion);
@@ -62,7 +60,6 @@ export function extractDotnetVersion(
   }
 
   const framework = projectAssets.project.frameworks[selectedFramework];
-
   const dependencyVersion =
     framework?.dependencies[mainAssembly]?.version || "0.0.0";
 
@@ -77,7 +74,7 @@ export function extractDotnetVersion(
 
 export function checkDotnetVersion(
   piletDotnetVersion: string,
-  appshellDotnetVersion: string
+  appshellDotnetVersion: string,
 ) {
   const versionMatch = isVersionSame(appshellDotnetVersion, piletDotnetVersion);
 

@@ -1,11 +1,11 @@
-import { resolve, join } from "path";
-import { existsSync, readdirSync, readFileSync } from "fs";
-import { copyAll, getAssetName } from "./io";
+import { resolve, join, basename } from "path";
+import { readFile } from "fs/promises";
+
+import { checkExists, copyAll, getAssetName, loadJson } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
-import { diffBlazorBootFiles, matchesSatellite } from "./utils";
+import { matchesSatellite } from "./utils";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
-import { BlazorManifest, ProjectAssets, StaticAssets } from "./types";
 import {
   alwaysIgnored,
   bbjson,
@@ -16,23 +16,31 @@ import {
   variant,
   blazorrc,
 } from "./constants";
+import type {
+  BlazorManifest,
+  DerivedAssets,
+  ProjectAssets,
+  ProjectConfig,
+  StaticAsset,
+  StaticAssets,
+} from "./types";
 
-function toFramework(files: Array<string>) {
-  return files.map((n) => `_framework/${n}`);
-}
-
-function findInstanceName(piralPiletFolder: string): string {
-  const packageJson = require(resolve(piralPiletFolder, packageJsonFilename));
+async function findInstanceName(piralPiletFolder: string): Promise<string> {
+  const packageJson = await loadJson(
+    resolve(piralPiletFolder, packageJsonFilename),
+  );
   const piletJsonFilePath = join(piralPiletFolder, piletJsonFilename).replace(
     /\\/g,
-    "/"
+    "/",
   );
-  const piletJsonFileExists = existsSync(piletJsonFilePath);
+  const piletJsonFileExists = await checkExists(piletJsonFilePath);
 
   if (piletJsonFileExists) {
-    const piletJson = require(resolve(piralPiletFolder, piletJsonFilename));
+    const piletJson = await loadJson(
+      resolve(piralPiletFolder, piletJsonFilename),
+    );
     const selectedInstance = Object.keys(piletJson.piralInstances).find(
-      (key) => piletJson.piralInstances[key].selected
+      (key) => piletJson.piralInstances[key].selected,
     );
 
     if (selectedInstance !== undefined) {
@@ -45,10 +53,10 @@ function findInstanceName(piralPiletFolder: string): string {
   return packageJson.piral.name;
 }
 
-function findBlazorVersion(piralPiletFolder: string) {
+async function findBlazorVersion(piralPiletFolder: string) {
   const key = "Version=";
   const blazorrcPath = resolve(piralPiletFolder, blazorrc);
-  const content = readFileSync(blazorrcPath, "utf8");
+  const content = await readFile(blazorrcPath, "utf8");
   const line = content
     .split("\r")
     .join("")
@@ -68,7 +76,7 @@ function getBlazorRelease(version: string) {
 
   if (!result) {
     throw new Error(
-      "Could not detect version of Blazor. Something does not seem right."
+      "Could not detect version of Blazor. Something does not seem right.",
     );
   }
 
@@ -77,110 +85,240 @@ function getBlazorRelease(version: string) {
   return `^${blazorRelease}`;
 }
 
-export async function prepare(
+function getAssetPath(asset: StaticAsset, name: string) {
+  return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
+}
+
+function getBasicProps(asset: StaticAsset, targetDir: string) {
+  const fingerprint = asset.Fingerprint ? `.${asset.Fingerprint}` : "";
+  const replacement =
+    asset.OriginalItemSpec.startsWith("wwwroot") ||
+    asset.OriginalItemSpec.endsWith(".map")
+      ? ""
+      : fingerprint;
+  const file = asset.RelativePath.trim()
+    .replace("#[.{fingerprint}]?", replacement)
+    .replace("#[.{fingerprint}]!", replacement);
+
+  return {
+    id: basename(asset.Identity).replace(fingerprint, ""),
+    name: getAssetPath(asset, file),
+    fingerprint,
+    source: asset.Identity,
+    target: join(targetDir, file),
+  };
+}
+
+function getAssets(
   targetDir: string,
+  manifest: BlazorManifest,
   staticAssets: StaticAssets,
-  projectAssets: ProjectAssets
-) {
+  projectAssets: ProjectAssets,
+): DerivedAssets {
+  const byIntegrity = new Map(
+    staticAssets.Assets.map((a) => [`sha256-${a.Integrity}`, a]),
+  );
+  const assemblies: DerivedAssets["assemblies"] = [];
+  const mainProjectName = projectAssets.project.restore.projectName;
+  const files: DerivedAssets["files"] = [];
+  const symbols: DerivedAssets["symbols"] = [];
+  const satellites: DerivedAssets["satellites"] = [];
+  const {
+    satelliteResources = {},
+    fingerprinting = {},
+    assembly = {},
+    pdb = {},
+  } = manifest.resources;
+
+  Object.entries(assembly).forEach(([fullName, integrity]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
+    const isEntry = originalName === `${mainProjectName}${ext}`;
+    const asset = byIntegrity.get(integrity);
+
+    if (asset) {
+      assemblies.push({
+        ...getBasicProps(asset, targetDir),
+        dependency: !isEntry,
+        entry: isEntry,
+        ignored: false,
+      });
+    }
+  });
+
+  Object.entries(pdb).forEach(([fullName, integrity]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const isEntry = originalName === `${mainProjectName}.pdb`;
+    const asset = byIntegrity.get(integrity);
+
+    if (asset) {
+      symbols.push({
+        ...getBasicProps(asset, targetDir),
+        entry: isEntry,
+        ignored: false,
+      });
+    }
+  });
+
+  Object.entries(satelliteResources).forEach(([culture, resources]) => {
+    const files = Object.keys(resources);
+    const findSatelliteAsset = (file: string) =>
+      staticAssets.Assets.find((m) => matchesSatellite(m, culture, file)); //TODO
+
+    files.map(findSatelliteAsset).forEach((asset) => {
+      if (asset) {
+        satellites.push({
+          ...getBasicProps(asset, targetDir),
+          culture,
+        });
+      }
+    });
+    return satellites;
+  });
+
+  staticAssets.Assets.forEach((asset) => {
+    if (asset.AssetTraitName === "Content-Encoding") {
+      // Empty on purpose
+    } else if (asset.AssetTraitValue === "ProjectBundle") {
+      const isCss = asset.RelativePath.endsWith(".css");
+      const props = getBasicProps(asset, join(targetDir, asset.BasePath));
+      files.push({
+        ...props,
+        type: isCss ? "css" : "other",
+      });
+    } else if (
+      asset.AssetTraitValue === "" &&
+      asset.Identity.endsWith(".map")
+    ) {
+      const props = getBasicProps(asset, join(targetDir, asset.BasePath));
+      files.push({
+        ...props,
+        type: "other",
+      });
+    } else if (!asset.RelativePath.startsWith("_framework")) {
+      const isCss = asset.RelativePath.endsWith(".css");
+      const props = getBasicProps(asset, targetDir);
+
+      if (!alwaysIgnored.includes(props.id)) {
+        files.push({
+          ...props,
+          type: isCss ? "css" : "other",
+        });
+      }
+    }
+  });
+
+  return {
+    assemblies,
+    symbols,
+    files,
+    satellites,
+  };
+}
+
+function updateAssets(assets: DerivedAssets, parent: BlazorManifest) {
+  const { fingerprinting = {}, assembly = {}, pdb = {} } = parent.resources;
+
+  Object.entries(assembly).forEach(([fullName]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const asset = assets.assemblies.find((m) => m.id === originalName);
+
+    if (asset) {
+      asset.ignored = true;
+    }
+  });
+
+  Object.entries(pdb).forEach(([fullName]) => {
+    const originalName = fingerprinting[fullName] || fullName;
+    const asset = assets.symbols.find((m) => m.id === originalName);
+
+    if (asset) {
+      asset.ignored = true;
+    }
+  });
+}
+
+export async function prepare(targetDir: string, config: ProjectConfig) {
+  // Require modules
+  const projectAssets = await loadJson<ProjectAssets>(config.paFile);
+  const staticAssets = await loadJson<StaticAssets>(config.swaFile);
   const piralPiletFolder = resolve(__dirname, "..");
-  const instanceName = findInstanceName(piralPiletFolder);
-  const appdir = findAppDir(piralPiletFolder, instanceName);
+  const instanceName = await findInstanceName(piralPiletFolder);
+  const appdir = await findAppDir(piralPiletFolder, instanceName);
 
   const manifestSource = staticAssets.Assets.find(
     (m) =>
       wasmResourceTraitNames.includes(m.AssetTraitName) &&
       m.AssetTraitValue === "manifest" &&
-      getAssetName(m).endsWith(bbjson)
+      getAssetName(m).endsWith(bbjson),
   );
 
   if (!manifestSource) {
     throw new Error(
-      `Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`
+      `Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`,
     );
   }
 
   // Piral Blazor checks
   const appFrameworkDir = resolve(appdir, "app", "_framework");
   const bbAppShellPath = resolve(appFrameworkDir, bbjson);
-  const blazorInAppshell = existsSync(bbAppShellPath);
+  const blazorInAppshell = await checkExists(bbAppShellPath);
   const shellPackagePath = resolve(appdir, packageJsonFilename);
   const manifest = manifestSource.Identity;
-  const piletManifest: BlazorManifest = require(manifest);
-  const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
+  const piletManifest = await loadJson<BlazorManifest>(manifest);
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
-  const { satelliteResources } = piletManifest.resources;
-
-  const satellites = Object.keys(satelliteResources || {}).reduce(
-    (satellites, name) => {
-      const resources = satelliteResources[name];
-      const files = Object.keys(resources);
-      const toSatellitePath = (file: string) =>
-        staticAssets.Assets.find((m) => matchesSatellite(m, name, file))
-          ?.RelativePath;
-      satellites[name] = files.map(toSatellitePath).filter(Boolean);
-      return satellites;
-    },
-    {} as Record<string, Array<string>>
+  const assets = getAssets(
+    targetDir,
+    piletManifest,
+    staticAssets,
+    projectAssets,
   );
 
   if (blazorInAppshell) {
     console.log(
-      "The app shell already integrates `piral-blazor` with `blazor`."
+      "The app shell already integrates `piral-blazor` with `blazor`.",
     );
 
-    const appShellManifest: BlazorManifest = require(bbAppShellPath);
+    const appShellManifest = await loadJson<BlazorManifest>(bbAppShellPath);
     const appshellDotnetVersion = extractDotnetVersion(
       appShellManifest,
-      projectAssets
-    );
-    const existingFiles = toFramework(readdirSync(appFrameworkDir));
-    const ignored = [...alwaysIgnored, ...existingFiles];
-
-    const [dlls, pdbs] = diffBlazorBootFiles(
-      appdir,
-      instanceName,
-      piletManifest,
-      appShellManifest
+      projectAssets,
     );
 
+    updateAssets(assets, appShellManifest);
     checkDotnetVersion(piletDotnetVersion, appshellDotnetVersion);
-
-    const watchPaths = copyAll(ignored, staticAssets, targetDir);
-
-    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
   } else {
     const blazorVersion =
-      findBlazorVersion(piralPiletFolder) ||
+      (await findBlazorVersion(piralPiletFolder)) ||
       getBlazorRelease(piletDotnetVersion);
 
     console.log(
-      "The app shell does not contain `piral-blazor`. Using standalone mode."
+      "The app shell does not contain `piral-blazor`. Using standalone mode.",
     );
 
     await checkInstallation(blazorVersion, shellPackagePath);
 
-    const originalManifest: BlazorManifest = require(bbStandalonePath);
-    const frameworkFiles = toFramework([
-      bbjson,
-      ...Object.keys(originalManifest.resources.assembly || {}),
-      ...Object.keys(originalManifest.resources.pdb || {}),
-      ...Object.keys(originalManifest.resources.runtime || {}),
-      ...Object.keys(originalManifest.resources.jsModuleRuntime || {}),
-      ...Object.keys(originalManifest.resources.jsModuleNative || {}),
-      ...Object.keys(originalManifest.resources.wasmNative || {}),
-    ]);
-    const ignored = [...alwaysIgnored, ...frameworkFiles];
-
-    const [dlls, pdbs] = diffBlazorBootFiles(
-      appdir,
-      instanceName,
-      piletManifest,
-      originalManifest
-    );
-
-    const watchPaths = copyAll(ignored, staticAssets, targetDir);
-
-    return { dlls, pdbs, standalone, manifest, satellites, watchPaths };
+    const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
+    const manifestPath = require.resolve(bbStandalonePath);
+    const originalManifest = await loadJson<BlazorManifest>(manifestPath);
+    updateAssets(assets, originalManifest);
   }
+
+  const watchlist = [
+    config.swaFile,
+    config.paFile,
+    manifest,
+    ...assets.assemblies.filter((m) => !m.ignored).map((m) => m.source),
+    ...assets.files.map((m) => m.source),
+    ...assets.satellites.map((m) => m.source),
+  ].filter((m) => m.indexOf(`/${config.projectName}.`) !== -1);
+
+  await copyAll(assets);
+
+  return {
+    watchlist,
+    standalone,
+    assets,
+  };
 }

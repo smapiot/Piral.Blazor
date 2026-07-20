@@ -1,5 +1,5 @@
 import { stripVersion } from "./version";
-import { ProjectAssets, ProjectConfig, Targets } from "./types";
+import type { ProjectAssets, ProjectConfig, Targets } from "./types";
 
 function createAllRefs(internaltargets: Targets, externalTargets: Targets) {
   // Sets de-duplicate AND keep their insertion order
@@ -37,7 +37,7 @@ function createAllRefs(internaltargets: Targets, externalTargets: Targets) {
 function defineTargets(
   config: ProjectConfig,
   uniqueDependencies: Array<string>,
-  projectAssets: ProjectAssets
+  projectAssets: ProjectAssets,
 ): [internal: Targets, external: Targets] {
   const isNotSharedDep = (x: string | undefined) =>
     typeof x === "string" && uniqueDependencies.includes(x);
@@ -54,7 +54,7 @@ function defineTargets(
   // Looks up the dll name for a project id
   const getDllName = (projectId: string) => {
     const target = Object.entries(targets).find(
-      (t) => stripVersion(t[0]) === projectId
+      (t) => stripVersion(t[0]) === projectId,
     );
 
     const compile = target?.[1]?.compile;
@@ -65,7 +65,7 @@ function defineTargets(
 
     return ((Object.keys(compile)?.[0] ?? "").split("/").pop() ?? "").replace(
       /\.(dll|wasm)$/,
-      ""
+      "",
     );
   };
 
@@ -84,7 +84,7 @@ function defineTargets(
         [
           dllName as string,
           filterDeps(Object.keys(data.dependencies || {})),
-        ] as const
+        ] as const,
     )
     // key-value to object
     .reduce((acc, [k, v]) => ({ [k]: v, ...acc }), {});
@@ -92,8 +92,8 @@ function defineTargets(
   const projectDependencies = filterDeps(
     Object.keys(
       projectAssets.project?.frameworks?.[config.targetFramework]
-        ?.dependencies ?? {}
-    )
+        ?.dependencies ?? {},
+    ),
   );
 
   // Get internal project
@@ -110,7 +110,7 @@ function defineTargets(
 export function createAllTargetRefs(
   config: ProjectConfig,
   uniqueDependencies: Array<string>,
-  projectAssets: ProjectAssets
+  projectAssets: ProjectAssets,
 ) {
   const targets = defineTargets(config, uniqueDependencies, projectAssets);
   return createAllRefs(...targets);

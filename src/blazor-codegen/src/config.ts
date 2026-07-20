@@ -1,16 +1,17 @@
 import glob from "glob";
 import { basename, dirname, resolve } from "path";
-import { readFile } from "fs";
+import { readFile } from "fs/promises";
 import { XMLParser } from "fast-xml-parser";
-import { configuration, pajson, swajson } from "./constants";
-import { ProjectConfig } from "./types";
 
-function getProjectName(Project: any): string {
+import { configuration, pajson, swajson } from "./constants";
+import type { ProjectConfig } from "./types";
+
+function getProjectName(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.AssemblyName);
+    const propertyGroup = propertyGroups.find((p: any) => p.AssemblyName);
 
     if (propertyGroup) {
       return propertyGroup.AssemblyName;
@@ -20,12 +21,12 @@ function getProjectName(Project: any): string {
   return undefined;
 }
 
-function getPriority(Project: any): string {
+function getPriority(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.PiletPriority);
+    const propertyGroup = propertyGroups.find((p: any) => p.PiletPriority);
 
     if (propertyGroup && !isNaN(+propertyGroup.PiletPriority)) {
       return propertyGroup.PiletPriority;
@@ -35,12 +36,12 @@ function getPriority(Project: any): string {
   return undefined;
 }
 
-function getKind(Project: any): string {
+function getKind(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.PiletKind);
+    const propertyGroup = propertyGroups.find((p: any) => p.PiletKind);
 
     if (propertyGroup) {
       return propertyGroup.PiletKind;
@@ -50,12 +51,12 @@ function getKind(Project: any): string {
   return undefined;
 }
 
-function getTargetFramework(Project: any): string {
+function getTargetFramework(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.TargetFramework);
+    const propertyGroup = propertyGroups.find((p: any) => p.TargetFramework);
 
     if (propertyGroup) {
       return propertyGroup.TargetFramework;
@@ -85,12 +86,12 @@ function getImportedProjects(Project: any, basePath: string): Array<string> {
   return projects;
 }
 
-function getConfigFolderName(Project: any): string {
+function getConfigFolderName(Project: any): string | undefined {
   if (typeof Project.PropertyGroup === "object" && Project.PropertyGroup) {
     const propertyGroups = Array.isArray(Project.PropertyGroup)
       ? Project.PropertyGroup
       : [Project.PropertyGroup];
-    const propertyGroup = propertyGroups.find((p) => p.ConfigFolder);
+    const propertyGroup = propertyGroups.find((p: any) => p.ConfigFolder);
 
     if (propertyGroup) {
       return propertyGroup.ConfigFolder;
@@ -109,7 +110,7 @@ function getSharedDependencies(Project: any): Array<string> {
       : [Project.ItemGroup];
 
     const sharedGroups = itemGroups.filter(
-      (group) => group["@_Label"] === "shared"
+      (group: any) => group["@_Label"] === "shared",
     );
 
     for (const group of sharedGroups) {
@@ -142,46 +143,40 @@ interface ProjectResult {
   projectName: string;
 }
 
-function readProject(path: string) {
+async function readProject(path: string) {
   const projectDir = dirname(path);
-
-  return new Promise<ProjectResult>((resolve, reject) => {
-    readFile(path, "utf8", async (err, xmlData) => {
-      if (err) {
-        return reject(err);
-      }
-
-      const xmlParser = new XMLParser({
-        ignoreAttributes: false,
-        allowBooleanAttributes: true
-      });
-      const { Project } = xmlParser.parse(xmlData);
-      const importedProject = getImportedProjects(Project, projectDir);
-      const result: ProjectResult = {
-        projectDir,
-        configDir: getConfigFolderName(Project),
-        sharedDependencies: getSharedDependencies(Project),
-        targetFramework: getTargetFramework(Project),
-        priority: getPriority(Project),
-        kind: getKind(Project),
-        projectName: getProjectName(Project),
-      };
-
-      for (const project of importedProject.reverse()) {
-        const newResult = await readProject(project);
-
-        Object.entries(newResult).forEach(([name, value]) => {
-          if (result[name] === undefined) {
-            result[name] = value;
-          } else if (Array.isArray(result[name])) {
-            result[name].push(...value);
-          }
-        });
-      }
-
-      resolve(result);
-    });
+  const xmlData = await readFile(path, "utf8");
+  const xmlParser = new XMLParser({
+    ignoreAttributes: false,
+    allowBooleanAttributes: true,
   });
+  const { Project } = xmlParser.parse(xmlData);
+  const importedProject = getImportedProjects(Project, projectDir);
+  const result: ProjectResult = {
+    projectDir,
+    configDir: getConfigFolderName(Project)!,
+    sharedDependencies: getSharedDependencies(Project),
+    targetFramework: getTargetFramework(Project)!,
+    priority: getPriority(Project)!,
+    kind: getKind(Project)!,
+    projectName: getProjectName(Project)!,
+  };
+
+  for (const project of importedProject.reverse()) {
+    const newResult = await readProject(project);
+
+    Object.entries(newResult).forEach(([name, value]) => {
+      const ex: Record<string, any> = result;
+
+      if (ex[name] === undefined) {
+        ex[name] = value;
+      } else if (Array.isArray(ex[name])) {
+        ex[name].push(...value);
+      }
+    });
+  }
+
+  return result;
 }
 
 export function getProjectConfig(projectDir: string) {
@@ -189,7 +184,7 @@ export function getProjectConfig(projectDir: string) {
     glob(`${projectDir}/*.csproj`, (err, matches) => {
       if (!!err || !matches || matches.length === 0) {
         return rejectPromise(
-          new Error(`Project file not found. Details: ${err}`)
+          new Error(`Project file not found. Details: ${err}`),
         );
       }
 
@@ -199,9 +194,9 @@ export function getProjectConfig(projectDir: string) {
             `Only one project file is allowed. You have: ${JSON.stringify(
               matches,
               null,
-              2
-            )}`
-          )
+              2,
+            )}`,
+          ),
         );
       }
 
@@ -212,7 +207,7 @@ export function getProjectConfig(projectDir: string) {
         .then((result) => {
           if (!result.targetFramework) {
             throw new Error(
-              'The project file does not specify a "TargetFramework" property.'
+              'The project file does not specify a "TargetFramework" property.',
             );
           }
 
@@ -226,7 +221,7 @@ export function getProjectConfig(projectDir: string) {
               "obj",
               configuration,
               result.targetFramework,
-              swajson
+              swajson,
             ),
             sharedDependencies: result.sharedDependencies,
             targetFramework: result.targetFramework,

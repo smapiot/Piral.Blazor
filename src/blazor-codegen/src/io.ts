@@ -1,39 +1,7 @@
-import { copyFileSync, mkdirSync } from "fs";
-import { basename, dirname, resolve } from "path";
-import { StaticAsset, StaticAssets } from "./types";
-import { ignoredAssets } from "./constants";
+import { copyFile, mkdir, readFile, stat } from "fs/promises";
+import { dirname } from "path";
 
-function isIgnored(path: string) {
-  const name = basename(path);
-
-  for (const asset of ignoredAssets) {
-    if (asset.test(name)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function copyFiles(assets: Array<StaticAsset>, target: string) {
-  const watchPaths: Array<string> = [];
-
-  for (const asset of assets) {
-    const fromPath = asset.Identity;
-    const toPath = resolve(target, getAssetPath(asset));
-
-    // do not copy unnecessary files ...
-    if (!isCompressFile(toPath) && !isIgnored(toPath)) {
-      const toDir = dirname(toPath);
-
-      mkdirSync(toDir, { recursive: true });
-      copyFileSync(fromPath, toPath);
-      watchPaths.push(fromPath);
-    }
-  }
-
-  return watchPaths;
-}
+import type { DerivedAssets, StaticAsset } from "./types";
 
 export function isCompressFile(path: string) {
   return path.endsWith(".gz") || path.endsWith(".br");
@@ -43,40 +11,52 @@ export function getAssetName(asset: StaticAsset) {
   return (
     asset?.RelativePath
       // Handle legacy patterns (both ! and ?)
-      .replace(/#\[\.{fingerprint}\][!?]/g, "")
+      .replace(/#\[\.\{fingerprint\}\][!?]/g, "")
       // Handle .NET {0} placeholder pattern
       .replace(/-\{0\}-[a-zA-Z0-9]+-[a-zA-Z0-9]+/g, "")
   );
 }
 
-export function isAsset(asset: StaticAsset, name: string) {
-  return basename(getAssetName(asset)) === name;
-}
-
-export function getAssetPath(asset: StaticAsset) {
-  const name = getAssetName(asset);
-  return asset.BasePath !== "/" ? `${asset.BasePath}/${name}` : name;
-}
-
-export function getFilePath(source: StaticAssets, name: string) {
-  const item = source.Assets.find((m) => isAsset(m, name));
-
-  if (item) {
-    return getAssetPath(item);
+export async function copyAll(assets: DerivedAssets) {
+  for (const asset of assets.assemblies) {
+    if (!asset.ignored) {
+      const toDir = dirname(asset.target);
+      await mkdir(toDir, { recursive: true });
+      await copyFile(asset.source, asset.target);
+    }
   }
 
-  return name;
+  for (const asset of assets.files) {
+    const toDir = dirname(asset.target);
+    await mkdir(toDir, { recursive: true });
+    await copyFile(asset.source, asset.target);
+  }
+
+  for (const asset of assets.satellites) {
+    const toDir = dirname(asset.target);
+    await mkdir(toDir, { recursive: true });
+    await copyFile(asset.source, asset.target);
+  }
+
+  for (const asset of assets.symbols) {
+    if (!asset.ignored) {
+      const toDir = dirname(asset.target);
+      await mkdir(toDir, { recursive: true });
+      await copyFile(asset.source, asset.target);
+    }
+  }
 }
 
-export function copyAll(
-  ignored: Array<string>,
-  source: StaticAssets,
-  targetDir: string
-) {
-  const staticFiles = source.Assets.filter(
-    (asset) => !ignored.includes(getAssetPath(asset))
-  );
+export async function checkExists(fn: string) {
+  try {
+    await stat(fn);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  //File copy
-  return copyFiles(staticFiles, targetDir);
+export async function loadJson<T = any>(fn: string) {
+  const content = await readFile(fn, "utf8");
+  return JSON.parse(content) as T;
 }

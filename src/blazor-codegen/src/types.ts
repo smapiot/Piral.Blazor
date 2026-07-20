@@ -6,12 +6,17 @@ export interface BlazorManifest {
   icuDataMode: number;
   linkerEnabled: boolean;
   resources: {
+    hash?: string;
+    // maps fingerprinted filenames to non-fingerprinted ones (e.g., "CommunityToolkit.Mvvm.ek2f7r3onp.wasm": "CommunityToolkit.Mvvm.wasm")
+    fingerprinting?: Record<string, string>;
     assembly: Record<string, string>;
+    coreAssembly?: Record<string, string>;
     pdb: Record<string, string>;
     runtime?: Record<string, string>;
     jsModuleNative?: Record<string, string>;
     jsModuleRuntime?: Record<string, string>;
     wasmNative?: Record<string, string>;
+    icu?: Record<string, string>;
     extensions: any;
     lazyAssembly: any;
     libraryInitializers: any;
@@ -141,13 +146,146 @@ export interface StaticAsset {
   ContentRoot: string;
   BasePath: string;
   RelativePath: string;
+  Fingerprint?: string;
   AssetKind: string;
   AssetMode: string;
   AssetRole: string;
   RelatedAsset: string;
   AssetTraitName: string;
   AssetTraitValue: string;
+  Integrity: string;
   CopyToOutputDirectory: string;
   CopyToPublishDirectory: string;
   OriginalItemSpec: string;
+}
+
+export interface DerivedAssets {
+  /**
+   * The referenced / used assemblies
+   */
+  assemblies: Array<{
+    /**
+     * Id of the assembly, e.g., "MyPilet.wasm"
+     */
+    id: string;
+    /**
+     * Name of the file to copy, e.g., MyPilet.abcdef1234.wasm
+     */
+    name: string;
+    /**
+     * Full source path of the file, e.g., /home/foo/bar/etc/bin/MyPilet.abcdef1234.wasm
+     */
+    source: string;
+    /**
+     * Full target path of the file, e.g., /home/foo/bar/~piral/dist/_framework/MyPilet.abcdef1234.wasm
+     */
+    target: string;
+    /**
+     * Fingerprint used by the file, e.g., .abcdef1234 - empty to denote no fingerprint
+     */
+    fingerprint: string;
+    /**
+     * True indicates that this is just a dependency of the main project, otherwise false
+     */
+    dependency: boolean;
+    /**
+     * True indicates that this is the main entry point of the pilet, otherwise false
+     */
+    entry: boolean;
+    /**
+     * True indicates that the assembly is already present (in one form or another) in the parent and should be ignored
+     */
+    ignored: boolean;
+  }>;
+  /**
+   * The debug symbols for the assembly, if any
+   */
+  symbols: Array<{
+    /**
+     * Id of the symbols file, e.g., "MyPilet.pdb"
+     */
+    id: string;
+    /**
+     * Name of the file to copy, e.g., MyPilet.abcdef1234.pdb
+     */
+    name: string;
+    /**
+     * Full source path of the file, e.g., /home/foo/bar/etc/bin/MyPilet.abcdef1234.pdb
+     */
+    source: string;
+    /**
+     * Full target path of the file, e.g., /home/foo/bar/~piral/dist/_framework/MyPilet.abcdef1234.pdb
+     */
+    target: string;
+    /**
+     * Fingerprint used by the file, e.g., .abcdef1234 - empty to denote no fingerprint
+     */
+    fingerprint: string;
+    /**
+     * True indicates that this is the main entry point of the pilet, otherwise false
+     */
+    entry: boolean;
+    /**
+     * True indicates that the symbols file is already present (in one form or another) in the parent and should be ignored
+     */
+    ignored: boolean;
+  }>;
+  /**
+   * The static web asset files which are not assemblies
+   */
+  files: Array<{
+    /**
+     * Id of the file, e.g., MyPilet.css
+     */
+    id: string;
+    /**
+     * Name of the file, e.g., MyPilet.52553.css
+     */
+    name: string;
+    /**
+     * The type of asset, e.g., "css" is a stylesheet
+     */
+    type: "css" | "other";
+    /**
+     * Fingerprint used by the file, e.g., .abcdef1234 - empty to denote no fingerprint
+     */
+    fingerprint: string;
+    /**
+     * Full source path of the file, e.g., /home/foo/bar/etc/bin/MyPilet.52553.css
+     */
+    source: string;
+    /**
+     * Full target path of the file, e.g., /home/foo/bar/~piral/dist/_framework/MyPilet.52553.css
+     */
+    target: string;
+  }>;
+  /**
+   * The generated satellite assemblies / files
+   */
+  satellites: Array<{
+    /**
+     * Id of the assembly, e.g., "MyPilet.resources.wasm"
+     */
+    id: string;
+    /**
+     * The culture of the satellite, e.g., "de".
+     */
+    culture: string;
+    /**
+     * Name of the file to copy, e.g., MyPilet.resources.abcdef1234.wasm
+     */
+    name: string;
+    /**
+     * Full source path of the file, e.g., /home/foo/bar/etc/bin/MyPilet.resources.abcdef1234.wasm
+     */
+    source: string;
+    /**
+     * Full target path of the file, e.g., /home/foo/bar/~piral/dist/_framework/MyPilet.resources.abcdef1234.wasm
+     */
+    target: string;
+    /**
+     * Fingerprint used by the file, e.g., .abcdef1234 - empty to denote no fingerprint
+     */
+    fingerprint: string;
+  }>;
 }

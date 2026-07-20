@@ -45,7 +45,7 @@
 			Version="$(Version)" />
     </Target>
 
-	<Target Name="PublishPilet" AfterTargets="AfterPublish">
+	<Target Name="PublishPilet" AfterTargets="AfterPublish" Condition="'$(PublishFeedUrl)' != ''">
 		<PublishPiletTask
 			Source="$(MSBuildProjectDirectory)"
             Target="$(OutputFolder)"

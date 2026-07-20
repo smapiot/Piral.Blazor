@@ -23,8 +23,8 @@
   },
   "dependencies": {
     "blazor": "10.0.19",
-    "piral": "1.7.2",
-    "piral-blazor": "1.7.2"
+    "piral": "1.11.2",
+    "piral-blazor": "1.11.2"
   },
   "devDependencies": {
     "@types/node": "latest",
@@ -32,7 +32,7 @@
     "@types/react-dom": "^18.0.0",
     "@types/react-router": "^5.0.0",
     "@types/react-router-dom": "^5.0.0",
-    "piral-cli": "1.7.2",
+    "piral-cli": "1.11.2",
     "piral-cli-esbuild": "latest",
     "sass": "^1.82.0",
     "typescript": "^5"

@@ -1,9 +1,13 @@
-import { existsSync } from "fs";
 import { resolve } from "path";
 
-export function getPiralVersion(shellPackagePath: string) {
+import { checkExists, loadJson } from "./io";
+
+export async function getPiralVersion(
+  shellPackagePath: string,
+): Promise<string> {
   try {
-    const { version } = require(shellPackagePath).piralCLI;
+    const shellData = await loadJson(shellPackagePath);
+    const { version } = shellData.piralCLI;
 
     if (typeof version !== "string") {
       throw new Error();
@@ -12,21 +16,29 @@ export function getPiralVersion(shellPackagePath: string) {
     return version;
   } catch {
     try {
-      return require("piral-cli/package.json").version;
+      const path = require.resolve("piral-cli/package.json");
+      const cliData = await loadJson(path);
+      return cliData.version;
     } catch {
       throw new Error(
-        "The version of the `piral-cli` could not be determined."
+        "The version of the `piral-cli` could not be determined.",
       );
     }
   }
 }
 
-export function findAppDir(baseFolder: string, piralName: string) {
-  const appdir = resolve(baseFolder, "node_modules", piralName);
+export async function findAppDir(baseFolder: string, piralName: string) {
+  const appDir = resolve(baseFolder, "node_modules", piralName);
+  const appDirExists = await checkExists(`${appDir}/app`);
 
-  if (!existsSync(`${appdir}/app`) && existsSync(`${appdir}/dist`)) {
-    return `${appdir}/dist`;
+  if (!appDirExists) {
+    const appDistDir = `${appDir}/dist`;
+    const appDistDirExists = await checkExists(appDistDir);
+
+    if (appDistDirExists) {
+      return appDistDir;
+    }
   }
 
-  return appdir;
+  return appDir;
 }

@@ -1,18 +1,7 @@
-import { existsSync } from "fs";
-import { ignoredDlls } from "./constants";
-import {
-  BlazorManifest,
-  BlazorResourceType,
-  ProjectConfig,
-  StaticAsset,
-  StaticAssets,
-} from "./types";
+import { checkExists, loadJson } from "./io";
+import type { ProjectConfig, StaticAsset, StaticAssets } from "./types";
 
-function getAllKeys(manifest: BlazorManifest, type: BlazorResourceType) {
-  return Object.keys(manifest.resources[type] || {});
-}
-
-export function matchesIdentity(asset: StaticAsset, file: string) {
+function matchesIdentity(asset: StaticAsset, file: string) {
   return (
     asset.Identity.endsWith(`/${file}`) || asset.Identity.endsWith(`\\${file}`)
   );
@@ -21,69 +10,33 @@ export function matchesIdentity(asset: StaticAsset, file: string) {
 export function matchesSatellite(
   asset: StaticAsset,
   culture: string,
-  file: string
+  file: string,
 ) {
   return (
     asset.AssetRole === "Related" &&
+    asset.AssetTraitName === "Culture" &&
     asset.AssetTraitValue === culture &&
     matchesIdentity(asset, file)
   );
 }
 
-function getUniqueKeys(
-  originalManifest: BlazorManifest,
-  piletManifest: BlazorManifest,
-  type: BlazorResourceType
-) {
-  const original = getAllKeys(originalManifest, type);
-  const dedicated = getAllKeys(piletManifest, type);
-  return dedicated.filter(
-    (m) => !original.includes(m) && !ignoredDlls.includes(m)
-  );
-}
+export async function rebuildNeeded(config: ProjectConfig) {
+  const paExists = await checkExists(config.paFile);
+  const swaExists = await checkExists(config.swaFile);
 
-export function getRef(dlls: Array<string>, name: string) {
-  const dllName = `${name}.dll`;
+  if (paExists && swaExists) {
+    const staticAssets = await loadJson<StaticAssets>(config.swaFile);
 
-  if (dlls.includes(dllName)) {
-    return dllName;
-  }
+    for (const asset of staticAssets.Assets) {
+      const exists = await checkExists(asset.Identity);
 
-  const wasmName = `${name}.wasm`;
-
-  if (dlls.includes(wasmName)) {
-    return wasmName;
-  }
-
-  return name;
-}
-
-export function rebuildNeeded(config: ProjectConfig) {
-  if (existsSync(config.paFile) && existsSync(config.swaFile)) {
-    const staticAssets: StaticAssets = require(config.swaFile);
-
-    if (staticAssets.Assets.every((m) => existsSync(m.Identity))) {
-      return false;
+      if (!exists) {
+        return true;
+      }
     }
+
+    return false;
   }
 
   return true;
-}
-
-export function diffBlazorBootFiles(
-  appdir: string,
-  appname: string,
-  piletManifest: BlazorManifest,
-  originalManifest: BlazorManifest
-): [Array<string>, Array<string>] {
-  if (!existsSync(appdir)) {
-    throw new Error(
-      `Cannot find the directory of "${appname}". Please re-install the dependencies.`
-    );
-  }
-
-  return [
-    getUniqueKeys(originalManifest, piletManifest, "assembly"),
-    getUniqueKeys(originalManifest, piletManifest, "pdb"),
-  ];
 }
