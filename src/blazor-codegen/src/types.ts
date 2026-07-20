@@ -153,6 +153,7 @@ export interface StaticAsset {
   RelatedAsset: string;
   AssetTraitName: string;
   AssetTraitValue: string;
+  Integrity: string;
   CopyToOutputDirectory: string;
   CopyToPublishDirectory: string;
   OriginalItemSpec: string;

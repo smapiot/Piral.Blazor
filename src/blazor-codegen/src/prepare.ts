@@ -106,6 +106,9 @@ function getAssets(
   staticAssets: StaticAssets,
   projectAssets: ProjectAssets,
 ): DerivedAssets {
+  const byIntegrity = new Map(
+    staticAssets.Assets.map((a) => [`sha256-${a.Integrity}`, a]),
+  );
   const assemblies: DerivedAssets["assemblies"] = [];
   const mainProjectName = projectAssets.project.restore.projectName;
   const files: DerivedAssets["files"] = [];
@@ -118,13 +121,11 @@ function getAssets(
     pdb = {},
   } = manifest.resources;
 
-  Object.entries(assembly).forEach(([fullName]) => {
+  Object.entries(assembly).forEach(([fullName, integrity]) => {
     const originalName = fingerprinting[fullName] || fullName;
     const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
     const isEntry = originalName === `${mainProjectName}${ext}`;
-    const asset = staticAssets.Assets.find((a) =>
-      a.Identity.endsWith(fullName),
-    );
+    const asset = byIntegrity.get(integrity);
 
     if (asset) {
       assemblies.push({
@@ -136,12 +137,10 @@ function getAssets(
     }
   });
 
-  Object.entries(pdb).forEach(([fullName]) => {
+  Object.entries(pdb).forEach(([fullName, integrity]) => {
     const originalName = fingerprinting[fullName] || fullName;
     const isEntry = originalName === `${mainProjectName}.pdb`;
-    const asset = staticAssets.Assets.find(
-      (a) => a.AssetTraitValue === "symbol" && a.Identity.endsWith(fullName),
-    );
+    const asset = byIntegrity.get(integrity);
 
     if (asset) {
       symbols.push({
@@ -155,7 +154,7 @@ function getAssets(
   Object.entries(satelliteResources).forEach(([culture, resources]) => {
     const files = Object.keys(resources);
     const findSatelliteAsset = (file: string) =>
-      staticAssets.Assets.find((m) => matchesSatellite(m, culture, file));
+      staticAssets.Assets.find((m) => matchesSatellite(m, culture, file));//TODO
 
     files.map(findSatelliteAsset).forEach((asset) => {
       if (asset) {

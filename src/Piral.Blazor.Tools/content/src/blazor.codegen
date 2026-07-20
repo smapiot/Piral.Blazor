@@ -2780,6 +2780,9 @@ function getBasicProps(asset, targetDir) {
   };
 }
 function getAssets(targetDir, manifest, staticAssets, projectAssets) {
+  const byIntegrity = new Map(
+    staticAssets.Assets.map((a) => [`sha256-${a.Integrity}`, a])
+  );
   const assemblies = [];
   const mainProjectName = projectAssets.project.restore.projectName;
   const files = [];
@@ -2791,13 +2794,11 @@ function getAssets(targetDir, manifest, staticAssets, projectAssets) {
     assembly = {},
     pdb = {}
   } = manifest.resources;
-  Object.entries(assembly).forEach(([fullName]) => {
+  Object.entries(assembly).forEach(([fullName, integrity]) => {
     const originalName = fingerprinting[fullName] || fullName;
     const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
     const isEntry = originalName === `${mainProjectName}${ext}`;
-    const asset = staticAssets.Assets.find(
-      (a) => a.Identity.endsWith(fullName)
-    );
+    const asset = byIntegrity.get(integrity);
     if (asset) {
       assemblies.push({
         ...getBasicProps(asset, targetDir),
@@ -2807,12 +2808,10 @@ function getAssets(targetDir, manifest, staticAssets, projectAssets) {
       });
     }
   });
-  Object.entries(pdb).forEach(([fullName]) => {
+  Object.entries(pdb).forEach(([fullName, integrity]) => {
     const originalName = fingerprinting[fullName] || fullName;
     const isEntry = originalName === `${mainProjectName}.pdb`;
-    const asset = staticAssets.Assets.find(
-      (a) => a.AssetTraitValue === "symbol" && a.Identity.endsWith(fullName)
-    );
+    const asset = byIntegrity.get(integrity);
     if (asset) {
       symbols.push({
         ...getBasicProps(asset, targetDir),
