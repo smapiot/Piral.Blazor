@@ -95,8 +95,11 @@ public sealed class PiletService : IPiletService, IDisposable
                 foreach (var satellite in satellites)
                 {
                     var url = GetUrl(satellite);
-                    var dep = await _client.GetStreamAsync(url);
-                    _context.LoadFromStream(dep);
+                    using var dep = await _client.GetStreamAsync(url);
+                    using var ms = new MemoryStream();
+                    await dep.CopyToAsync(ms);
+                    ms.Position = 0;
+                    _context.LoadFromStream(ms);
                 }
             }
 

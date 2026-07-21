@@ -5,6 +5,7 @@ using Microsoft.JSInterop;
 using Piral.Blazor.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -200,8 +201,11 @@ public static class JSBridge
     {
         var client = Host.Services.GetRequiredService<HttpClient>();
         var js = Host.Services.GetService<IJSRuntime>();
-        var dll = await client.GetStreamAsync(url);
-        var assembly = AssemblyLoadContext.Default.LoadFromStream(dll);
+        using var dll = await client.GetStreamAsync(url);
+        using var ms = new MemoryStream();
+        await dll.CopyToAsync(ms);
+        ms.Position = 0;
+        var assembly = AssemblyLoadContext.Default.LoadFromStream(ms);
         var pilet = new PiletService(js, client, url);
 
         ContainerService?.ConfigureModule(assembly, pilet);
@@ -215,9 +219,15 @@ public static class JSBridge
     {
         var client = Host.Services.GetRequiredService<HttpClient>();
         var js = Host.Services.GetService<IJSRuntime>();
-        var dll = await client.GetStreamAsync(dllUrl);
-        var pdb = await client.GetStreamAsync(pdbUrl);
-        var assembly = AssemblyLoadContext.Default.LoadFromStream(dll, pdb);
+        using var dll = await client.GetStreamAsync(dllUrl);
+        using var pdb = await client.GetStreamAsync(pdbUrl);
+        using var msDll = new MemoryStream();
+        using var msPdb = new MemoryStream();
+        await dll.CopyToAsync(msDll);
+        await pdb.CopyToAsync(msPdb);
+        msDll.Position = 0;
+        msPdb.Position = 0;
+        var assembly = AssemblyLoadContext.Default.LoadFromStream(msDll, msPdb);
         var pilet = new PiletService(js, client, dllUrl);
 
         ContainerService?.ConfigureModule(assembly, pilet);
@@ -278,14 +288,23 @@ public static class JSBridge
         if (pdbUrl is not null)
         {
             var streams = await Task.WhenAll(client.GetStreamAsync(dllUrl), client.GetStreamAsync(pdbUrl));
-            var dll = streams[0];
-            var pdb = streams[1];
-            return context.LoadFromStream(dll, pdb);
+            using var dll = streams[0];
+            using var pdb = streams[1];
+            using var dllMs = new MemoryStream();
+            using var pdbMs = new MemoryStream();
+            await dll.CopyToAsync(dllMs);
+            await pdb.CopyToAsync(pdbMs);
+            dllMs.Position = 0;
+            pdbMs.Position = 0;
+            return context.LoadFromStream(dllMs, pdbMs);
         }
         else
         {
-            var dll = await client.GetStreamAsync(dllUrl);
-            return context.LoadFromStream(dll);
+            using var dll = await client.GetStreamAsync(dllUrl);
+            using var ms = new MemoryStream();
+            await dll.CopyToAsync(ms);
+            ms.Position = 0;
+            return context.LoadFromStream(ms);
         }
     }
     
