@@ -17,7 +17,7 @@
     "@types/glob": "^7",
     "@types/node": "^18",
     "esbuild": "0.25.0",
-    "fast-xml-parser": "^4",
+    "fast-xml-parser": "^5",
     "glob": "^7",
     "typescript": "^5"
   }
