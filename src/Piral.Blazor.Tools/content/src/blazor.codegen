@@ -2906,23 +2906,23 @@ function getAssets(targetDir, manifest, staticAssets, projectAssets) {
       return satellites;
     });
     staticAssets.Assets.forEach((asset) => {
+      const isCss = asset.RelativePath.endsWith(".css");
+      const target = (0, import_path4.join)(targetDir, asset.BasePath);
       if (asset.AssetTraitName === "Content-Encoding") {
       } else if (asset.AssetTraitValue === "ProjectBundle") {
-        const isCss = asset.RelativePath.endsWith(".css");
-        const props = getBasicProps(asset, (0, import_path4.join)(targetDir, asset.BasePath));
+        const props = getBasicProps(asset, target);
         files.push({
           ...props,
           type: isCss ? "css" : "other"
         });
       } else if (asset.AssetTraitValue === "" && asset.Identity.endsWith(".map")) {
-        const props = getBasicProps(asset, (0, import_path4.join)(targetDir, asset.BasePath));
+        const props = getBasicProps(asset, target);
         files.push({
           ...props,
           type: "other"
         });
       } else if (!asset.RelativePath.startsWith("_framework")) {
-        const isCss = asset.RelativePath.endsWith(".css");
-        const props = getBasicProps(asset, targetDir);
+        const props = getBasicProps(asset, target);
         if (!alwaysIgnored.includes(props.id)) {
           files.push({
             ...props,
@@ -2984,23 +2984,23 @@ function getAssets(targetDir, manifest, staticAssets, projectAssets) {
       return satellites;
     });
     staticAssets.Assets.forEach((asset) => {
+      const isCss = asset.RelativePath.endsWith(".css");
+      const target = (0, import_path4.join)(targetDir, asset.BasePath);
       if (asset.AssetTraitName === "Content-Encoding") {
       } else if (asset.AssetTraitValue === "ProjectBundle") {
-        const isCss = asset.RelativePath.endsWith(".css");
-        const props = getBasicProps(asset, (0, import_path4.join)(targetDir, asset.BasePath));
+        const props = getBasicProps(asset, target);
         files.push({
           ...props,
           type: isCss ? "css" : "other"
         });
       } else if (asset.AssetTraitValue === "" && asset.Identity.endsWith(".map")) {
-        const props = getBasicProps(asset, (0, import_path4.join)(targetDir, asset.BasePath));
+        const props = getBasicProps(asset, target);
         files.push({
           ...props,
           type: "other"
         });
       } else if (!asset.RelativePath.startsWith("_framework")) {
-        const isCss = asset.RelativePath.endsWith(".css");
-        const props = getBasicProps(asset, targetDir);
+        const props = getBasicProps(asset, target);
         if (!alwaysIgnored.includes(props.id)) {
           files.push({
             ...props,
