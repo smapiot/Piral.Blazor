@@ -2893,7 +2893,7 @@ function getAssets(targetDir, manifest, staticAssets, projectAssets) {
     Object.entries(satelliteResources).forEach(([culture, resources]) => {
       resources.map(
         (entry) => staticAssets.Assets.find(
-          (m) => matchesSatellite(m, culture, entry.virtualPath)
+          (m) => matchesSatellite(m, culture, entry.name)
         )
       ).forEach((asset) => {
         if (asset) {

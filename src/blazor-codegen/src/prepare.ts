@@ -164,7 +164,7 @@ function getAssets(
       resources
         .map((entry) =>
           staticAssets.Assets.find((m) =>
-            matchesSatellite(m, culture, entry.virtualPath),
+            matchesSatellite(m, culture, entry.name),
           ),
         )
         .forEach((asset) => {
@@ -258,7 +258,7 @@ function getAssets(
     Object.entries(satelliteResources).forEach(([culture, resources]) => {
       const files = Object.keys(resources);
       const findSatelliteAsset = (file: string) =>
-        staticAssets.Assets.find((m) => matchesSatellite(m, culture, file)); //TODO
+        staticAssets.Assets.find((m) => matchesSatellite(m, culture, file));
 
       files.map(findSatelliteAsset).forEach((asset) => {
         if (asset) {
