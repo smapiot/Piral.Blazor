@@ -2539,7 +2539,7 @@ async function rebuildNeeded(config) {
 
 // src/prepare.ts
 var import_path4 = require("path");
-var import_promises2 = require("fs/promises");
+var import_promises3 = require("fs/promises");
 
 // src/piral.ts
 var import_path2 = require("path");
@@ -2676,23 +2676,12 @@ async function analyzeProject(config) {
 
 // src/manifest.ts
 var import_path3 = require("path");
+var import_promises2 = require("fs/promises");
 async function loadManifestFromDotnetJsPath(path) {
-  const mod = await import(path);
-  if (!mod) {
-    return void 0;
-  }
-  const config = {
-    current: void 0
-  };
-  mod.dotnet.withOnConfigLoaded((cfg) => {
-    config.current = structuredClone(cfg);
-    throw new Error("Stop after config capture");
-  });
-  try {
-    await mod.dotnet.create();
-  } catch {
-  }
-  return config.current;
+  const src = await (0, import_promises2.readFile)(path, "utf8");
+  const m = src.match(/\/\*json-start\*\/([\s\S]*?)\/\*json-end\*\//);
+  if (!m) return void 0;
+  return JSON.parse(m[1]);
 }
 async function loadManifestFromDotnetJs(assets) {
   const manifestSource = assets.Assets.find(
@@ -2719,12 +2708,13 @@ async function loadManifestFromBlazorBootJson(assets) {
   const content = await loadJson(manifest);
   return [manifest, content];
 }
-async function loadManifestFrom(path) {
-  const originalManifestExists = await checkExists(path);
-  if (originalManifestExists) {
-    return await loadJson(path);
+async function loadManifestFrom(dir) {
+  const jsonManifestPath = (0, import_path3.resolve)(dir, bbjson);
+  const jsonManifestExists = await checkExists(jsonManifestPath);
+  if (jsonManifestExists) {
+    return await loadJson(jsonManifestPath);
   }
-  const jsManifestPath = (0, import_path3.resolve)((0, import_path3.dirname)(path), dotnetjs);
+  const jsManifestPath = (0, import_path3.resolve)(dir, dotnetjs);
   const jsManifestExists = await checkExists(jsManifestPath);
   if (jsManifestExists) {
     const content = await loadManifestFromDotnetJsPath(jsManifestPath);
@@ -2736,7 +2726,7 @@ async function loadManifestFrom(path) {
     return content;
   }
   throw new Error(
-    `Could not find the manifest in the specified path (${path}). Something seems to be wrong.`
+    `Could not find the manifest in the specified path (${dir}). Something seems to be wrong.`
   );
 }
 async function loadManifestOf(assets) {
@@ -2825,7 +2815,7 @@ async function findInstanceName(piralPiletFolder) {
 async function findBlazorVersion(piralPiletFolder) {
   const key = "Version=";
   const blazorrcPath = (0, import_path4.resolve)(piralPiletFolder, blazorrc);
-  const content = await (0, import_promises2.readFile)(blazorrcPath, "utf8");
+  const content = await (0, import_promises3.readFile)(blazorrcPath, "utf8");
   const line = content.split("\r").join("").split("\n").find((m) => m.startsWith(key));
   if (typeof line === "string") {
     return line.substring(key.length);
@@ -3069,8 +3059,7 @@ async function prepare(targetDir, config) {
   const instanceName = await findInstanceName(piralPiletFolder);
   const appdir = await findAppDir(piralPiletFolder, instanceName);
   const appFrameworkDir = (0, import_path4.resolve)(appdir, "app", "_framework");
-  const bbAppShellPath = (0, import_path4.resolve)(appFrameworkDir, bbjson);
-  const blazorInAppshell = await checkExists(bbAppShellPath);
+  const blazorInAppshell = await checkExists(appFrameworkDir);
   const shellPackagePath = (0, import_path4.resolve)(appdir, packageJsonFilename);
   const [manifest, piletManifest] = await loadManifestOf(staticAssets);
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
@@ -3085,7 +3074,7 @@ async function prepare(targetDir, config) {
     console.log(
       "The app shell already integrates `piral-blazor` with `blazor`."
     );
-    const appShellManifest = await loadManifestFrom(bbAppShellPath);
+    const appShellManifest = await loadManifestFrom(appFrameworkDir);
     const appshellDotnetVersion = extractDotnetVersion(
       appShellManifest,
       projectAssets
@@ -3098,9 +3087,16 @@ async function prepare(targetDir, config) {
       "The app shell does not contain `piral-blazor`. Using standalone mode."
     );
     await checkInstallation(blazorVersion, shellPackagePath);
-    const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-    const manifestPath = require.resolve(bbStandalonePath);
-    const originalManifest = await loadManifestFrom(manifestPath);
+    const packageName = `blazor/package.json`;
+    const packagePath = require.resolve(packageName);
+    const manifestDir = (0, import_path4.resolve)(
+      packagePath,
+      "..",
+      variant,
+      "wwwroot",
+      "_framework"
+    );
+    const originalManifest = await loadManifestFrom(manifestDir);
     updateAssets(assets, originalManifest);
   }
   const watchlist = [
@@ -3122,7 +3118,7 @@ async function prepare(targetDir, config) {
 // src/config.ts
 var import_glob = __toESM(require_glob());
 var import_path5 = require("path");
-var import_promises3 = require("fs/promises");
+var import_promises4 = require("fs/promises");
 
 // node_modules/fast-xml-parser/src/util.js
 var nameStartChar = ":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
@@ -4790,7 +4786,7 @@ function getSharedDependencies(Project) {
 }
 async function readProject(path) {
   const projectDir = (0, import_path5.dirname)(path);
-  const xmlData = await (0, import_promises3.readFile)(path, "utf8");
+  const xmlData = await (0, import_promises4.readFile)(path, "utf8");
   const xmlParser = new XMLParser({
     ignoreAttributes: false,
     allowBooleanAttributes: true

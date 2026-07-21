@@ -9,7 +9,6 @@ import { loadManifestFrom, loadManifestOf } from "./manifest";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
 import {
   alwaysIgnored,
-  bbjson,
   packageJsonFilename,
   piletJsonFilename,
   variant,
@@ -369,8 +368,7 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
 
   // Piral Blazor checks
   const appFrameworkDir = resolve(appdir, "app", "_framework");
-  const bbAppShellPath = resolve(appFrameworkDir, bbjson);
-  const blazorInAppshell = await checkExists(bbAppShellPath);
+  const blazorInAppshell = await checkExists(appFrameworkDir);
   const shellPackagePath = resolve(appdir, packageJsonFilename);
   const [manifest, piletManifest] = await loadManifestOf(staticAssets);
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
@@ -387,7 +385,7 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
       "The app shell already integrates `piral-blazor` with `blazor`.",
     );
 
-    const appShellManifest = await loadManifestFrom(bbAppShellPath);
+    const appShellManifest = await loadManifestFrom(appFrameworkDir);
     const appshellDotnetVersion = extractDotnetVersion(
       appShellManifest,
       projectAssets,
@@ -406,9 +404,16 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
 
     await checkInstallation(blazorVersion, shellPackagePath);
 
-    const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
-    const manifestPath = require.resolve(bbStandalonePath);
-    const originalManifest = await loadManifestFrom(manifestPath);
+    const packageName = `blazor/package.json`;
+    const packagePath = require.resolve(packageName);
+    const manifestDir = resolve(
+      packagePath,
+      "..",
+      variant,
+      "wwwroot",
+      "_framework",
+    );
+    const originalManifest = await loadManifestFrom(manifestDir);
     updateAssets(assets, originalManifest);
   }
 

@@ -1,4 +1,6 @@
-import { dirname, resolve } from "path";
+import { resolve } from "path";
+import { readFile } from "fs/promises";
+
 import { bbjson, dotnetjs, swajson, wasmResourceTraitNames } from "./constants";
 import { checkExists, getAssetName, loadJson } from "./io";
 import type {
@@ -8,27 +10,12 @@ import type {
 } from "./types";
 
 async function loadManifestFromDotnetJsPath(path: string) {
-  const mod = await import(path);
+  const src = await readFile(path, "utf8");
+  const m = src.match(/\/\*json-start\*\/([\s\S]*?)\/\*json-end\*\//);
 
-  if (!mod) {
-    return undefined;
-  }
+  if (!m) return undefined;
 
-  const config = {
-    current: undefined as undefined | BlazorRuntimeManifest,
-  };
-
-  mod.dotnet.withOnConfigLoaded((cfg: any) => {
-    config.current = structuredClone(cfg);
-    // Optional: throw to stop early if you only need config
-    throw new Error("Stop after config capture");
-  });
-
-  try {
-    await mod.dotnet.create();
-  } catch {}
-
-  return config.current;
+  return JSON.parse(m[1]) as BlazorRuntimeManifest;
 }
 
 async function loadManifestFromDotnetJs(assets: StaticAssets) {
@@ -70,14 +57,15 @@ async function loadManifestFromBlazorBootJson(assets: StaticAssets) {
   return [manifest, content] as const;
 }
 
-export async function loadManifestFrom(path: string) {
-  const originalManifestExists = await checkExists(path);
+export async function loadManifestFrom(dir: string) {
+  const jsonManifestPath = resolve(dir, bbjson);
+  const jsonManifestExists = await checkExists(jsonManifestPath);
 
-  if (originalManifestExists) {
-    return await loadJson<BlazorJsonManifest>(path);
+  if (jsonManifestExists) {
+    return await loadJson<BlazorJsonManifest>(jsonManifestPath);
   }
 
-  const jsManifestPath = resolve(dirname(path), dotnetjs);
+  const jsManifestPath = resolve(dir, dotnetjs);
   const jsManifestExists = await checkExists(jsManifestPath);
 
   if (jsManifestExists) {
@@ -93,7 +81,7 @@ export async function loadManifestFrom(path: string) {
   }
 
   throw new Error(
-    `Could not find the manifest in the specified path (${path}). Something seems to be wrong.`,
+    `Could not find the manifest in the specified path (${dir}). Something seems to be wrong.`,
   );
 }
 
