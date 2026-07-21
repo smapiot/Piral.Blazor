@@ -1,5 +1,9 @@
 import { mainAssembly, selectedFramework } from "./constants";
-import type { BlazorManifest, ProjectAssets } from "./types";
+import type {
+  BlazorJsonManifest,
+  BlazorRuntimeManifest,
+  ProjectAssets,
+} from "./types";
 
 /* 
   More advanced version compare that can handle versions 
@@ -42,7 +46,7 @@ export function stripVersion(x: string) {
 }
 
 export function extractDotnetVersion(
-  manifest: BlazorManifest,
+  manifest: BlazorJsonManifest | BlazorRuntimeManifest,
   projectAssets: ProjectAssets,
 ) {
   const dotnetFiles =

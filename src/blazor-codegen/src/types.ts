@@ -1,4 +1,4 @@
-export interface BlazorManifest {
+export interface BlazorJsonManifest {
   cacheBootResources: boolean;
   config: Array<string>;
   debugBuild: boolean;
@@ -24,6 +24,60 @@ export interface BlazorManifest {
   };
 }
 
+export interface BlazorRuntimeManifest {
+  mainAssemblyName: string;
+  applicationEnvironment: string;
+  debugLevel: number;
+  globalizationMode: string;
+  extensions: Record<string, any>;
+  runtimeConfig: {
+    runtimeOptions: {
+      configProperties: Record<string, boolean>;
+    };
+  };
+  resources: {
+    hash?: string;
+    runtime: undefined;
+    jsModuleNative?: Record<string, string>;
+    jsModuleRuntime?: Record<string, string>;
+    wasmNative?: Record<string, string>;
+    icu?: Array<{
+      virtualPath: string;
+      name: string;
+      integrity: string;
+    }>;
+    coreAssembly?: Array<{
+      virtualPath: string;
+      name: string;
+      integrity: string;
+    }>;
+    assembly: Array<{
+      virtualPath: string;
+      name: string;
+      integrity: string;
+    }>;
+    pdb: Array<{
+      virtualPath: string;
+      name: string;
+      integrity: string;
+    }>;
+    satelliteResources: Record<
+      string,
+      Array<{
+        virtualPath: string;
+        name: string;
+        integrity: string;
+      }>
+    >;
+    libraryInitializers: Array<{
+      name: string;
+    }>;
+    modulesAfterConfigLoaded: Array<{
+      name: string;
+    }>;
+  };
+}
+
 export interface ProjectConfig {
   targetFramework: string;
   configDir: string;
@@ -37,7 +91,7 @@ export interface ProjectConfig {
   priority: string;
 }
 
-export type BlazorResourceType = keyof BlazorManifest["resources"];
+export type BlazorResourceType = keyof BlazorJsonManifest["resources"];
 
 export type Targets = Record<string, Array<string>>;
 

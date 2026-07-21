@@ -1,23 +1,23 @@
 import { resolve, join, basename } from "path";
 import { readFile } from "fs/promises";
 
-import { checkExists, copyAll, getAssetName, loadJson } from "./io";
+import { checkExists, copyAll, loadJson } from "./io";
 import { findAppDir } from "./piral";
 import { checkInstallation } from "./project";
 import { matchesSatellite } from "./utils";
+import { loadManifestFrom, loadManifestOf } from "./manifest";
 import { checkDotnetVersion, extractDotnetVersion } from "./version";
 import {
   alwaysIgnored,
   bbjson,
-  swajson,
   packageJsonFilename,
   piletJsonFilename,
-  wasmResourceTraitNames,
   variant,
   blazorrc,
 } from "./constants";
 import type {
-  BlazorManifest,
+  BlazorJsonManifest,
+  BlazorRuntimeManifest,
   DerivedAssets,
   ProjectAssets,
   ProjectConfig,
@@ -111,7 +111,7 @@ function getBasicProps(asset: StaticAsset, targetDir: string) {
 
 function getAssets(
   targetDir: string,
-  manifest: BlazorManifest,
+  manifest: BlazorJsonManifest | BlazorRuntimeManifest,
   staticAssets: StaticAssets,
   projectAssets: ProjectAssets,
 ): DerivedAssets {
@@ -123,119 +123,240 @@ function getAssets(
   const files: DerivedAssets["files"] = [];
   const symbols: DerivedAssets["symbols"] = [];
   const satellites: DerivedAssets["satellites"] = [];
-  const {
-    satelliteResources = {},
-    fingerprinting = {},
-    assembly = {},
-    pdb = {},
-  } = manifest.resources;
 
-  Object.entries(assembly).forEach(([fullName, integrity]) => {
-    const originalName = fingerprinting[fullName] || fullName;
-    const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
-    const isEntry = originalName === `${mainProjectName}${ext}`;
-    const asset = byIntegrity.get(integrity);
+  if ("extensions" in manifest) {
+    const {
+      assembly = [],
+      pdb = [],
+      satelliteResources = {},
+    } = manifest.resources;
 
-    if (asset) {
-      assemblies.push({
-        ...getBasicProps(asset, targetDir),
-        dependency: !isEntry,
-        entry: isEntry,
-        ignored: false,
-      });
-    }
-  });
+    assembly.forEach((entry) => {
+      const originalName = entry.virtualPath;
+      const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
+      const isEntry = originalName === `${mainProjectName}${ext}`;
+      const asset = byIntegrity.get(entry.integrity);
 
-  Object.entries(pdb).forEach(([fullName, integrity]) => {
-    const originalName = fingerprinting[fullName] || fullName;
-    const isEntry = originalName === `${mainProjectName}.pdb`;
-    const asset = byIntegrity.get(integrity);
-
-    if (asset) {
-      symbols.push({
-        ...getBasicProps(asset, targetDir),
-        entry: isEntry,
-        ignored: false,
-      });
-    }
-  });
-
-  Object.entries(satelliteResources).forEach(([culture, resources]) => {
-    const files = Object.keys(resources);
-    const findSatelliteAsset = (file: string) =>
-      staticAssets.Assets.find((m) => matchesSatellite(m, culture, file)); //TODO
-
-    files.map(findSatelliteAsset).forEach((asset) => {
       if (asset) {
-        satellites.push({
+        assemblies.push({
           ...getBasicProps(asset, targetDir),
-          culture,
+          dependency: !isEntry,
+          entry: isEntry,
+          ignored: false,
         });
       }
     });
-    return satellites;
-  });
 
-  staticAssets.Assets.forEach((asset) => {
-    if (asset.AssetTraitName === "Content-Encoding") {
-      // Empty on purpose
-    } else if (asset.AssetTraitValue === "ProjectBundle") {
-      const isCss = asset.RelativePath.endsWith(".css");
-      const props = getBasicProps(asset, join(targetDir, asset.BasePath));
-      files.push({
-        ...props,
-        type: isCss ? "css" : "other",
-      });
-    } else if (
-      asset.AssetTraitValue === "" &&
-      asset.Identity.endsWith(".map")
-    ) {
-      const props = getBasicProps(asset, join(targetDir, asset.BasePath));
-      files.push({
-        ...props,
-        type: "other",
-      });
-    } else if (!asset.RelativePath.startsWith("_framework")) {
-      const isCss = asset.RelativePath.endsWith(".css");
-      const props = getBasicProps(asset, targetDir);
+    pdb.forEach((entry) => {
+      const originalName = entry.virtualPath;
+      const isEntry = originalName === `${mainProjectName}.pdb`;
+      const asset = byIntegrity.get(entry.integrity);
 
-      if (!alwaysIgnored.includes(props.id)) {
+      if (asset) {
+        symbols.push({
+          ...getBasicProps(asset, targetDir),
+          entry: isEntry,
+          ignored: false,
+        });
+      }
+    });
+
+    Object.entries(satelliteResources).forEach(([culture, resources]) => {
+      resources
+        .map((entry) =>
+          staticAssets.Assets.find((m) =>
+            matchesSatellite(m, culture, entry.virtualPath),
+          ),
+        )
+        .forEach((asset) => {
+          if (asset) {
+            satellites.push({
+              ...getBasicProps(asset, targetDir),
+              culture,
+            });
+          }
+        });
+      return satellites;
+    });
+
+    staticAssets.Assets.forEach((asset) => {
+      if (asset.AssetTraitName === "Content-Encoding") {
+        // Empty on purpose
+      } else if (asset.AssetTraitValue === "ProjectBundle") {
+        const isCss = asset.RelativePath.endsWith(".css");
+        const props = getBasicProps(asset, join(targetDir, asset.BasePath));
         files.push({
           ...props,
           type: isCss ? "css" : "other",
         });
-      }
-    }
-  });
+      } else if (
+        asset.AssetTraitValue === "" &&
+        asset.Identity.endsWith(".map")
+      ) {
+        const props = getBasicProps(asset, join(targetDir, asset.BasePath));
+        files.push({
+          ...props,
+          type: "other",
+        });
+      } else if (!asset.RelativePath.startsWith("_framework")) {
+        const isCss = asset.RelativePath.endsWith(".css");
+        const props = getBasicProps(asset, targetDir);
 
-  return {
-    assemblies,
-    symbols,
-    files,
-    satellites,
-  };
+        if (!alwaysIgnored.includes(props.id)) {
+          files.push({
+            ...props,
+            type: isCss ? "css" : "other",
+          });
+        }
+      }
+    });
+
+    return {
+      assemblies,
+      symbols,
+      files,
+      satellites,
+    };
+  } else {
+    const {
+      satelliteResources = {},
+      fingerprinting = {},
+      assembly = {},
+      pdb = {},
+    } = manifest.resources;
+
+    Object.entries(assembly).forEach(([fullName, integrity]) => {
+      const originalName = fingerprinting[fullName] || fullName;
+      const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
+      const isEntry = originalName === `${mainProjectName}${ext}`;
+      const asset = byIntegrity.get(integrity);
+
+      if (asset) {
+        assemblies.push({
+          ...getBasicProps(asset, targetDir),
+          dependency: !isEntry,
+          entry: isEntry,
+          ignored: false,
+        });
+      }
+    });
+
+    Object.entries(pdb).forEach(([fullName, integrity]) => {
+      const originalName = fingerprinting[fullName] || fullName;
+      const isEntry = originalName === `${mainProjectName}.pdb`;
+      const asset = byIntegrity.get(integrity);
+
+      if (asset) {
+        symbols.push({
+          ...getBasicProps(asset, targetDir),
+          entry: isEntry,
+          ignored: false,
+        });
+      }
+    });
+
+    Object.entries(satelliteResources).forEach(([culture, resources]) => {
+      const files = Object.keys(resources);
+      const findSatelliteAsset = (file: string) =>
+        staticAssets.Assets.find((m) => matchesSatellite(m, culture, file)); //TODO
+
+      files.map(findSatelliteAsset).forEach((asset) => {
+        if (asset) {
+          satellites.push({
+            ...getBasicProps(asset, targetDir),
+            culture,
+          });
+        }
+      });
+      return satellites;
+    });
+
+    staticAssets.Assets.forEach((asset) => {
+      if (asset.AssetTraitName === "Content-Encoding") {
+        // Empty on purpose
+      } else if (asset.AssetTraitValue === "ProjectBundle") {
+        const isCss = asset.RelativePath.endsWith(".css");
+        const props = getBasicProps(asset, join(targetDir, asset.BasePath));
+        files.push({
+          ...props,
+          type: isCss ? "css" : "other",
+        });
+      } else if (
+        asset.AssetTraitValue === "" &&
+        asset.Identity.endsWith(".map")
+      ) {
+        const props = getBasicProps(asset, join(targetDir, asset.BasePath));
+        files.push({
+          ...props,
+          type: "other",
+        });
+      } else if (!asset.RelativePath.startsWith("_framework")) {
+        const isCss = asset.RelativePath.endsWith(".css");
+        const props = getBasicProps(asset, targetDir);
+
+        if (!alwaysIgnored.includes(props.id)) {
+          files.push({
+            ...props,
+            type: isCss ? "css" : "other",
+          });
+        }
+      }
+    });
+
+    return {
+      assemblies,
+      symbols,
+      files,
+      satellites,
+    };
+  }
 }
 
-function updateAssets(assets: DerivedAssets, parent: BlazorManifest) {
-  const { fingerprinting = {}, assembly = {}, pdb = {} } = parent.resources;
+function updateAssets(
+  assets: DerivedAssets,
+  parent: BlazorJsonManifest | BlazorRuntimeManifest,
+) {
+  if ("extensions" in parent) {
+    const { assembly = [], pdb = [] } = parent.resources;
 
-  Object.entries(assembly).forEach(([fullName]) => {
-    const originalName = fingerprinting[fullName] || fullName;
-    const asset = assets.assemblies.find((m) => m.id === originalName);
+    assembly.forEach((entry) => {
+      const originalName = entry.virtualPath;
+      const asset = assets.assemblies.find((m) => m.id === originalName);
 
-    if (asset) {
-      asset.ignored = true;
-    }
-  });
+      if (asset) {
+        asset.ignored = true;
+      }
+    });
 
-  Object.entries(pdb).forEach(([fullName]) => {
-    const originalName = fingerprinting[fullName] || fullName;
-    const asset = assets.symbols.find((m) => m.id === originalName);
+    pdb.forEach((entry) => {
+      const originalName = entry.virtualPath;
+      const asset = assets.symbols.find((m) => m.id === originalName);
 
-    if (asset) {
-      asset.ignored = true;
-    }
-  });
+      if (asset) {
+        asset.ignored = true;
+      }
+    });
+  } else {
+    const { fingerprinting = {}, assembly = {}, pdb = {} } = parent.resources;
+
+    Object.entries(assembly).forEach(([fullName]) => {
+      const originalName = fingerprinting[fullName] || fullName;
+      const asset = assets.assemblies.find((m) => m.id === originalName);
+
+      if (asset) {
+        asset.ignored = true;
+      }
+    });
+
+    Object.entries(pdb).forEach(([fullName]) => {
+      const originalName = fingerprinting[fullName] || fullName;
+      const asset = assets.symbols.find((m) => m.id === originalName);
+
+      if (asset) {
+        asset.ignored = true;
+      }
+    });
+  }
 }
 
 export async function prepare(targetDir: string, config: ProjectConfig) {
@@ -246,26 +367,12 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
   const instanceName = await findInstanceName(piralPiletFolder);
   const appdir = await findAppDir(piralPiletFolder, instanceName);
 
-  const manifestSource = staticAssets.Assets.find(
-    (m) =>
-      wasmResourceTraitNames.includes(m.AssetTraitName) &&
-      m.AssetTraitValue === "manifest" &&
-      getAssetName(m).endsWith(bbjson),
-  );
-
-  if (!manifestSource) {
-    throw new Error(
-      `Could not find the "${bbjson}" in ${swajson}. Something seems to be wrong.`,
-    );
-  }
-
   // Piral Blazor checks
   const appFrameworkDir = resolve(appdir, "app", "_framework");
   const bbAppShellPath = resolve(appFrameworkDir, bbjson);
   const blazorInAppshell = await checkExists(bbAppShellPath);
   const shellPackagePath = resolve(appdir, packageJsonFilename);
-  const manifest = manifestSource.Identity;
-  const piletManifest = await loadJson<BlazorManifest>(manifest);
+  const [manifest, piletManifest] = await loadManifestOf(staticAssets);
   const piletDotnetVersion = extractDotnetVersion(piletManifest, projectAssets);
   const standalone = !blazorInAppshell;
   const assets = getAssets(
@@ -280,7 +387,7 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
       "The app shell already integrates `piral-blazor` with `blazor`.",
     );
 
-    const appShellManifest = await loadJson<BlazorManifest>(bbAppShellPath);
+    const appShellManifest = await loadManifestFrom(bbAppShellPath);
     const appshellDotnetVersion = extractDotnetVersion(
       appShellManifest,
       projectAssets,
@@ -301,7 +408,7 @@ export async function prepare(targetDir: string, config: ProjectConfig) {
 
     const bbStandalonePath = `blazor/${variant}/wwwroot/_framework/${bbjson}`;
     const manifestPath = require.resolve(bbStandalonePath);
-    const originalManifest = await loadJson<BlazorManifest>(manifestPath);
+    const originalManifest = await loadManifestFrom(manifestPath);
     updateAssets(assets, originalManifest);
   }
 

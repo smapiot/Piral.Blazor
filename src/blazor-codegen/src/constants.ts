@@ -10,6 +10,7 @@ export const variant = isRelease ? "release" : "debug";
 export const selectedFramework = "net10.0";
 export const blazorrc = ".blazorrc";
 export const bbjson = "blazor.boot.json";
+export const dotnetjs = "dotnet.js";
 export const pajson = "project.assets.json";
 export const packageJsonFilename = "package.json";
 export const piletJsonFilename = "pilet.json";
