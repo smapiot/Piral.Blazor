@@ -134,7 +134,7 @@ function getAssets(
       const originalName = entry.virtualPath;
       const ext = originalName.endsWith(".dll") ? ".dll" : ".wasm";
       const isEntry = originalName === `${mainProjectName}${ext}`;
-      const asset = byIntegrity.get(entry.integrity);
+      const asset = byIntegrity.get(entry.hash || entry.integrity || "");
 
       if (asset) {
         assemblies.push({
@@ -149,7 +149,7 @@ function getAssets(
     pdb.forEach((entry) => {
       const originalName = entry.virtualPath;
       const isEntry = originalName === `${mainProjectName}.pdb`;
-      const asset = byIntegrity.get(entry.integrity);
+      const asset = byIntegrity.get(entry.hash || entry.integrity || "");
 
       if (asset) {
         symbols.push({

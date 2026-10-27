@@ -44,29 +44,34 @@ export interface BlazorRuntimeManifest {
     icu?: Array<{
       virtualPath: string;
       name: string;
-      integrity: string;
+      integrity?: string;
+      hash?: string;
     }>;
     coreAssembly?: Array<{
       virtualPath: string;
       name: string;
-      integrity: string;
+      integrity?: string;
+      hash?: string;
     }>;
     assembly: Array<{
       virtualPath: string;
       name: string;
-      integrity: string;
+      integrity?: string;
+      hash?: string;
     }>;
     pdb: Array<{
       virtualPath: string;
       name: string;
-      integrity: string;
+      integrity?: string;
+      hash?: string;
     }>;
     satelliteResources: Record<
       string,
       Array<{
         virtualPath: string;
         name: string;
-        integrity: string;
+        integrity?: string;
+        hash?: string;
       }>
     >;
     libraryInitializers: Array<{
