@@ -24,8 +24,38 @@ These steps can be automated.
 
 1. `git clone https://github.com/dotnet/aspnetcore.git`
 2. `cd aspnetcore` (to project root)
-3. `git apply /piral.blazor.source/tools/componentfactory-piral.patch` (don't forget to replace `/piral.blazor.source` with the path to the actual `Piral.Blazor` repository)
-4. `cd src/Components` (from project root)
-5. `./build.sh` (on Linux, otherwise `build.cmd` on Windows)
-6. Usually it would be good to also build for Release afterwards; `cd Components/src` (from `src/Components`) and `dotnet build Microsoft.AspNetCore.Components.csproj -c Release`
-7. Now use / copy `artifacts/bin/Microsoft.AspNetCore.Components/Release/net10.0/Microsoft.AspNetCore.Components.dll` (from project root) to the NuGet package dir
+3. Change to the corresponding release tag (e.g., `v10.0.14` for .NET 10 release 14): `git checkout v10.0.14`
+4. `git apply piral-blazor-source/tools/componentfactory-piral.patch` (don't forget to replace `piral-blazor-source` with the path to the actual `Piral.Blazor` repository)
+5. `cd src/Components` (from project root)
+6. `./build.sh` (on Linux, otherwise `build.cmd` on Windows)
+7. Usually it would be good to also build for Release afterwards; `cd Components/src` (from `src/Components`) and `dotnet build Microsoft.AspNetCore.Components.csproj -c Release`
+8. Now use / copy `artifacts/bin/Microsoft.AspNetCore.Components/Release/net10.0/Microsoft.AspNetCore.Components.dll` (from project root) to the NuGet package dir
+
+In a script (run from the `Piral.Blazor` repository root):
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+PIRAL_BLAZOR_SOURCE="$(pwd)"
+ASPNETCORE_TAG="${1:-v10.0.14}"
+ASPNETCORE_VERSION="${ASPNETCORE_TAG#v}"
+NUGET_PACKAGES_DIR="${NUGET_PACKAGES:-$(dotnet nuget locals global-packages --list | sed 's/^global-packages: //')}"
+
+git clone https://github.com/dotnet/aspnetcore.git
+cd aspnetcore
+git checkout "$ASPNETCORE_TAG"
+git apply "$PIRAL_BLAZOR_SOURCE/tools/componentfactory-piral.patch"
+
+cd src/Components
+./build.sh
+
+cd Components/src
+dotnet build Microsoft.AspNetCore.Components.csproj -c Release
+
+cd ../../../..
+cp artifacts/bin/Microsoft.AspNetCore.Components/Release/net10.0/Microsoft.AspNetCore.Components.dll \
+  "$PIRAL_BLAZOR_SOURCE/tools/Microsoft.AspNetCore.Components.dll"
+```
+
+It could be that either a global SDK needs to be installed or that the global.json of the ASP.NET Core repository needs to be adjusted.
