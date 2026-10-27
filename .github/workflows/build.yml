@@ -47,8 +47,8 @@ jobs:
 
       - name: Change GAC
         run: |
-          rm ~/.nuget/packages/microsoft.aspnetcore.components/10.0.3/lib/net10.0/Microsoft.AspNetCore.Components.dll
-          cp tools/Microsoft.AspNetCore.Components.dll ~/.nuget/packages/microsoft.aspnetcore.components/10.0.3/lib/net10.0/Microsoft.AspNetCore.Components.dll
+          rm ~/.nuget/packages/microsoft.aspnetcore.components/10.0.14/lib/net10.0/Microsoft.AspNetCore.Components.dll
+          cp tools/Microsoft.AspNetCore.Components.dll ~/.nuget/packages/microsoft.aspnetcore.components/10.0.14/lib/net10.0/Microsoft.AspNetCore.Components.dll
 
       - name: Run Tests
         run: |
