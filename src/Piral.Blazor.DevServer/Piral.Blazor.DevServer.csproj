@@ -11,7 +11,7 @@
     <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
     <AddPublicApiAnalyzers>false</AddPublicApiAnalyzers>
     <UseBlazorWebAssembly>true</UseBlazorWebAssembly>
-    <VersionPrefix>10.0.19</VersionPrefix>
+    <VersionPrefix>10.0.20</VersionPrefix>
     <Description>Blazor Dev Server for Blazor pilets.</Description>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>

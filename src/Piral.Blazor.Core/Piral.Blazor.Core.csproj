@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Piral.Blazor.Core</PackageId>
-    <VersionPrefix>10.0.19</VersionPrefix>
+    <VersionPrefix>10.0.20</VersionPrefix>
     <Authors>Florian Rappl</Authors>
     <Company>smapiot</Company>
     <IsPackable>true</IsPackable>
